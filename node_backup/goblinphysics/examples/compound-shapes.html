@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Compound Shapes | Goblin Physics</title>
+	<link rel="stylesheet" type="text/css" href="css/styles.css"/>
+	<script type="text/javascript" src="../lib/three.min.js"></script>
+	<script type="text/javascript" src="../lib/TrackballControls.js"></script>
+	<script type="text/javascript" src="../lib/stats.min.js"></script>
+	<script type="text/javascript" src="../build/goblin.js"></script>
+	<script type="text/javascript" src="js/exampleUtils.js"></script>
+
+	<script type="text/javascript">
+		window.onload = function() {
+			exampleUtils.initialize(); // Creates Three.js renderer & GoblinPhysics world
+
+			var ground = exampleUtils.createPlane( 1, 20, 20, 0, exampleUtils.createMaterial( 'pebbles', 5, 5 ) );
+			ground.goblin.restitution = 0.1;
+			ground.castShadow = false;
+
+			var box_geometry = new THREE.BoxGeometry( 4, 0.5, 1 ),
+				box_shape = new Goblin.BoxShape( 2, 0.25, 0.5 ),
+				compound_shape = new Goblin.CompoundShape();
+				box_material = exampleUtils.createMaterial( 'scratched_metal', 1, 0.2 );
+
+			compound_shape.addChildShape(
+				box_shape,
+				new Goblin.Vector3(),
+				new Goblin.Quaternion( 0, 0, 0, 1 )
+			);
+			compound_shape.addChildShape(
+				box_shape,
+				new Goblin.Vector3(),
+				new Goblin.Quaternion( 0, 0, -1, 1 )
+			);
+
+			var spawnObject = function() {
+				// Create Three.js object
+				var object = new THREE.Object3D(),
+					box_1 = new THREE.Mesh( box_geometry, box_material ),
+					box_2 = new THREE.Mesh( box_geometry, box_material );
+
+				box_1.castShadow = true;
+				box_1.receiveShadow = true;
+				object.add( box_1 );
+
+				box_2.rotation.z = -Math.PI / 2;
+				box_2.castShadow = true;
+				box_2.receiveShadow = true;
+				object.add( box_2 );
+
+				// Create Goblin object
+				var compound = new Goblin.RigidBody( compound_shape, 3 );
+				compound.restitution = 0;
+				compound.position.y = 10;
+				compound.rotation.set( 0, 0, 0.5, 1 );
+				compound.rotation.normalize();
+				compound.applyImpulse( new Goblin.Vector3( 0, -10, 0 ) );
+
+				// Add everything
+				object.goblin = compound;
+				exampleUtils.scene.add( object );
+				exampleUtils.world.addRigidBody( compound );
+				exampleUtils.objects.push( object );
+			};
+
+			exampleUtils.world.addListener(
+				'stepStart',
+				function( tick ) {
+					if ( tick % 60 === 1 ) {
+						spawnObject();
+					}
+				}
+			);
+
+			exampleUtils.run();
+		};
+	</script>
+</head>
+
+<body>
+
+</body>
+</html>

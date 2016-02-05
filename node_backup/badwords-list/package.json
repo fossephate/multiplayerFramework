@@ -1,0 +1,84 @@
+{
+  "_args": [
+    [
+      "badwords-list@^1.0.0",
+      "/srv/www/f1v3.net/public_html/js/mmo/node_modules/bad-words"
+    ]
+  ],
+  "_from": "badwords-list@>=1.0.0 <2.0.0",
+  "_id": "badwords-list@1.0.0",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/badwords-list",
+  "_npmUser": {
+    "email": "webmech@gmail.com",
+    "name": "webmech"
+  },
+  "_npmVersion": "1.4.3",
+  "_phantomChildren": {},
+  "_requested": {
+    "name": "badwords-list",
+    "raw": "badwords-list@^1.0.0",
+    "rawSpec": "^1.0.0",
+    "scope": null,
+    "spec": ">=1.0.0 <2.0.0",
+    "type": "range"
+  },
+  "_requiredBy": [
+    "/bad-words"
+  ],
+  "_resolved": "https://registry.npmjs.org/badwords-list/-/badwords-list-1.0.0.tgz",
+  "_shasum": "5e9856dbf13482a295c3b0b304afb9d4cfc5c579",
+  "_shrinkwrap": null,
+  "_spec": "badwords-list@^1.0.0",
+  "_where": "/srv/www/f1v3.net/public_html/js/mmo/node_modules/bad-words",
+  "author": {
+    "email": "webmech@gmail.com",
+    "name": "Michael Price"
+  },
+  "bugs": {
+    "url": "https://github.com/web-mech/badwords-list/issues"
+  },
+  "dependencies": {},
+  "description": "A highly consumable list of bad (profanity) english words (forked from badwords)",
+  "devDependencies": {
+    "better-assert": "1.0.0",
+    "mocha": "1.14.0"
+  },
+  "directories": {},
+  "dist": {
+    "shasum": "5e9856dbf13482a295c3b0b304afb9d4cfc5c579",
+    "tarball": "http://registry.npmjs.org/badwords-list/-/badwords-list-1.0.0.tgz"
+  },
+  "homepage": "https://github.com/web-mech/badwords-list",
+  "keywords": [
+    "bad",
+    "black",
+    "blacklist",
+    "filter",
+    "list",
+    "profanity",
+    "swear",
+    "word",
+    "words"
+  ],
+  "license": "MIT",
+  "main": "./lib/index",
+  "maintainers": [
+    {
+      "name": "webmech",
+      "email": "webmech@gmail.com"
+    }
+  ],
+  "name": "badwords-list",
+  "optionalDependencies": {},
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/web-mech/badwords-list.git"
+  },
+  "scripts": {
+    "test": "mocha -R nyan"
+  },
+  "version": "1.0.0"
+}

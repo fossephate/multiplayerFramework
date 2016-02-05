@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Mesh Shape | Goblin Physics</title>
+	<link rel="stylesheet" type="text/css" href="css/styles.css"/>
+	<script type="text/javascript" src="../lib/three.min.js"></script>
+	<script type="text/javascript" src="../lib/TrackballControls.js"></script>
+	<script type="text/javascript" src="../lib/stats.min.js"></script>
+	<script type="text/javascript" src="../build/goblin.js"></script>
+	<script type="text/javascript" src="js/exampleUtils.js"></script>
+
+	<script type="text/javascript">
+		window.onload = function() {
+			exampleUtils.initialize(); // Creates Three.js renderer & GoblinPhysics world
+			exampleUtils.world.solver.relaxation = 0.1; // relax penetrations solving to avoid jitter
+
+			// Making ground a MeshShape as well because Mesh-Mesh collision is MUCH faster than Mesh-Convex
+			var ground_geometry = new THREE.PlaneGeometry( 50, 50 );
+			var ground_shape = new Goblin.MeshShape(
+				ground_geometry.vertices.map(function( vertex ){
+					return new Goblin.Vector3( vertex.x, vertex.y, vertex.z )
+				}),
+				ground_geometry.faces.reduce(
+					function( faces, face ) {
+						faces.push( face.a, face.b, face.c );
+						return faces;
+					},
+					[]
+				)
+			);
+			var ground_material = exampleUtils.createMaterial( 'floor_tiles', 3, 3 );
+			var ground = new THREE.Mesh( ground_geometry, ground_material );
+			ground.receiveShadow = true;
+			ground.goblin = new Goblin.RigidBody( ground_shape, 0 );
+			ground.goblin.position.y = -5;
+			ground.goblin.rotation.set( -1, 0, 0, 1 );
+			exampleUtils.objects.push( ground );
+			exampleUtils.scene.add( ground );
+			exampleUtils.world.addRigidBody( ground.goblin );
+			ground.castShadow = false;
+
+			var chain_material = exampleUtils.createMaterial( 'brushed_metal', 1, 5 );
+
+			var link_geometry = null,
+				link_shape = null;
+			function spawnLink() {
+				var mesh = new THREE.Mesh( link_geometry, chain_material );
+				mesh.castShadow = mesh.receiveShadow = true;
+				exampleUtils.scene.add( mesh );
+
+				mesh.goblin = new Goblin.RigidBody( link_shape, 1 );
+
+				exampleUtils.objects.push( mesh );
+				exampleUtils.scene.add( mesh );
+				exampleUtils.world.addRigidBody( mesh.goblin );
+
+				return mesh;
+			}
+
+			function spawnChain(x_position, link_count, starting_height) {
+				var links = [],
+					link_height = link_geometry.boundingBox.max.y - link_geometry.boundingBox.min.y,
+					rotation_quaternion = new Goblin.Quaternion( 0, 0.4, 0, 1 );
+				rotation_quaternion.normalize();
+
+				for ( var i = 0; i < link_count; i++ ) {
+					var link = spawnLink();
+
+					link.goblin.position.x = x_position;
+					link.goblin.position.y = starting_height - i * link_height * 0.7;
+
+					// rotate this link a little more than the last one
+					if ( i > 0 ) {
+						link.goblin.rotation.multiplyQuaternions( links[i-1].goblin.rotation, rotation_quaternion )
+						link.goblin.rotation.normalize();
+					}
+
+					links.push(link);
+				}
+			}
+
+			function meshShapeFromGeometry( geometry ) {
+				return new Goblin.MeshShape(
+					geometry.vertices.map(function( vertex ){
+						return new Goblin.Vector3( vertex.x, vertex.y, vertex.z )
+					}),
+					geometry.faces.reduce(
+						function( faces, face ) {
+							faces.push( face.a, face.b, face.c );
+							return faces;
+						},
+						[]
+					)
+				);
+			}
+
+			var json_loader = new THREE.JSONLoader();
+			json_loader.load(
+				'models/chainlink.js',
+				function( geometry ) {
+					var scale = 0.6,
+						scale_matrix = new THREE.Matrix4().scale(new THREE.Vector3( scale, scale, scale ));
+
+					// big geometry
+					link_geometry = geometry;
+					link_geometry.computeBoundingBox();
+					link_shape = meshShapeFromGeometry(link_geometry);
+					spawnChain(-10, 7, 10);
+
+					// scale down to medium
+					link_geometry = link_geometry.clone();
+					link_geometry.applyMatrix( scale_matrix );
+					link_geometry.computeBoundingBox();
+					link_shape = meshShapeFromGeometry(link_geometry);
+					spawnChain(0, 12, 10);
+
+					// scale down to small
+					link_geometry = link_geometry.clone();
+					link_geometry.applyMatrix( scale_matrix );
+					link_geometry.computeBoundingBox();
+					link_shape = meshShapeFromGeometry(link_geometry);
+					spawnChain(10, 20, 10);
+				}
+			);
+
+			exampleUtils.run();
+		};
+	</script>
+</head>
+
+<body>
+
+</body>
+</html>

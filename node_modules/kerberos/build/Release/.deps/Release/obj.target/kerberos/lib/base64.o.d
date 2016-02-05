@@ -1,0 +1,4 @@
+cmd_Release/obj.target/kerberos/lib/base64.o := cc '-DNODE_GYP_MODULE_NAME=kerberos' '-D_LARGEFILE_SOURCE' '-D_FILE_OFFSET_BITS=64' '-DBUILDING_NODE_EXTENSION' -I/srv/www/f1v3.net/public_html/js/mmo/node_modules/kerberos/.node-gyp/0.12.3/include/node -I/srv/www/f1v3.net/public_html/js/mmo/node_modules/kerberos/.node-gyp/0.12.3/src -I/srv/www/f1v3.net/public_html/js/mmo/node_modules/kerberos/.node-gyp/0.12.3/deps/uv/include -I/srv/www/f1v3.net/public_html/js/mmo/node_modules/kerberos/.node-gyp/0.12.3/deps/v8/include -I../node_modules/nan -I/usr/include/mit-krb5  -fPIC -pthread -Wall -Wextra -Wno-unused-parameter -m64 -O3 -ffunction-sections -fdata-sections -fno-tree-vrp -fno-omit-frame-pointer  -MMD -MF ./Release/.deps/Release/obj.target/kerberos/lib/base64.o.d.raw   -c -o Release/obj.target/kerberos/lib/base64.o ../lib/base64.c
+Release/obj.target/kerberos/lib/base64.o: ../lib/base64.c ../lib/base64.h
+../lib/base64.c:
+../lib/base64.h:
