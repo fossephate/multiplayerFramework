@@ -6,7 +6,7 @@
 var THREE = require('three');
 THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
 var CANNON = require('cannon');
-var getPixels = require('get-pixels');
+var getPixels = require('./get-pixels');
 
 exports.toArray2D = function(vertices, options) {
 	//var tgt = new Array(options.xSegments),
