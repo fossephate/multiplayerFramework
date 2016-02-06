@@ -1895,7 +1895,7 @@ $(function() {
 			}
 			if (input.action.jump && temp.isJumping === false) {
 				temp.isJumping = true;
-				pPhys.applyLocalImpulse(new CANNON.Vec3(0, 0, 4), new CANNON.Vec3());
+				pPhys.applyLocalImpulse(new CANNON.Vec3(0, 0, 1), new CANNON.Vec3());
 			}
 			
 			
@@ -1923,7 +1923,14 @@ $(function() {
 				temp.inputVelocity.y = -rotatedV.y;
 			}
 			temp.inputVelocity.applyAxisAngle(new THREE.Vector3(0, 0, 1), cameraOptions.rotateOffset.z); /*this.temp.rotateOffset.z);*/
-			pPhys.applyLocalImpulse(temp.inputVelocity.multiplyScalar(1), new CANNON.Vec3());
+			//pPhys.applyLocalImpulse(temp.inputVelocity.multiplyScalar(1), new CANNON.Vec3());
+			
+			if (temp.isJumping === false) {
+				pPhys.velocity.x = temp.inputVelocity.x;
+				pPhys.velocity.y = temp.inputVelocity.y;
+				pPhys.velocity.z = 0;
+			}
+			
 
 			var pry = pMesh.rotation.y;
 			if (input.action.moveForward) {
@@ -1958,30 +1965,17 @@ $(function() {
 			world1.c.pw.raycastAny(pVec1, pVec2, {}, result);
 
 			if (result.hasHit) {
-				//pMesh.lookAt(result.hitNormalWorld);
-				//pMesh.position.copy(result.hitPointWorld);
-				//helper.position.set(0, 0, 0);
-				//helper.lookAt(result.hitNormalWorld);
-				//helper.position.copy(result.hitPointWorld);
 				var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
-				//if (result.distance < 2.15 && result.distance > -1) {
-				/*if (result.distance < 0.35 && result.distance > -1) {
-					if (temp.isJumping === true && !input.action.jump) {
-						temp.isJumping = false;
-					}
-					//pPhys.position.z += 2.15 - result.distance;
-					//pPhys.applyLocalForce(new CANNON.Vec3(0, 0, 11), new CANNON.Vecu3(0, 0, 0));
-				} else if (result.distance > 1) {
-					temp.isJumping = true;
-				} else {
-					temp.isJumping = false;
-				}*/
-				
-				if (result.distance < 0.35) {
-					temp.isJumping = false;
-				} else {
-					temp.isJumping = true;
+
+				if(temp.isJumping == false && result.distance < 2 && result.distance > 0) {
+					pPhys.position.z += 0 - result.distance;
 				}
+
+				if (result.distance < 0.2 && !input.action.jump) {
+					temp.isJumping = false;
+				}
+			} else {
+				temp.isJumping = false;
 			}
 
 			//if(temp.isJumping === false) {

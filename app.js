@@ -650,7 +650,7 @@ player.prototype.move = function() {
 		this.gainXP(10);
 		//this.score += 1;
 		this.temp.isJumping = true;
-		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 7), new CANNON.Vec3(0, 0, 0));
+		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 1), new CANNON.Vec3(0, 0, 0));
 		//this.phys.applyLocalImpulse(this.temp.inputVelocity.multiplyScalar(1), new CANNON.Vec3());
 	}
 
@@ -714,8 +714,12 @@ player.prototype.move = function() {
 
 	this.temp.inputVelocity.applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.z); /*this.temp.rotateOffset.z);*/
 	if (this.temp.isJumping === false) {
-		this.phys.velocity.copy(new CANNON.Vec3(this.temp.inputVelocity.x, this.temp.inputVelocity.y, null));
 		//this.phys.velocity.copy(new CANNON.Vec3(this.temp.inputVelocity.x, this.temp.inputVelocity.y, this.phys.velocity.z));
+		//this.phys.applyLocalImpulse(this.temp.inputVelocity.multiplyScalar(0.05), new CANNON.Vec3());
+		
+		this.phys.velocity.x = this.temp.inputVelocity.x;
+		this.phys.velocity.y = this.temp.inputVelocity.y;
+		this.phys.velocity.z = 0;
 	}
 
 	var px = Math.pow(this.phys.velocity.x, 2);
@@ -725,9 +729,9 @@ player.prototype.move = function() {
 		this.animTo = "idle";
 	}
 	
-	if(this.temp.isJumping === false && (this.phys.velocity.z > 1 || this.phys.velocity.z < -1) ) {
+	/*if(this.temp.isJumping === false && (this.phys.velocity.z > 1 || this.phys.velocity.z < -1) ) {
 		//this.phys.velocity.z /= 2;
-	}
+	}*/
 
 
 	var pVec1 = new CANNON.Vec3().copy(this.phys.position).vadd(new CANNON.Vec3(0, 0, -2.7));
@@ -737,35 +741,15 @@ player.prototype.move = function() {
 	gs.c.pw.raycastAny(pVec1, pVec2, {}, result);
 
 	if (result.hasHit) {
-		//this.temp.helper.position.set(0, 0, 0);
-		//this.temp.helper.lookAt(result.hitNormalWorld);
-		//this.temp.helper.position.copy(result.hitPointWorld);
-		/*var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
-		//if (result.distance < 2.15 && result.distance > -1) {
-		if (result.distance < 0.2) {
-			if (this.temp.isJumping === true && keys.indexOf("jump") == -1) {
-				this.temp.isJumping = false;
-			}
-			//this.phys.position.z += 2.15 - result.distance; //+= 6.6 - result.distance;
-
-			//this.phys.applyLocalForce(new CANNON.Vec3(0, 0, 11), new CANNON.Vec3(0, 0, 0));
-		} else if (result.distance > 0.5) {
-			this.temp.isJumping = true;
-		} else {
-			this.temp.isJumping = false;
-		}
-		if(this.temp.isJumping === false) {
-			this.phys.position.z += 0.2 - result.distance;
-			this.velocity.z = 0;
-		}*/
-		
 		var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
-		if (result.distance < 0.2) {
-			this.temp.isJumping = false;
-		} else {
-			this.temp.isJumping = true;
+		
+		if(this.temp.isJumping == false && result.distance < 2 && result.distance > 0) {
+			this.phys.position.z += 0 - result.distance;
 		}
 		
+		if (result.distance < 0.01 && keys.indexOf("jump") == -1) {
+			this.temp.isJumping = false;
+		}
 		
 	} else {
 		this.temp.isJumping = false;
@@ -1098,11 +1082,10 @@ io.on('connection', function(socket) {
 		//ADDED
 		var clnodes = gs.clients[socket.id].nodes;
 		var usernames = gs.clients[socket.id].usernames;
-		console.log(clnodes.length);
 
 		var tnodes = [];
 		//io.emit('deletePlayer', gs.clients[socket.id].username);
-		for (i = 0; i < clnodes.length; i++) {
+		for (i = 0; i < usernames.length; i++) {//for (i = 0; i < clnodes.length; i++) {
 			var clnode2 = gs.clients[socket.id].getNode(i);
 			tnodes.push(clnode2.saveObj());
 			io.emit('numOfPlayersOnline', gs.playersOnline);
@@ -1134,13 +1117,6 @@ io.on('connection', function(socket) {
 		console.log("gs.nodes.length: " + gs.nodes.length);
 		console.log("gs.map.length: " + gs.map.length);
 		console.log("gs.clients.length: " + gs.clients.length);
-	});
-	
-	
-	
-	socket.on('createCharacter', function(data) {
-		
-		
 	});
 	
 	
