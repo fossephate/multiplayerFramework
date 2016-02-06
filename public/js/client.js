@@ -224,28 +224,28 @@ $(function() {
 
 		if (input.mouse.chg.x > xminmax) {
 			input.mouse.chg.x = xminmax;
-		} else if (input.mouse.chg.x < -1 * xminmax) {
-			input.mouse.chg.x = -1 * xminmax;
+		} else if (input.mouse.chg.x < -1*xminmax) {
+			input.mouse.chg.x = -1*xminmax;
 		}
 		if (input.mouse.chg.y > yminmax) {
 			input.mouse.chg.y = yminmax;
-		} else if (input.mouse.chg.y < -1 * yminmax) {
-			input.mouse.chg.y = -1 * yminmax;
+		} else if (input.mouse.chg.y < -1*yminmax) {
+			input.mouse.chg.y = -1*yminmax;
 		}
 
 		cameraOptions.rotateOffset.z += input.mouse.chg.x;
 		cameraOptions.rotateOffset.y += input.mouse.chg.y;
-		cameraOptions.rotateOffset.z = limit(0, Math.PI * 2, cameraOptions.rotateOffset.z, true, true);
-		cameraOptions.rotateOffset.y = limit((-Math.PI / 2) + 0.02, (Math.PI / 2) - 0.02, cameraOptions.rotateOffset.y, false);
+		cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true, true);
+		cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
 
 		var pMesh = world1.game.player.tObject.mesh;
 		var rclone = cameraOptions.rotateOffset.clone();
-		var diff = (pMesh.rotation.y - (Math.PI / 2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
-		pMesh.rotation.y = limit(0, (Math.PI * 2), pMesh.rotation.y, true, true);
-		if (diff > Math.PI / 4) {
-			pMesh.rotation.y -= diff - Math.PI / 4;
-		} else if (diff < -Math.PI / 4) {
-			pMesh.rotation.y -= diff + Math.PI / 4;
+		var diff = (pMesh.rotation.y - (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
+		pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
+		if (diff > Math.PI/4) {
+			pMesh.rotation.y -= diff - Math.PI/4;
+		} else if (diff < -Math.PI/4) {
+			pMesh.rotation.y -= diff + Math.PI/4;
 		}
 
 	});
@@ -380,8 +380,8 @@ $(function() {
 		//world1.game.player.username = character;
 		$('#titleScreen').modal('hide');
 		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-			//world1.t.camera.aspect = (window.innerWidth/2) / (window.innerHeight/2);
-			//world1.t.camera.aspect = (window.innerWidth/2) / (window.innerHeight/2);
+			//world1.t.camera.aspect = (window.innerWidth/2)/(window.innerHeight/2);
+			//world1.t.camera.aspect = (window.innerWidth/2)/(window.innerHeight/2);
 			//world1.t.camera.updateProjectionMatrix();
 			//world1.t.renderer.setSize(window.innerWidth/2, window.innerHeight/2);
 			//world1.t.renderer.setSize(1024, 1024);
@@ -557,7 +557,7 @@ $(function() {
 
 	socket.on('disconnect', function() {
 		swal({
-			title: "Server disconnected / reset!",
+			title: "Server disconnected/reset!",
 			text: "The page will reload after you close this message.",
 			type: "error",
 		}, function() {
@@ -800,8 +800,8 @@ $(function() {
 					
 					//vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
 
-					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI / 2);
-					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2));
+					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI/2);
+					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
 					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
 				}
 
@@ -851,7 +851,7 @@ $(function() {
 			// three.js
 			this.t = {};
 			this.t.scene = new THREE.Scene();
-			this.t.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.1, 2000000);
+			this.t.camera = new THREE.PerspectiveCamera(75, this.width/this.height, 0.1, 2000000);
 			this.t.camera.up.set(0, 0, 1);
 			this.t.audioListener = new THREE.AudioListener();
 			this.t.camera.add(this.t.audioListener);
@@ -860,7 +860,7 @@ $(function() {
 			this.t.HUD = {};
 			this.t.HUD.items = {};
 			this.t.HUD.scene = new THREE.Scene();
-			this.t.HUD.camera = new THREE.OrthographicCamera(-this.width / 2, this.width / 2, this.height / 2, -this.height / 2, 1, 1000);
+			this.t.HUD.camera = new THREE.OrthographicCamera(-this.width/2, this.width/2, this.height/2, -this.height/2, 1, 1000);
 			this.t.HUD.camera.up.set(0, 0, 1);
 			this.t.HUD.camera.position.set(0, 0, 10);
 			this.t.HUD.raycaster = new THREE.Raycaster();
@@ -1004,7 +1004,7 @@ $(function() {
 			mieCoefficient: 0.005,
 			mieDirectionalG: 0.8,
 			luminance: 1,
-			inclination: 0.25, // elevation / inclination //0.25
+			inclination: 0.25, // elevation/inclination //0.25
 			azimuth: 0.25, // Facing front,//0.25
 			sun: true
 		};
@@ -1019,11 +1019,11 @@ $(function() {
 			uniforms.luminance.value = this.effectController.luminance;
 			uniforms.mieCoefficient.value = this.effectController.mieCoefficient;
 			uniforms.mieDirectionalG.value = this.effectController.mieDirectionalG;
-			var theta = Math.PI * (this.effectController.inclination - 0.5);
-			var phi = 2 * Math.PI * (this.effectController.azimuth - 0.5);
-			this.sunSphere.position.x = distance * Math.cos(phi);
-			this.sunSphere.position.y = distance * Math.sin(phi) * Math.sin(theta);
-			this.sunSphere.position.z = distance * Math.sin(phi) * Math.cos(theta);
+			var theta = Math.PI*(this.effectController.inclination - 0.5);
+			var phi = 2*Math.PI*(this.effectController.azimuth - 0.5);
+			this.sunSphere.position.x = distance*Math.cos(phi);
+			this.sunSphere.position.y = distance*Math.sin(phi)*Math.sin(theta);
+			this.sunSphere.position.z = distance*Math.sin(phi)*Math.cos(theta);
 			this.sunSphere.visible = this.effectController.sun;
 
 			var pos = new THREE.Vector3().copy(this.sunSphere.position);
@@ -1079,7 +1079,7 @@ $(function() {
 			})
 		);
 		sand.position.y = -101;
-		sand.rotation.x = -0.5 * Math.PI;
+		sand.rotation.x = -0.5*Math.PI;
 		//world1.t.scene.add(sand);
 		texLoader.load('img/grass1.jpg', function(t2) {
 			t2.wrapS = t2.wrapT = THREE.RepeatWrapping;
@@ -1098,7 +1098,7 @@ $(function() {
 							levels: [20, 50, 60, 85]
 						}, {
 							texture: t4,
-							glsl: '1.0 - smoothstep(65.0 + smoothstep(-256.0, 256.0, vPosition.x) * 10.0, 80.0, vPosition.z)'
+							glsl: '1.0 - smoothstep(65.0 + smoothstep(-256.0, 256.0, vPosition.x)*10.0, 80.0, vPosition.z)'
 						}, {
 							texture: t3,
 							glsl: 'slope > 0.7853981633974483 ? 0.2 : 1.0 - smoothstep(0.47123889803846897, 0.7853981633974483, slope) + 0.2'
@@ -1121,7 +1121,7 @@ $(function() {
 							ySegments: 128, //63
 							ySize: 1024,
 						});
-						//terrainScene.rotateX(Math.PI / 2);
+						//terrainScene.rotateX(Math.PI/2);
 						//mesh.updateMatrix(); 
 						//mesh.geometry.applyMatrix( mesh.matrix );
 						//mesh.matrix.identity();
@@ -1136,91 +1136,15 @@ $(function() {
 			});
 		});
 	});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	
+	
+	
 	physicsFromHeightmap("img/heightmap2.png", function(planeMesh, hfBody) {
 		var terrain2 = createPhysicsObject(planeMesh, hfBody, world1, false);
 		terrain2.phys.position.set(0, 0, -60);
 		world1.t.scene.remove(planeMesh);
 	});
-
-
-
-	//var wallGeometry = new THREE.PlaneGeometry(1000, 1000, 16, 16);
-	//var wallMaterial = new THREE.MeshLambertMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-	//var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
-	//world1.t.scene.add(wallMesh);
-
-
-
-
-
-
-
+	
 
 	world1.t.HUD.items.healthBar = new createHealthBar();
 	world1.t.HUD.items.XPBar = new createXPBar();
@@ -1235,29 +1159,20 @@ $(function() {
 
 
 
-
-
-
-
 	world1.t.AH.onloadFuncs.push(function() {
-
 		var player = new THREE.BlendCharacter(world1.t.AH);
 		player.loadFast("player");
-
 		player.scale.set(0.02, 0.02, 0.02);
 		player.applyWeight('idle', 1/3);
 		player.applyWeight('walk', 1/3);
 		player.applyWeight('run', 1/3);
 		player.applyWeight('jump', 1/100);
-
 		var q = new THREE.Quaternion();
 		q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
 		player.quaternion.multiply(q);
 		q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
 		player.quaternion.multiply(q);
-		
 		player.username = world1.game.player.username;
-
 		var tempBody = createPhysBody("capsule", 1)(1, 3.2); //3.76
 		world1.game.player.tObject = new createPhysicsObject(player, tempBody, world1, "player");
 	});
@@ -1267,15 +1182,9 @@ $(function() {
 
 
 
-
-
-
-
-
 	world1.t.AH.onloadFuncs.push(function() {
 		var treeBarkMesh = new THREE.BlendCharacter(world1.t.AH);
 		treeBarkMesh.loadFast("treeBark");
-		
 		treeBarkMesh.scale.set(2, 2, 2);
 		treeBarkMesh.applyWeight('windAction', 1/3);
 		var q = new THREE.Quaternion();
@@ -1283,15 +1192,11 @@ $(function() {
 		treeBarkMesh.quaternion.multiply(q);
 		q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
 		treeBarkMesh.quaternion.multiply(q);
-		
 		var treeLeavesMesh = new THREE.BlendCharacter(world1.t.AH);
 		treeLeavesMesh.loadFast("treeLeaves");
 		treeLeavesMesh.applyWeight('windAction', 1/3);
-		
 		treeBarkMesh.add(treeLeavesMesh);
-		
 		var tempBody = createPhysBody("capsule", 1)(1, 3.2);
-		
 		tree1 = new createPhysicsObject(treeBarkMesh, tempBody, world1, false);
 	});
 	
@@ -1299,10 +1204,8 @@ $(function() {
 	
 	
 	world1.t.AH.onloadFuncs.push(function() {
-
 		var enemy = new THREE.BlendCharacter(world1.t.AH);
 		enemy.loadFast("abababe");
-		
 		enemy.scale.set(2, 2, 2);
 		enemy.applyWeight('walk', 1/3);
 		var q = new THREE.Quaternion();
@@ -1310,7 +1213,6 @@ $(function() {
 		enemy.quaternion.multiply(q);
 		q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
 		enemy.quaternion.multiply(q);
-		
 		var tempBody = createPhysBody("capsule", 1)(1, 2);
 		var pObject = new createPhysicsObject(enemy, tempBody, world1, "enemy");
 	});
@@ -1319,73 +1221,11 @@ $(function() {
 
 
 
-	/*blendMesh4 = new THREE.BlendCharacter();
-	blendMesh4.load("models/abababe.json", function() {
-		blendMesh4.scale.set(2, 2, 2);
-		blendMesh4.applyWeight('walk', 1 / 3);
-		var q = new THREE.Quaternion();
-		q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
-		blendMesh4.quaternion.multiply(q);
-		q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2);
-		blendMesh4.quaternion.multiply(q);
-		//variables.var1 = true;
-
-		var newPlayerMesh = Object.create(blendMesh4);
-		var tempBody = createPhysBody("capsule", 1)(1, 2);
-		var pObject = new createPhysicsObject(newPlayerMesh, tempBody, world1, "enemy");
-
-		//pObject.phys.position.copy(vpd[i].position);
-		//pObject.phys.quaternion.copy(vpd[i].quaternion);
-		//pObject.phys.velocity.copy(vpd[i].velocity);
-
-		//pObject.items.userLabel = new makeTextSprite(vpd[i].username);
-		//pObject.items.userLabel.position.set(0, 250, 0);
-		//pObject.items.userLabel.scale.set(50, 50, 1);
-		//pObject.mesh.add(pObject.items.userLabel);
-	});*/
-
-
-
-
-
-	/*var loader = new THREE.ColladaLoader();
-	loader.load(
-		// resource URL
-		'models/medieval-house.dae',
-		// Function when resource is loaded
-		function ( collada ) {
-			
-			
-			var cylinder = {
-				height: 3.2,
-				radius: 1
-			};
-			var cylinderShape = new CANNON.Cylinder(cylinder.radius, cylinder.radius, cylinder.height, 16);
-			var sphereShape = new CANNON.Sphere(cylinder.radius);
-			var tempBody = new CANNON.Body({
-				mass: 1
-			});
-			tempBody.addShape(cylinderShape);
-			tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, cylinder.height / 2));
-			tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, -cylinder.height / 2));
-			tempBody.angularDamping = 1;
-			
-			collada.scene.scale.set(10,10,10);
-			
-			var house = new createPhysicsObject(collada.scene, tempBody, world1, false);
-			
-			//scene.add( collada.scene );
-		},
-		// Function called when download progresses
-		function ( xhr ) {
-			console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-		}
-	);*/
+	
 
 
 	function followObject(world, obj, cam, options) {
 		var targetSet = {
-			//object: obj.clone(),
 			object: obj,
 			camPos: new THREE.Vector3(10, 10, 5),
 			translateOffset: new THREE.Vector3(0, 0, 0),
@@ -1400,90 +1240,65 @@ $(function() {
 
 		if (options) {
 			targetSet.rotateOffset = options.rotateOffset;
-			//targetSet.translateOffset = options.translateOffset;
 		}
-
+		
 		var ideal = new THREE.Object3D();
 		ideal.up.set(0, 0, 1);
 		ideal.position.copy(targetSet.object.position);
 		ideal.quaternion.copy(targetSet.object.quaternion);
 
-
 		var tPos = targetSet.object.position;
-		//var tRot = targetSet.object.rotation;
 		var tRot = new THREE.Vector3();
 		var tr = targetSet.rotateOffset;
-
-		/*ideal.position.x = tPos.x + Math.cos(tRot.z + targetSet.rotateOffset.z) * input.mouse.scrollLevel;
-		ideal.position.y = tPos.y + Math.sin(tRot.z + targetSet.rotateOffset.z) * input.mouse.scrollLevel;
-		//ideal.position.z = tPos.z + targetSet.camPos.z;
-		ideal.position.z = tPos.z + Math.sin(-tRot.y + targetSet.rotateOffset.y + Math.PI / 6) * input.mouse.scrollLevel;*/
-
-
-		ideal.position.x = tPos.x + (Math.cos(tr.z) * Math.cos(tr.y) * input.mouse.scrollLevel);
-		ideal.position.y = tPos.y + (Math.sin(tr.z) * Math.cos(tr.y) * input.mouse.scrollLevel);
-		ideal.position.z = tPos.z + (Math.sin(tr.y) * input.mouse.scrollLevel) + 3.5;
+		
+		ideal.position.x = tPos.x + (Math.cos(tr.z)*Math.cos(tr.y)*input.mouse.scrollLevel);
+		ideal.position.y = tPos.y + (Math.sin(tr.z)*Math.cos(tr.y)*input.mouse.scrollLevel);
+		ideal.position.z = tPos.z + (Math.sin(tr.y)*input.mouse.scrollLevel) + 3.5;
 
 		var q = new THREE.Quaternion();
-		q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+		q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI/2);
 		ideal.quaternion.multiply(q);
-		q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
+		q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
 		ideal.quaternion.multiply(q);
-
+		
 		var tstiff = targetSet.transStiffness || targetSet.stiffness;
 		var rstiff = targetSet.rotationStiffness || targetSet.stiffness;
-
-
+		
 		var camVec1 = new CANNON.Vec3().copy(cam.position);
 		var camVec2 = camVec1.vsub(new CANNON.Vec3(0, 0, 600));
 		var result = new CANNON.RaycastResult();
-		//console.log("distance1: " + result.distance);
-		//if(result.distance == -1) {
-		//result.reset();
-		//camVec2 = camVec2.vadd(new CANNON.Vec3(0, 0, 40));
+		
 		camVec2 = camVec2.negate();
 		world1.c.pw.raycastAny(camVec1, camVec2, {}, result);
-		//console.log("distance2: " + result.distance);
+		
 		if (result.hasHit) {
 			//ideal.position.z += result.distance;
 		}
-
-		/*if(logReset === 0) {
-			console.log(result);
-		}*/
-		//}
-
-
-
-
+		
 		cam.position.lerp(ideal.position, tstiff);
 		//cam.position.copy(ideal.position);
 		//cam.quaternion.slerp(ideal.quaternion, rstiff);
 		var tempv = new THREE.Vector3().copy(targetSet.object.position).add(new THREE.Vector3(0, 0, 3.5));
-
 		cam.lookAt(tempv);
 	}
 
 
-
-
-
-
+	
+	
 	window.addEventListener('resize', function() {
 		world1.width = window.innerWidth;
 		world1.height = window.innerHeight;
 		world1.canvas.width = window.innerWidth;
 		world1.canvas.height = window.innerHeight;
 
-		world1.t.camera.aspect = window.innerWidth / window.innerHeight;
+		world1.t.camera.aspect = window.innerWidth/window.innerHeight;
 		world1.t.camera.updateProjectionMatrix();
 
-		world1.t.HUD.camera.aspect = window.innerWidth / window.innerHeight;
-
-		world1.t.HUD.camera.left = -window.innerWidth / 2;
-		world1.t.HUD.camera.right = window.innerWidth / 2;
-		world1.t.HUD.camera.top = window.innerHeight / 2;
-		world1.t.HUD.camera.bottom = -window.innerHeight / 2;
+		world1.t.HUD.camera.aspect = window.innerWidth/window.innerHeight;
+		world1.t.HUD.camera.left = -window.innerWidth/2;
+		world1.t.HUD.camera.right = window.innerWidth/2;
+		world1.t.HUD.camera.top = window.innerHeight/2;
+		world1.t.HUD.camera.bottom = -window.innerHeight/2;
 
 
 		world1.t.HUD.camera.updateProjectionMatrix();
@@ -1545,7 +1360,7 @@ $(function() {
 		/*var laserBeam = new THREEx.LaserBeam();
 		var laserCooked = new THREEx.LaserCooked(laserBeam);
 		var pMesh = world1.game.player.tObject.mesh;
-		laserBeam.object3d.rotation.set(0, 0, pMesh.rotation.y + Math.PI / 2);
+		laserBeam.object3d.rotation.set(0, 0, pMesh.rotation.y + Math.PI/2);
 		world1.t.scene.add(laserBeam.object3d);
 		laserBeam.object3d.position.copy(pMesh.position);
 		laserBeam.object3d.position.z += 3;
@@ -1589,7 +1404,7 @@ $(function() {
 
 	var testGeometry = new THREE.CylinderGeometry(0, 2, 10, 3);
 	testGeometry.translate(0, 0, 0);
-	testGeometry.rotateX(Math.PI / 2);
+	testGeometry.rotateX(Math.PI/2);
 	var helper = new THREE.Mesh(testGeometry, new THREE.MeshNormalMaterial());
 	world1.t.scene.add(helper);
 	
@@ -1620,15 +1435,6 @@ $(function() {
 			value: 0.5
 		}
 	};
-
-
-
-
-
-
-
-
-
 
 	function createFireball(pos1, rotation, isTarget) {
 		var fireballSettings = {
@@ -1744,15 +1550,6 @@ $(function() {
 		return emitter1;
 	}
 
-
-
-
-
-
-
-
-
-
 	function renderParticles(dt) {
 		for (var i in world1.spe.groups) {
 			world1.spe.groups[i].tick(dt);
@@ -1761,14 +1558,6 @@ $(function() {
 			}
 		}
 	}
-
-
-
-
-
-
-
-
 
 	world1.spe.groups.smoke = new SPE.Group({
 		texture: {
@@ -1876,7 +1665,7 @@ $(function() {
 
 
 			var rclone = cameraOptions.rotateOffset.clone();
-			//rclone.z += Math.PI / 2;
+			//rclone.z += Math.PI/2;
 			var wasKeyPressed = false;
 			var dirOffset = 0;
 
@@ -1945,15 +1734,15 @@ $(function() {
 
 
 			//var dir = pMesh.rotation.y - (rclone.z + dirOffset);
-			var diff = (pry - (Math.PI / 2)) - findNearestCoterminalAngle(pry, rclone.z);
+			var diff = (pry - (Math.PI/2)) - findNearestCoterminalAngle(pry, rclone.z);
 			if (wasKeyPressed) {
-				pMesh.rotation.y = limit(0, (Math.PI * 2), pMesh.rotation.y, true, true);
-				pMesh.rotation.y -= diff / 5;
+				pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
+				pMesh.rotation.y -= diff/5;
 				//console.log("offset.z: " + cameraOptions.rotateOffset.z);
 				//console.log("pMesh.rotation.y: " + pMesh.rotation.y);
 			} else if (!input.mouse.lclick && !input.mouse.rclick) {
-				pMesh.rotation.y = limit(0, (Math.PI * 2), pMesh.rotation.y, true, true);
-				pMesh.rotation.y -= diff / 5;
+				pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
+				pMesh.rotation.y -= diff/5;
 			}
 
 
@@ -1977,20 +1766,6 @@ $(function() {
 			} else {
 				temp.isJumping = false;
 			}
-
-			//if(temp.isJumping === false) {
-			//pPhys.applyLocalForce(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3(0, 0, 0));
-			//}
-
-			// calculate objects intersecting the picking ray
-			//world1.t.HUD.raycaster.setFromCamera(input.mouse.HUDRay, world1.t.HUD.camera);
-			//var intersects = world1.t.HUD.raycaster.intersectObjects(world1.t.HUD.scene.children);
-			//for (var i = 0; i < intersects.length; i++) {
-			//intersects[i].object.material.color.set(0xff0000);
-			//}
-
-
-			// calculate objects intersecting the picking ray
 			if (!input.mouse.rclick && input.mouse.rclickInitial.x != 9999) {
 				var dx = Math.pow(input.mouse.x - input.mouse.rclickInitial.x, 2);
 				var dy = Math.pow(input.mouse.x - input.mouse.rclickInitial.x, 2);
@@ -2038,98 +1813,66 @@ $(function() {
 	}
 	loop();
 
-
-	/*document.addEventListener("click", function(e) {
-		if(input.mouse.rclick) {
-			if(input.mouse.rclickInitial.x == 9999) {
-				input.mouse.rclickInitial.x = e.clientX;
-				input.mouse.rclickInitial.y = e.clientY;
-			}
-		}
-	});*/
-
-
-
-
 	document.addEventListener("mousemove", function(e) {
 		e.preventDefault();
-
 		var movementX = e.movementX || e.mozMovementX || /*e.webkitMovementX ||*/ 0;
 		var movementY = e.movementY || e.mozMovementY || /*e.webkitMovementY ||*/ 0;
-
+		
 		input.mouse.x = e.clientX;
 		input.mouse.y = e.clientY;
-
+		
 		input.mouse.chg.x = movementX;
 		input.mouse.chg.y = movementY;
-
+		
 		input.mouse.chg.x *= -0.01;
 		input.mouse.chg.y *= 0.01;
-
+		
 		var n = 1;
-
+		
 		var xminmax = 0.5;
 		var yminmax = 0.5;
-
+		
 		if (input.mouse.chg.x > xminmax) {
 			input.mouse.chg.x = xminmax;
-		} else if (input.mouse.chg.x < -1 * xminmax) {
-			input.mouse.chg.x = -1 * xminmax;
+		} else if (input.mouse.chg.x < -1*xminmax) {
+			input.mouse.chg.x = -1*xminmax;
 		}
 		if (input.mouse.chg.y > yminmax) {
 			input.mouse.chg.y = yminmax;
-		} else if (input.mouse.chg.y < -1 * yminmax) {
-			input.mouse.chg.y = -1 * yminmax;
+		} else if (input.mouse.chg.y < -1*yminmax) {
+			input.mouse.chg.y = -1*yminmax;
 		}
 
 		if (input.mouse.rclick) {
 
 			cameraOptions.rotateOffset.z += input.mouse.chg.x;
 			cameraOptions.rotateOffset.y += input.mouse.chg.y;
-			cameraOptions.rotateOffset.z = limit(0, Math.PI * 2, cameraOptions.rotateOffset.z, true, true);
-			cameraOptions.rotateOffset.y = limit((-Math.PI / 2) + 0.02, (Math.PI / 2) - 0.02, cameraOptions.rotateOffset.y, false);
+			cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true, true);
+			cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
 
 			var pMesh = world1.game.player.tObject.mesh;
 			var rclone = cameraOptions.rotateOffset.clone();
-			var diff = (pMesh.rotation.y - (Math.PI / 2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
-			pMesh.rotation.y = limit(0, (Math.PI * 2), pMesh.rotation.y, true, true);
-			if (diff > Math.PI / 4) {
-				pMesh.rotation.y -= diff - Math.PI / 4;
-			} else if (diff < -Math.PI / 4) {
-				pMesh.rotation.y -= diff + Math.PI / 4;
+			var diff = (pMesh.rotation.y - (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
+			pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
+			if (diff > Math.PI/4) {
+				pMesh.rotation.y -= diff - Math.PI/4;
+			} else if (diff < -Math.PI/4) {
+				pMesh.rotation.y -= diff + Math.PI/4;
 			}
-
+			
 		} else if (input.mouse.lclick) {
 			cameraOptions.rotateOffset.z += input.mouse.chg.x;
 			cameraOptions.rotateOffset.y += input.mouse.chg.y;
-			cameraOptions.rotateOffset.z = limit(0, Math.PI * 2, cameraOptions.rotateOffset.z, true);
-			cameraOptions.rotateOffset.y = limit((-Math.PI / 2) + 0.02, (Math.PI / 2) - 0.02, cameraOptions.rotateOffset.y, false);
+			cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true);
+			cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
 		}
-
-
-		input.mouse.HUDRay.x = (e.clientX / world1.width) * 2 - 1;
-		input.mouse.HUDRay.y = -(e.clientY / world1.height) * 2 + 1;
-
-		/*world1.t.HUD.raycaster.setFromCamera( input.mouse.HUDRay, world1.t.HUD.camera );	
-		// calculate objects intersecting the picking ray
-		var intersects = world1.t.HUD.raycaster.intersectObjects( world1.t.HUD.children );
-		for ( var i = 0; i < intersects.length; i++ ) {
-			intersects[ i ].object.material.color.set( 0xff0000 );
-		}*/
-
-
-		input.mouse.ray.x = (e.clientX / world1.width) * 2 - 1;
-		input.mouse.ray.y = -(e.clientY / world1.height) * 2 + 1;
-
-		/*world1.t.raycaster.setFromCamera( input.mouse.ray, world1.t.camera );	
-		// calculate objects intersecting the picking ray
-		var intersects = world1.t.raycaster.intersectObjects( world1.t.scene.children );
-		for ( var i = 0; i < intersects.length; i++ ) {
-			intersects[ i ].object.material.color.set( 0xff0000 );
-		}*/
-
+		
+		input.mouse.HUDRay.x = (e.clientX/world1.width)*2 - 1;
+		input.mouse.HUDRay.y = -(e.clientY/world1.height)*2 + 1;
+		
+		input.mouse.ray.x = (e.clientX/world1.width)*2 - 1;
+		input.mouse.ray.y = -(e.clientY/world1.height)*2 + 1;
 	});
-
 	$(document).on('wheel', function(event) {
 		var delta = event.originalEvent.deltaY;
 		if (delta < 0) {
@@ -2148,9 +1891,5 @@ $(function() {
 	document.exitPointerLock = document.exitPointerLock ||
 		document.mozExitPointerLock ||
 		document.webkitExitPointerLock;
-
-	/*$(world1.canvas).on('click', function(e) {
-		$(world1.canvas)[0].requestPointerLock();
-	});*/
 
 });
