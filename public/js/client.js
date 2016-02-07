@@ -211,9 +211,7 @@ $(function() {
 
 		input.mouse.chg.x = chg.x;
 		input.mouse.chg.y = chg.y;
-
-
-
+		
 		input.mouse.chg.x *= -0.01;
 		input.mouse.chg.y *= 0.01;
 
@@ -1337,43 +1335,15 @@ $(function() {
 		} else if (logReset > 100) {
 			logReset = 0;
 		}
-		//console.log(logReset);
+		
 		updatePhysics(world1);
-
 		renderParticles(clock.getDelta());
-
-		onRenderFunctions.forEach(function(updateFn) {
-			//updateFn(deltaMsec/1000, nowMsec/1000)
-			updateFn(clock.getDelta(), clock.getElapsedTime());
-		});
-
 		gameLoop(world1);
 		world1.stats.end();
 	}
 
 
 	var clock = new THREE.Clock();
-
-	var lasers = [];
-
-	function shootLaser() {
-		/*var laserBeam = new THREEx.LaserBeam();
-		var laserCooked = new THREEx.LaserCooked(laserBeam);
-		var pMesh = world1.game.player.tObject.mesh;
-		laserBeam.object3d.rotation.set(0, 0, pMesh.rotation.y + Math.PI/2);
-		world1.t.scene.add(laserBeam.object3d);
-		laserBeam.object3d.position.copy(pMesh.position);
-		laserBeam.object3d.position.z += 3;
-		var tVec1 = new THREE.Vector3(-3, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), pMesh.rotation.z);
-		laserBeam.object3d.position.add(tVec1);
-		onRenderFunctions.push(function(delta, now) {
-			laserCooked.update(delta, now);
-		});
-		setTimeout(function(laserb) {
-			world1.t.scene.remove(laserb.object3d);
-			onRenderFunctions.splice(0, 1);
-		}, 3000, laserBeam);*/
-	}
 
 
 
@@ -1766,9 +1736,10 @@ $(function() {
 			} else {
 				temp.isJumping = false;
 			}
+			
 			if (!input.mouse.rclick && input.mouse.rclickInitial.x != 9999) {
 				var dx = Math.pow(input.mouse.x - input.mouse.rclickInitial.x, 2);
-				var dy = Math.pow(input.mouse.x - input.mouse.rclickInitial.x, 2);
+				var dy = Math.pow(input.mouse.y - input.mouse.rclickInitial.y, 2);
 				var distance = Math.sqrt(dx + dy);
 				input.mouse.rclickInitial.x = 9999;
 				input.mouse.rclickInitial.y = 9999;
@@ -1787,6 +1758,21 @@ $(function() {
 						
 					}
 				}
+			}
+			
+			
+			
+			world1.t.HUD.raycaster.setFromCamera(input.mouse.HUDRay, world1.t.HUD.camera);
+			var intersects = world1.t.HUD.raycaster.intersectObjects(world1.t.HUD.scene.children);
+			for (var i = 0; i < intersects.length; i++) {
+				var obj = intersects[i].object;
+				if(typeof obj.mouseOver != "undefined") {
+					obj.mouseOver();
+				}
+				/*if(logReset == 0) {
+					console.log(obj);
+				}*/
+				//intersects[i].object.material.color.set(0xff0000);
 			}
 
 
@@ -1873,6 +1859,10 @@ $(function() {
 		input.mouse.ray.x = (e.clientX/world1.width)*2 - 1;
 		input.mouse.ray.y = -(e.clientY/world1.height)*2 + 1;
 	});
+	
+	
+	
+	
 	$(document).on('wheel', function(event) {
 		var delta = event.originalEvent.deltaY;
 		if (delta < 0) {
@@ -1887,7 +1877,7 @@ $(function() {
 	world1.canvas.requestPointerLock = world1.canvas.requestPointerLock ||
 		world1.canvas.mozRequestPointerLock ||
 		world1.canvas.webkitRequestPointerLock;
-
+	
 	document.exitPointerLock = document.exitPointerLock ||
 		document.mozExitPointerLock ||
 		document.webkitExitPointerLock;

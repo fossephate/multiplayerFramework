@@ -1,0 +1,4 @@
+hover text
+create load bar/screen
+inventory
+combat

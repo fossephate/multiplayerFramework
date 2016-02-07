@@ -328,6 +328,7 @@ function player(owner, username, classType) {
 		inputVelocity: new THREE.Vector3(),
 		helper: new THREE.Object3D(),
 		isJumping: true,
+		isGrounded: true
 	};
 
 	this.phys = gs.createPlayer();
@@ -447,7 +448,7 @@ player.prototype.move = function() {
 	this.reduceCooldowns();
 
 	this.temp.inputVelocity.set(0, 0, 0);
-	if (keys.indexOf("moveForward") > -1 && this.temp.isJumping === false) {
+	if (keys.indexOf("moveForward") > -1 && this.temp.isGrounded == true) {
 		this.animTo = "walk";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
 		if (rotatedV.x > 0) {
@@ -456,7 +457,7 @@ player.prototype.move = function() {
 			this.temp.inputVelocity.x = -20; //-0.2;
 		}
 	}
-	if (keys.indexOf("moveBackward") > -1 && this.temp.isJumping === false) {
+	if (keys.indexOf("moveBackward") > -1 && this.temp.isGrounded == true) {
 		this.animTo = "walk";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
 		if (rotatedV.x < 0) {
@@ -465,7 +466,7 @@ player.prototype.move = function() {
 			this.temp.inputVelocity.x = 20; //0.2;
 		}
 	}
-	if (keys.indexOf("moveLeft") > -1 && this.temp.isJumping === false) {
+	if (keys.indexOf("moveLeft") > -1 && this.temp.isGrounded == true) {
 		this.animTo = "walk";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
 		if (rotatedV.y > 0) {
@@ -474,7 +475,7 @@ player.prototype.move = function() {
 			this.temp.inputVelocity.y = -20; //-0.2;
 		}
 	}
-	if (keys.indexOf("moveRight") > -1 && this.temp.isJumping === false) {
+	if (keys.indexOf("moveRight") > -1 && this.temp.isGrounded == true) {
 		this.animTo = "walk";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
 		if (rotatedV.y < 0) {
@@ -484,7 +485,7 @@ player.prototype.move = function() {
 		}
 	}
 
-	if (keys.indexOf("jump") > -1 && this.temp.isJumping === false) {
+	if (keys.indexOf("jump") > -1 && this.temp.isGrounded == true) {
 		this.animTo = "jump";
 		this.gainXP(10);
 		//this.score += 1;
@@ -492,11 +493,11 @@ player.prototype.move = function() {
 		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 1), new CANNON.Vec3(0, 0, 0));
 	}
 
-	if (keys.indexOf("moveForward") == -1 && keys.indexOf("moveBackward") == -1 && this.temp.isJumping === false) {
+	if (keys.indexOf("moveForward") == -1 && keys.indexOf("moveBackward") == -1 && this.temp.isGrounded == true) {
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z).multiplyScalar(0.1);
 		this.temp.inputVelocity.x = -rotatedV.x;
 	}
-	if (keys.indexOf("moveLeft") == -1 && keys.indexOf("moveRight") == -1 && this.temp.isJumping === false) {
+	if (keys.indexOf("moveLeft") == -1 && keys.indexOf("moveRight") == -1 && this.temp.isGrounded == true) {
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z).multiplyScalar(0.1);
 		this.temp.inputVelocity.y = -rotatedV.y;
 	}
@@ -549,8 +550,7 @@ player.prototype.move = function() {
 
 
 	this.temp.inputVelocity.applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.z);
-	if (this.temp.isJumping === false) {
-		
+	if (this.temp.isGrounded == true) {
 		this.phys.velocity.x = this.temp.inputVelocity.x;
 		this.phys.velocity.y = this.temp.inputVelocity.y;
 		this.phys.velocity.z = 0;
@@ -571,19 +571,22 @@ player.prototype.move = function() {
 	if (result.hasHit) {
 		var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
 		
-		if(this.temp.isJumping == false && result.distance < 2 && result.distance > 0) {
+		if(this.temp.isGrounded == true && result.distance < 2 && result.distance > 0) {
 			this.phys.position.z += 0 - result.distance;
 		}
 		
-		if (result.distance < 0.01 && keys.indexOf("jump") == -1) {
-			this.temp.isJumping = false;
+		if (result.distance < 0.1) {
+			this.temp.isGrounded = true;
+			
+			if (keys.indexOf("jump") == -1) {
+				this.temp.isJumping = false;
+			}
+		} else if(result.distance > 1) {
+			this.temp.isGrounded = false;
 		}
 		
 	} else {
-		this.temp.isJumping = false;
-	}
-	
-	if (this.temp.isJumping === false) {
+		this.temp.isGrounded = true;
 	}
 };
 
@@ -761,20 +764,19 @@ io.on('connection', function(socket) {
 			tnodes.push(clnode2.saveObj());
 			io.emit('numOfPlayersOnline', gs.playersOnline);
 			gs.c.pw.removeBody(clnode2.phys);
-		}
-		
-		if (gs.clients[socket.id].username.indexOf("guest") == -1) {
-			var data = {
-				user: gs.clients[socket.id].username,
-				nodes: tnodes
-			};
 			
-			AM.addData(data, function(e, o) {
-			});
+			if (i == usernames.length && gs.clients[socket.id].username.indexOf("guest") == -1) {
+				var data = {
+					user: gs.clients[socket.id].username,
+					nodes: tnodes
+				};
+
+				AM.addData(data, function(e, o) {
+				});
+			}
 		}
 		
-
-
+		
 		//END OF ADDED
 
 		delete gs.clients[socket.id];
