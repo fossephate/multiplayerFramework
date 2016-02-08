@@ -1,40 +1,36 @@
 THREE.BlendCharacter = function(assetHolder) {
-	
+
 	this.animations = {};
 	this.weightSchedule = [];
 	this.warpSchedule = [];
 	this.AH = assetHolder || null;
-	
+
 	this.load = function(url, onLoad) {
 		var scope = this;
 		
 		var loader = new THREE.JSONLoader();
 		loader.load(url, function(geometry, materials) {
-			materials.forEach( function ( material ) {
-				material.skinning = true;
-			});
+			
 			//var originalMaterial = materials[0];
 			//scope.originalMaterial = originalMaterial;
 			//originalMaterial.skinning = true;
 			//THREE.SkinnedMesh.call(scope, geometry, originalMaterial);
+			
+			materials.forEach(function(material) {
+				material.skinning = true;
+			});
 			THREE.SkinnedMesh.call(scope, geometry, new THREE.MeshFaceMaterial(materials));
-			/*var mesh = new THREE.SkinnedMesh(
-				geometry,
-				new THREE.MeshFaceMaterial( materials )
-			);*/
 			scope.mixer = new THREE.AnimationMixer(scope);
-			// Create the animations
+			
 			for (var i = 0; i < geometry.animations.length; ++i) {
-				var animName = geometry.animations[i].name;
-				scope.animations[animName] = geometry.animations[i];
-				//scope.animations[animName] = new THREE.AnimationAction(geometry.animations[i]);
+				scope.mixer.clipAction(geometry.animations[i]);
 			}
-			// Loading is complete, fire the callback
+			
 			if (onLoad !== undefined) onLoad();
 		});
 	};
-	
-	
+
+
 	this.loadFast = function(name, assetHolder) {
 		var scope = this;
 		
@@ -44,91 +40,73 @@ THREE.BlendCharacter = function(assetHolder) {
 		var geometry = model.geometry;
 		var materials = model.materials;
 		
-		materials.forEach( function ( material ) {
+		
+		/*var originalMaterial = materials[0];
+		scope.originalMaterial = originalMaterial;
+		originalMaterial.skinning = true;
+		THREE.SkinnedMesh.call(scope, geometry, originalMaterial);*/
+
+		materials.forEach(function(material) {
 			material.skinning = true;
 		});
-		
 		THREE.SkinnedMesh.call(scope, geometry, new THREE.MeshFaceMaterial(materials));
+		
 		scope.mixer = new THREE.AnimationMixer(scope);
 		
-		// Create the animations
 		for (var i = 0; i < geometry.animations.length; ++i) {
-			var animName = geometry.animations[i].name;
-			scope.animations[animName] = geometry.animations[i];
+			scope.mixer.clipAction(geometry.animations[i]);
 		}
-		// no load time
 	};
-	
-	
-	this.loadFast2 = function(geometry, materials) {
-		var scope = this;
-		
-		materials.forEach( function ( material ) {
-			material.skinning = true;
-		});
-		
-		THREE.SkinnedMesh.call(scope, geometry, new THREE.MeshFaceMaterial(materials));
-		scope.mixer = new THREE.AnimationMixer(scope);
-		
-		// Create the animations
-		for (var i = 0; i < geometry.animations.length; ++i) {
-			var animName = geometry.animations[i].name;
-			scope.animations[animName] = geometry.animations[i];
-		}
-		// no load time
-	};
-	
-	
-	
+
+
+
 	this.update = function(dt) {
 		this.mixer.update(dt);
 	};
-	
+
 	this.play = function(animName, weight) {
-		this.mixer.removeAllActions();
-		this.mixer.play(new THREE.AnimationAction(this.animations[animName]));
+		//console.log("play('%s', %f)", animName, weight);
+		return this.mixer.clipAction(animName).
+		setEffectiveWeight(weight).play();
 	};
 	
 	this.crossfade = function(fromAnimName, toAnimName, duration) {
-		this.mixer.removeAllActions();
-		var fromAction = new THREE.AnimationAction(this.animations[fromAnimName]);
-		var toAction = new THREE.AnimationAction(this.animations[toAnimName]);
-		this.mixer.play(fromAction);
-		this.mixer.play(toAction);
-		this.mixer.crossFade(fromAction, toAction, duration, false);
+		this.mixer.stopAllAction();
+		var fromAction = this.play(fromAnimName, 1);
+		var toAction = this.play(toAnimName, 1);
+		fromAction.crossFadeTo(toAction, duration, false);
 	};
-	
+
 	this.warp = function(fromAnimName, toAnimName, duration) {
-		this.mixer.removeAllActions();
-		var fromAction = new THREE.AnimationAction(this.animations[fromAnimName]);
-		var toAction = new THREE.AnimationAction(this.animations[toAnimName]);
-		this.mixer.play(fromAction);
-		this.mixer.play(toAction);
-		this.mixer.crossFade(fromAction, toAction, duration, true);
+		this.mixer.stopAllAction();
+		var fromAction = this.play(fromAnimName, 1);
+		var toAction = this.play(toAnimName, 1);
+		fromAction.crossFadeTo(toAction, duration, true);
 	};
-	
+
 	this.applyWeight = function(animName, weight) {
-		var action = this.mixer.findActionByName(animName);
-		if (action) {
-			action.weight = weight;
-		}
+		this.mixer.clipAction(animName).setEffectiveWeight(weight);
 	};
-	
+
+	this.getWeight = function(animName) {
+		return this.mixer.clipAction(animName).getEffectiveWeight();
+	};
+
 	this.pauseAll = function() {
 		this.mixer.timeScale = 0;
 	};
-	
+
 	this.unPauseAll = function() {
 		this.mixer.timeScale = 1;
 	};
 	
 	this.stopAll = function() {
-		this.mixer.removeAllActions();
+		this.mixer.stopAllAction();
 	};
 	
-	this.showModel = function(boolean) {
+	this.showModel = function( boolean ) {
 		this.visible = boolean;
-	}
+	};
 };
 
 

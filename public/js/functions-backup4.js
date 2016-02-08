@@ -483,8 +483,6 @@ function createHealthBar() {
 
 
 
-
-
 function createXPBar() {
 	var XPBOpts = {
 		radius: 8,
@@ -626,180 +624,6 @@ function createXPBar() {
 	};
 	return XPB;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function createXPBar2(radius, xPos, yPos, barLength) {
-	
-	var XPB = {};
-	XPB.bg = {};
-	XPB.options = {};
-	XPB.options.radius = radius || 8;
-	XPB.options.xPos = xPos || window.innerWidth/4;
-	XPB.options.yPos = yPos || 10;
-	XPB.options.barLength = barLength || window.innerWidth/2;
-	XPB.options.barLength2 = 0;
-	
-	XPB.options.calcCylinderPos = function(barLength, isbg) {
-		var pos = {};
-		if (isbg) {
-			pos.x = (-window.innerWidth / 2) + this.xPos + this.barLength / 2 + this.radius;
-			pos.y = (-window.innerHeight / 2) + this.yPos;
-		} else if (!isbg) {
-			pos.x = (-window.innerWidth / 2) + this.xPos + barLength / 2 + this.radius;
-			pos.y = (-window.innerHeight / 2) + this.yPos;
-		}
-		return pos;
-	};
-	XPB.options.calcSpherePos = function(which, isbg) {
-		var pos = {};
-		pos.x = (-window.innerWidth / 2) + this.xPos + this.radius;
-		pos.y = (-window.innerHeight / 2) + this.yPos;
-		if (which == 2) {
-			if (isbg) {
-				//console.log(pos.y);
-				pos.x += this.barLength;
-			} else if (!isbg) {
-				pos.x += this.barLength2;
-			}
-		}
-		return pos;
-	};
-	
-	
-	
-	
-	var XPBOpts = XPB.options;
-	
-	
-
-	var bgCylinderGeometry = new THREE.CylinderGeometry(XPBOpts.radius, XPBOpts.radius, XPBOpts.barLength, 32);
-	var bgSphereGeometry = new THREE.SphereGeometry(XPBOpts.radius, 32, 32);
-	var bgBarMaterial = new THREE.MeshBasicMaterial({
-		color: 0x333333,
-	});
-	
-	XPB.bg.cMesh = new THREE.Mesh(bgCylinderGeometry, bgBarMaterial);
-	XPB.bg.cMesh.rotation.z = Math.PI/2;
-	
-	XPB.bg.sMesh1 = new THREE.Mesh(bgSphereGeometry, bgBarMaterial);
-	XPB.bg.sMesh2 = new THREE.Mesh(bgSphereGeometry, bgBarMaterial);
-
-	var bgCylinderPos = XPBOpts.calcCylinderPos(XPBOpts.barLength, true);
-	XPB.bg.cMesh.position.set(bgCylinderPos.x, bgCylinderPos.y, -20);
-	var bgSpherePos1 = XPBOpts.calcSpherePos(1, true);
-	XPB.bg.sMesh1.position.set(bgSpherePos1.x, bgSpherePos1.y, -20);
-	var bgSpherePos2 = XPBOpts.calcSpherePos(2, true);
-	XPB.bg.sMesh2.position.set(bgSpherePos2.x, bgSpherePos2.y, -20);
-
-
-	var cylinderGeometry = new THREE.CylinderGeometry(XPBOpts.radius - 2, XPBOpts.radius - 2, XPBOpts.barLength2, 32);
-	var sphereGeometry = new THREE.SphereGeometry(XPBOpts.radius - 2, 32, 32);
-	var barMaterial = new THREE.MeshBasicMaterial({
-		color: 0x990099,
-	});
-	
-	XPB.cMesh = new THREE.Mesh(cylinderGeometry, barMaterial);
-	XPB.cMesh.rotation.z = Math.PI / 2;
-	XPB.sMesh1 = new THREE.Mesh(sphereGeometry, barMaterial);
-	XPB.sMesh2 = new THREE.Mesh(sphereGeometry, barMaterial);
-	
-	var cylinderPos = XPBOpts.calcCylinderPos(XPBOpts.barLength2);
-	XPB.cMesh.position.set(cylinderPos.x, cylinderPos.y, -10);
-	var spherePos1 = XPBOpts.calcSpherePos(1, false);
-	XPB.sMesh1.position.set(spherePos1.x, spherePos1.y, -10);
-	var spherePos2 = XPBOpts.calcSpherePos(2, false);
-	XPB.sMesh2.position.set(spherePos2.x, spherePos2.y, -10);
-	
-	XPB.options.percent = -1;
-
-	world1.t.HUD.scene.add(XPB.bg.cMesh);
-	world1.t.HUD.scene.add(XPB.bg.sMesh1);
-	world1.t.HUD.scene.add(XPB.bg.sMesh2);
-	world1.t.HUD.scene.add(XPB.cMesh);
-	world1.t.HUD.scene.add(XPB.sMesh1);
-	world1.t.HUD.scene.add(XPB.sMesh2);
-
-	XPB.recalc = function() {
-		this.options.barLength = window.innerWidth / 2;
-		this.options.xPos = window.innerWidth / 4;
-
-		var bgCylinderGeometry = new THREE.CylinderGeometry(this.options.radius, this.options.radius, this.options.barLength, 32);
-		this.bg.cMesh.geometry.dispose();
-		this.bg.cMesh.geometry = bgCylinderGeometry;
-		this.bg.cMesh.needsUpdate = true;
-
-		var cylinderGeometry = new THREE.CylinderGeometry(this.options.radius - 2, this.options.radius - 2, this.options.barLength2, 32);
-		this.cMesh.geometry.dispose();
-		this.cMesh.geometry = cylinderGeometry;
-		this.cMesh.needsUpdate = true;
-	};
-
-	//XPB.update = function(currentXP, currentLevel) {
-	XPB.update = function(percent) {
-		
-		if(this.options.percent == percent) {
-			return;
-		}
-		this.options.percent = percent;
-		//currentXP/100*currentLevel+1;
-		//var levelMaxXP = 100*currentLevel+1;
-		//this.options.barLength2 = (currentXP / levelMaxXP) * this.options.barLength;
-		
-		this.options.barLength2 = (percent) * this.options.barLength;
-		var bgCylinderPos = this.options.calcCylinderPos(this.options.barLength, true);
-		this.bg.cMesh.position.set(bgCylinderPos.x, bgCylinderPos.y, -20);
-		var bgSpherePos1 = this.options.calcSpherePos(1, true);
-		this.bg.sMesh1.position.set(bgSpherePos1.x, bgSpherePos1.y, -20);
-		var bgSpherePos2 = this.options.calcSpherePos(2, true);
-		this.bg.sMesh2.position.set(bgSpherePos2.x, bgSpherePos2.y, -20);
-		
-		var spherePos1 = this.options.calcSpherePos(1, false);
-		this.sMesh1.position.set(spherePos1.x, spherePos1.y, -10);
-		var spherePos2 = this.options.calcSpherePos(2, false);
-		this.sMesh2.position.set(spherePos2.x, spherePos2.y, -10);
-		
-		var cylinderGeometry = new THREE.CylinderGeometry(this.options.radius - 2, this.options.radius - 2, this.options.barLength2, 32);
-		this.cMesh.geometry.dispose();
-		this.cMesh.geometry = cylinderGeometry;
-		var cylinderPos = this.options.calcCylinderPos(this.options.barLength2, false);
-		this.cMesh.position.set(cylinderPos.x, cylinderPos.y, -10);
-	};
-	return XPB;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1229,7 +1053,7 @@ function drawCapsule(ctx, x, y, radius, length, fillColor) {
 	
 	//ctx.scale(1/window.innerWidth, 1/window.innerHeight);
 	
-	var lineWidth = 1;
+	var lineWidth = 5;
 	var lineColor = '#000000';
 	if(fillColor) {
 		
@@ -1254,8 +1078,11 @@ function drawCapsule(ctx, x, y, radius, length, fillColor) {
 	var c1Y = radius+y;
 	ctx.beginPath();
 	ctx.arc(c1X, c1Y, radius, 0, 2*Math.PI, false);
+	//ctx.fillStyle = fillColor;
 	ctx.closePath();
 	ctx.fill();
+	//ctx.lineWidth = lineWidth;
+	//ctx.strokeStyle = lineColor;
 	ctx.stroke();
 	
 	
@@ -1264,9 +1091,18 @@ function drawCapsule(ctx, x, y, radius, length, fillColor) {
 	var c2Y = radius+y;
 	ctx.beginPath();
 	ctx.arc(c2X, c2Y, radius, 0, 2*Math.PI, false);
+	//ctx.fillStyle = fillColor;
 	ctx.closePath();
 	ctx.fill();
+	//ctx.lineWidth = lineWidth;
+	//ctx.strokeStyle = lineColor;
 	ctx.stroke();
+	
+	
+	
+	
+
+	
 	
 	// Draw rectangle
 	/*var r2x1 = radius+x;
@@ -1279,6 +1115,7 @@ function drawCapsule(ctx, x, y, radius, length, fillColor) {
 	var r2y1 = 0+y;
 	var r2Width = length-(radius*2);
 	var r2Height = radius*2;
+	//ctx.fillStyle = fillColor;
 	ctx.fillRect(r2x1, r2y1, r2Width, r2Height);
 	
 	//ctx.fillRect(0, 0, 99999, 99999);
@@ -1291,6 +1128,16 @@ function drawCapsule(ctx, x, y, radius, length, fillColor) {
 
 
 function createLoadScreen() {
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
 	var obj = {};
 	obj.loadBar1;
 	obj.loadBar2;
@@ -1309,9 +1156,9 @@ function createLoadScreen() {
 	
 	canvas = document.createElement('canvas');
 	context = canvas.getContext('2d');
-	canvas.width = 1024;
-	canvas.height = 1024;
-	radius = 10;
+	canvas.width = 4096/4;
+	canvas.height = 4096/4;
+	radius = 50;
 	
 	drawCapsule(context, canvas.width/4, (canvas.height/2)-radius, radius, canvas.width/2, '#FFFFFF');
 	texture = new THREE.Texture(canvas);
@@ -1322,12 +1169,15 @@ function createLoadScreen() {
 	obj.loadBar1.scale.set(window.innerWidth, window.innerWidth, 1);
 	obj.loadBar1.position.set(0, (-window.innerHeight/2)+radius+10, 3);
 	
+	
+	
+	
 	canvas = document.createElement('canvas');
 	context = canvas.getContext('2d');
-	canvas.width = 1024;
-	canvas.height = 1024;
+	canvas.width = 4096/4;
+	canvas.height = 4096/4;
 	
-	radius = 10;
+	radius = 50;
 	length = 200;
 	drawCapsule(context, canvas.width/4, (canvas.height/2)-radius, radius, length, '#154AA5');
 	texture = new THREE.Texture(canvas);
@@ -1345,32 +1195,30 @@ function createLoadScreen() {
 	
 
 	obj.update = function(progress) {
+		
 		world1.t.HUD.scene.remove(this.loadBar2);
+		
+		
+		
 		var canvas = document.createElement('canvas');
 		var context = canvas.getContext('2d');
-		canvas.width = 1024;
-		canvas.height = 1024;
+		canvas.width = 4096/4;
+		canvas.height = 4096/4;
 
-		var radius = 10;
+		var radius = 50;
 		var length = progress*(canvas.width/2);
 		
 		drawCapsule(context, canvas.width/4, (canvas.height/2)-radius, radius, length, '#154AA5');
 		var texture = new THREE.Texture(canvas);
 		texture.needsUpdate = true;
 		var spriteMaterial = new THREE.SpriteMaterial({map: texture});
-		
+
 		this.loadBar2 = new THREE.Sprite(spriteMaterial);
 		this.loadBar2.scale.set(window.innerWidth, window.innerWidth, 1);
 		this.loadBar2.position.set(0, (-window.innerHeight/2)+radius+10, 4);
-		world1.t.HUD.scene.add(this.loadBar2);
 		
-		if(progress == 1) {
-			setTimeout(function(scope) {
-				world1.t.HUD.scene.remove(scope.loadBar1);
-				world1.t.HUD.scene.remove(scope.loadBar2);
-				world1.t.HUD.scene.remove(scope.loadScreen);
-			}, 2000, this);
-		}
+		
+		world1.t.HUD.scene.add(this.loadBar2);
 		
 		//this.mesh.remove(this.sprite);
 		//this.mesh.add(sprite);
@@ -1587,11 +1435,6 @@ function assetHolder() {
 	this.manager.scope = this;
 	this.manager.onProgress = function(item, loaded, total) {
 		console.log(item, loaded, total);
-		var scope = this.scope;
-		var funcs = scope.onProgressFuncs;
-		for (var i = 0; i < funcs.length; i++) {
-			funcs[i](loaded/total);
-		}
 	};
 
 	this.manager.onLoad = function() {
@@ -1603,7 +1446,6 @@ function assetHolder() {
 	};
 
 	this.onloadFuncs = [];
-	this.onProgressFuncs = [];
 
 
 
@@ -1922,3 +1764,68 @@ function createEnemy(type) {
 
 
 
+
+
+
+THREE.Points.prototype.raycast = ( function () {
+	var inverseMatrix = new THREE.Matrix4();
+	var ray = new THREE.Ray();
+	return function raycast( raycaster, intersects ) {
+		var object = this;
+		var geometry = object.geometry;
+		var threshold = raycaster.params.Points.threshold;
+		inverseMatrix.getInverse( this.matrixWorld );
+		ray.copy( raycaster.ray ).applyMatrix4( inverseMatrix );
+		if ( geometry.boundingBox !== null ) {
+			if ( ray.isIntersectionBox( geometry.boundingBox ) === false ) {
+				return;
+			}
+		}
+		var localThreshold = threshold / ( ( this.scale.x + this.scale.y + this.scale.z ) / 3 );
+		var localThresholdSq = localThreshold * localThreshold;
+		var position = new THREE.Vector3();
+		function testPoint( point, index ) {
+			var rayPointDistanceSq = ray.distanceSqToPoint( point );
+			if ( rayPointDistanceSq < localThresholdSq ) {
+				var intersectPoint = ray.closestPointToPoint( point );
+				intersectPoint.applyMatrix4( object.matrixWorld );
+				var distance = raycaster.ray.origin.distanceTo( intersectPoint );
+				if ( distance < raycaster.near || distance > raycaster.far ) return;
+				intersects.push( {
+					distance: distance,
+					distanceToRay: Math.sqrt( rayPointDistanceSq ),
+					point: intersectPoint.clone(),
+					index: index,
+					face: null,
+					object: object
+				} );
+			}
+		}
+
+		if ( geometry instanceof THREE.BufferGeometry ) {
+			//return;
+			var index = geometry.index;
+			var attributes = geometry.attributes;
+			var positions = attributes.position.array;
+
+			if ( index !== null ) {
+				var indices = index.array;
+				for ( var i = 0, il = indices.length; i < il; i ++ ) {
+					var a = indices[ i ];
+					position.fromArray( positions, a * 3 );
+					testPoint( position, a );
+				}
+			} else {
+				for ( var i = 0, l = positions.length / 3; i < l; i ++ ) {
+					position.fromArray( positions, i * 3 );
+					testPoint( position, i );
+				}
+			}
+		} else {
+			var vertices = geometry.vertices;
+			for ( var i = 0, l = vertices.length; i < l; i ++ ) {
+				testPoint( vertices[ i ], i );
+			}
+		}
+	};
+}() );

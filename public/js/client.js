@@ -392,14 +392,6 @@ $(function() {
 				stickRadius: 50,
 				strokeStyle: randomColor()
 			});
-
-			/*var jumpButton = document.createElement('button');
-			$(jumpButton).attr('id', 'jumpButton');
-			$(jumpButton).attr('class', 'btn btn-default');
-			$(jumpButton).attr('style', 'z-index: 100;');
-			$(jumpButton).text('Jump');
-			$(jumpButton).appendTo($('#hud'));*/
-
 		}
 	}
 
@@ -438,9 +430,7 @@ $(function() {
 
 	$("#playBtn").on('click', function(event) {
 		event.preventDefault();
-		//var nick = $("#nick").val();
-		//setNick(nick);
-		//$("#characterSelector").find(':input:checked')[0].value;
+		
 		var character = $("#characterSelector").find(':input:checked')[0].value;
 		if (typeof getCookie('user') != "undefined") {
 			login(false, character);
@@ -452,16 +442,37 @@ $(function() {
 
 	});
 
-	$("#playGuest").on('click', function(event) {
+	/*$("#playGuest").on('click', function(event) {
 		event.preventDefault();
-		///setNick(null, true);
 		login(true, "wizard");
-	});
+	});*/
 
 	socket.on('initData', function(data) {
 		world1.game.player.id = socket.id;
 		world1.game.player.username = data.username;
-		world1.game.connected = true;
+		//world1.game.connected = true;
+		
+		
+		var loadScreen = new createLoadScreen();
+		world1.t.AH.onProgressFuncs.push(function(progress) {
+			loadScreen.update(progress);
+		});
+		
+		world1.t.AH.onloadFuncs.push(function(progress) {
+			world1.game.connected = true;
+		});
+		
+		var modelList = {
+			"player": "models/marineAnim.json",
+			"treeBark": "models/tree1.json",
+			"treeLeaves": "models/tree2.json",
+			"abababe": "models/abababe.json",
+		};
+		world1.t.AH.loadModels(modelList);
+		
+		/*world1.t.AH.onProgressFuncs.push(
+			loadScreen.update(progress));*/
+		
 	});
 
 	$('#jumpButton').on('click touchstart', function() {
@@ -635,10 +646,13 @@ $(function() {
 
 		for (var i = 0; i < vpd.length; i++) {
 			var playerObject = world1.game.player.tObject;
+			if(!world1.game.connected) {
+				continue;
+			}
 			if (vpd[i].type == "player") {
 				if (vpd[i].username == world1.game.player.username) {
 
-					playerObject.phys.position.copy(vpd[i].position);
+					//playerObject.phys.position.copy(vpd[i].position);
 					playerObject.phys.quaternion.copy(vpd[i].quaternion);
 					playerObject.phys.velocity.copy(vpd[i].velocity);
 					//playerObject.phys.position.lerp(vpd[i].position, 0.4);
@@ -646,8 +660,8 @@ $(function() {
 					playerObject.warpTime = vpd[i].warpTime;
 					playerObject.animTo = vpd[i].animTo;
 
-					/*var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.001);
-					playerObject.phys.position.copy(newPos);*/
+					var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.6);
+					playerObject.phys.position.copy(newPos);
 
 					//var half = new THREE.Vector3().copy(vpd[i].position).sub(playerObject.phys.position.clone()).multiplyScalar(0.5);
 					//playerObject.phys.position.vadd(half);
@@ -659,7 +673,9 @@ $(function() {
 					sound1.position.set(0, 0, -28);*/
 
 					world1.t.HUD.items.healthBar.update(vpd[i].health/100);
-					world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
+					var percent = vpd[i].experience/(100*(vpd[i].level+1));
+					//world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
+					world1.t.HUD.items.XPBar.update(percent);
 					world1.t.HUD.items.levelText.update(vpd[i].level);
 					continue;
 				}
@@ -691,26 +707,25 @@ $(function() {
 						pObject.phys.velocity.copy(vpd[i].velocity);
 
 						pObject.items.userLabel = new makeTextSprite(vpd[i].username);
-						//pObject.items.userLabel.position.set(0, 250, 0);
-						pObject.items.userLabel.position.copy(vpd[i].position);
-						pObject.items.userLabel.position.y += 250;
-						
 						pObject.items.userLabel.scale.set(50, 50, 1);
+						pObject.items.userLabel.position.set(0, 250, 0);
+						//pObject.items.userLabel.position.copy(vpd[i].position);
+						//pObject.items.userLabel.position.y += 250;
 						pObject.mesh.add(pObject.items.userLabel);
 
 						pObject.items.classLabel = new makeTextSprite(vpd[i].class);
-						//pObject.items.classLabel.position.set(0, 200, 0);
-						pObject.items.classLabel.position.copy(vpd[i].position);
-						pObject.items.classLabel.position.y += 150;
 						pObject.items.classLabel.scale.set(30, 30, 1);
+						pObject.items.classLabel.position.set(0, 150, 0);
+						//pObject.items.classLabel.position.copy(vpd[i].position);
+						//pObject.items.classLabel.position.y += 150;
 						pObject.mesh.add(pObject.items.classLabel);
 						
 						//pObject.items.healthLabel = new createHealthText(vpd[i].health);
 						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
-						pObject.items.healthLabel.mesh.scale.set(20, 20, 20);
-						//pObject.items.healthLabel.mesh.position.set(0, 200, 0);
-						pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
-						pObject.items.healthLabel.mesh.position.y += 200;
+						pObject.items.healthLabel.mesh.scale.set(20, 20, 1);
+						pObject.items.healthLabel.mesh.position.set(0, 200, 0);
+						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
+						//pObject.items.healthLabel.mesh.position.y += 200;
 						pObject.mesh.add(pObject.items.healthLabel.mesh);
 						
 						
@@ -728,13 +743,20 @@ $(function() {
 					
 				} else if (vp[vpd[i].username] != "placeholder" && typeof vp[vpd[i].username] != "undefined") {
 
-					vp[vpd[i].username].phys.position.copy(vpd[i].position);
+					//vp[vpd[i].username].phys.position.copy(vpd[i].position);
 					vp[vpd[i].username].phys.quaternion.copy(vpd[i].quaternion);
 					vp[vpd[i].username].phys.velocity.copy(vpd[i].velocity);
 					//vp[vpd[i].username].phys.position.lerp(vpd[i].position, 0.4);
 					//vp[vpd[i].username].quaternion.slerp(vpd[i].quaternion, 0.4);
+					
+					
+					var newPos = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.6);
+					vp[vpd[i].username].phys.position.copy(newPos);
+					
+					
 					vp[vpd[i].username].warpTime = vpd[i].warpTime;
 					vp[vpd[i].username].animTo = vpd[i].animTo;
+					
 					
 					vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
 					
@@ -765,9 +787,11 @@ $(function() {
 						
 						
 						pObject.items.userLabel = new makeTextSprite(vpd[i].username);
-						pObject.items.userLabel.position.copy(vpd[i].position);
-						pObject.items.userLabel.position.y += 250;
 						pObject.items.userLabel.scale.set(1, 1, 1);
+						//pObject.items.userLabel.position.copy(vpd[i].position);
+						//pObject.items.userLabel.position.y += 250;
+						pObject.items.userLabel.position.set(0, 250, 0);
+						
 						pObject.mesh.add(pObject.items.userLabel);
 
 						/*pObject.items.classLabel = new makeTextSprite(vpd[i].class);
@@ -777,8 +801,9 @@ $(function() {
 						
 						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
 						pObject.items.healthLabel.mesh.scale.set(1, 1, 1);
-						pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
-						pObject.items.healthLabel.mesh.position.y += 200;
+						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
+						pObject.items.healthLabel.mesh.position.set(0, 200, 0);
+						//pObject.items.healthLabel.mesh.position.y += 200;
 						//pObject.items.healthLabel.mesh.position.set(0, 20, 0);
 						pObject.mesh.add(pObject.items.healthLabel.mesh);
 						
@@ -802,20 +827,7 @@ $(function() {
 					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
 					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
 				}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+				
 			}
 
 
@@ -931,13 +943,13 @@ $(function() {
 
 
 	world1.t.AH = new assetHolder();
-	var modelList = {
+	/*var modelList = {
 		"player": "models/marineAnim.json",
 		"treeBark": "models/tree1.json",
 		"treeLeaves": "models/tree2.json",
 		"abababe": "models/abababe.json",
 	};
-	world1.t.AH.loadModels(modelList);
+	world1.t.AH.loadModels(modelList);*/
 
 
 
@@ -951,7 +963,9 @@ $(function() {
 
   var sound1 = new THREE.Audio(world1.t.audioListener);
   sound1.load('./sounds/explosion.wav');
-  sound1.volume = 1;
+	sound1.autoplay = true;
+	sound1.setLoop(true);
+  sound1.setVolume(0.5);
 	sound1.setRefDistance(20);
 	sound1.position.set(0, 0, -28);
 	
@@ -1145,7 +1159,7 @@ $(function() {
 	
 
 	world1.t.HUD.items.healthBar = new createHealthBar();
-	world1.t.HUD.items.XPBar = new createXPBar();
+	world1.t.HUD.items.XPBar = new createXPBar2();
 	world1.t.HUD.items.levelText = new createLevelText(0);
 	world1.t.HUD.items.inventory = new createHUDInventory();
 	
@@ -1171,6 +1185,21 @@ $(function() {
 		q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
 		player.quaternion.multiply(q);
 		player.username = world1.game.player.username;
+		
+		/*player.sfx = {};
+		player.sfx.footsteps = new THREE.Audio(world1.t.audioListener);
+		player.sfx.footsteps.load('./sounds/sfx/footsteps/footsteps.mp3');
+		player.sfx.footsteps.autoplay = true;
+		player.sfx.footsteps.setLoop(true);
+		player.sfx.footsteps.setVolume(0.5);
+		player.sfx.footsteps.playbackRate = 0.5;
+		player.sfx.footsteps.setRefDistance(20);
+		//player.sfx.footsteps.pause();
+		
+		player.sfx.footsteps.position.copy(player.position);
+		player.add(player.sfx.footsteps);*/
+		
+		
 		var tempBody = createPhysBody("capsule", 1)(1, 3.2); //3.76
 		world1.game.player.tObject = new createPhysicsObject(player, tempBody, world1, "player");
 	});
@@ -1306,8 +1335,7 @@ $(function() {
 				world1.t.HUD.items[i].recalc();
 			}
 		}
-
-
+		
 		world1.t.renderer.setSize(window.innerWidth, window.innerHeight);
 	}, true);
 
@@ -1321,8 +1349,6 @@ $(function() {
 				window.setTimeout(callback, 1000/60);
 			};
 	})();
-
-	onRenderFunctions = [];
 
 	function loop() {
 		//setTimeout(function(){
@@ -1777,11 +1803,14 @@ $(function() {
 
 
 			followObject(world, world1.game.player.tObject.mesh, world.t.camera, cameraOptions);
+			
 			world.t.renderer.clear();
 			world.t.renderer.render(world.t.scene, world.t.camera);
-			world.t.renderer.clearDepth();
-			world.t.renderer.render(world.t.HUD.scene, world.t.HUD.camera);
+			
 		}
+
+		world.t.renderer.clearDepth();
+		world.t.renderer.render(world.t.HUD.scene, world.t.HUD.camera);
 	}
 	
 	
