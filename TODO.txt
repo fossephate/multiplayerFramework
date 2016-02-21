@@ -4,6 +4,7 @@ inventory
 combat
 //footsteps and other sound effects
 //interpolate movement
+add cooldown buttons/countdown timers
 
 
 

@@ -17,8 +17,9 @@ var tree2;
 var world1;
 var hfBody;
 var socket;
-var debug = true;
-//var models = {};
+var debug = false;
+var sound1;
+//var models = {};w
 
 //end of super global variables (testing)
 $(function() {
@@ -961,7 +962,8 @@ $(function() {
 	sphere.position.set(0, 0, -28);
 	world1.t.scene.add(sphere);
 
-  var sound1 = new THREE.Audio(world1.t.audioListener);
+  //sound1 = new THREE.Audio(world1.t.audioListener);
+	sound1 = new THREE.PositionalAudio(world1.t.audioListener);
   sound1.load('./sounds/explosion.wav');
 	sound1.autoplay = true;
 	sound1.setLoop(true);
@@ -970,8 +972,8 @@ $(function() {
 	sound1.position.set(0, 0, -28);
 	
 	setInterval(function() {
-		sound1.currentTime = 0;
-		sound1.play();
+		//sound1.currentTime = 0;
+		//sound1.play();
 		//sound1.cloneNode(true).play();
 	}, 100);*/
 
@@ -1053,14 +1055,18 @@ $(function() {
 
 	setInterval(function() {
 		//world1.t.sky.effectController.inclination += 0.0005;
-		world1.t.sky.effectController.azimuth += 0.00005;
+		//world1.t.sky.effectController.azimuth += 0.00005;
+		var d = new Date();
+		var n = d.getTime();
+		//world1.t.sky.effectController.azimuth = 0.00005*n;
 		world1.t.sky.update();
 	}, 50);
 
 
-	/*//var tLight = new THREE.DirectionalLight(0xffffff, 0.5);
+	//var tLight = new THREE.DirectionalLight(0xffffff, 0.5);
+	//world1.t.scene.add(tLight);
 	//var tLight = new THREE.PointLight(0xffffff, 1, 1000);
-	var tLight = new THREE.SpotLight( 0xffffff );
+	/*var tLight = new THREE.SpotLight( 0xffffff );
 	tLight.castShadow = true;
 	tLight.shadowMapWidth = 2048;
 	tLight.shadowMapHeight = 1024;
@@ -1069,7 +1075,7 @@ $(function() {
 	tLight.shadowCameraFov = 50;
 	tLight.shadowCameraVisible = true;
 	//tLight.position.set(0, 0, -25);
-	world1.t.scene.add(tLight);*
+	world1.t.scene.add(tLight);
 	
 	var geometry = new THREE.SphereGeometry( 2, 32, 32 );
 	var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
@@ -1156,13 +1162,6 @@ $(function() {
 		terrain2.phys.position.set(0, 0, -60);
 		world1.t.scene.remove(planeMesh);
 	});
-	
-
-	world1.t.HUD.items.healthBar = new createHealthBar();
-	world1.t.HUD.items.XPBar = new createXPBar2();
-	world1.t.HUD.items.levelText = new createLevelText(0);
-	world1.t.HUD.items.inventory = new createHUDInventory();
-	
 
 
 
@@ -1186,8 +1185,8 @@ $(function() {
 		player.quaternion.multiply(q);
 		player.username = world1.game.player.username;
 		
-		/*player.sfx = {};
-		player.sfx.footsteps = new THREE.Audio(world1.t.audioListener);
+		player.sfx = {};
+		player.sfx.footsteps = new THREE.PositionalAudio(world1.t.audioListener);
 		player.sfx.footsteps.load('./sounds/sfx/footsteps/footsteps.mp3');
 		player.sfx.footsteps.autoplay = true;
 		player.sfx.footsteps.setLoop(true);
@@ -1195,9 +1194,17 @@ $(function() {
 		player.sfx.footsteps.playbackRate = 0.5;
 		player.sfx.footsteps.setRefDistance(20);
 		//player.sfx.footsteps.pause();
+		player.sfx.footsteps.position.set(0,0,0);
+		//player.sfx.footsteps.position.copy(player.position);
+		player.add(player.sfx.footsteps);
 		
-		player.sfx.footsteps.position.copy(player.position);
-		player.add(player.sfx.footsteps);*/
+		
+		world1.t.HUD.items.healthBar = new createHealthBar();
+		world1.t.HUD.items.XPBar = new createXPBar2();
+		world1.t.HUD.items.levelText = new createLevelText(0);
+		//world1.t.HUD.items.inventory = new createHUDInventory();
+		world1.t.HUD.items.spellBar = new createSpellBar();
+		//creatSpellBar();
 		
 		
 		var tempBody = createPhysBody("capsule", 1)(1, 3.2); //3.76
@@ -1601,6 +1608,7 @@ $(function() {
 
 
 	var temp = {
+		isGrounded: true,
 		isJumping: false,
 		isCasting: false,
 		inputVelocity: new THREE.Vector3(),
@@ -1678,9 +1686,10 @@ $(function() {
 			if (input.action.moveRight) {
 				temp.inputVelocity.y += 0.2;
 			}
-			if (input.action.jump && temp.isJumping === false) {
+			if (input.action.jump && temp.isGrounded === true && temp.isJumping === false) {
 				temp.isJumping = true;
-				pPhys.applyLocalImpulse(new CANNON.Vec3(0, 0, 1), new CANNON.Vec3());
+				pPhys.applyLocalImpulse(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3());
+				pPhys.position.z += 0.5;
 			}
 			
 			
@@ -1697,8 +1706,7 @@ $(function() {
 				}, 80);
 			}
 			
-
-
+			
 			if (!input.action.moveForward && !input.action.moveBackward) {
 				var rotatedV = new THREE.Vector3().copy(pPhys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -cameraOptions.rotateOffset.z).multiplyScalar(0.1);
 				temp.inputVelocity.x = -rotatedV.x;
@@ -1709,14 +1717,15 @@ $(function() {
 			}
 			temp.inputVelocity.applyAxisAngle(new THREE.Vector3(0, 0, 1), cameraOptions.rotateOffset.z); /*this.temp.rotateOffset.z);*/
 			//pPhys.applyLocalImpulse(temp.inputVelocity.multiplyScalar(1), new CANNON.Vec3());
-			
-			if (temp.isJumping === false) {
+			if (temp.isGrounded === true) {
 				pPhys.velocity.x = temp.inputVelocity.x;
 				pPhys.velocity.y = temp.inputVelocity.y;
 				pPhys.velocity.z = 0;
 			}
 			
-
+			
+			
+			
 			var pry = pMesh.rotation.y;
 			if (input.action.moveForward) {
 				wasKeyPressed = true;
@@ -1727,8 +1736,8 @@ $(function() {
 			} else if (input.action.moveRight) {
 				wasKeyPressed = true;
 			}
-
-
+			
+			
 			//var dir = pMesh.rotation.y - (rclone.z + dirOffset);
 			var diff = (pry - (Math.PI/2)) - findNearestCoterminalAngle(pry, rclone.z);
 			if (wasKeyPressed) {
@@ -1751,17 +1760,26 @@ $(function() {
 
 			if (result.hasHit) {
 				var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
-
-				if(temp.isJumping == false && result.distance < 2 && result.distance > 0) {
-					pPhys.position.z += 0 - result.distance;
+				
+				if(result.distance < 1 && result.distance > 0 && temp.isJumping === false) {
+					pPhys.position.z += 0.01 - result.distance;
 				}
-
-				if (result.distance < 0.2 && !input.action.jump) {
-					temp.isJumping = false;
+				
+				if (result.distance < 0.1) {
+					temp.isGrounded = true;
+				} else {
+					temp.isGrounded = false;
 				}
 			} else {
+				temp.isGrounded = true;
+			}
+			
+			if (!input.action.jump && temp.isGrounded === true) {
 				temp.isJumping = false;
 			}
+			
+			
+			
 			
 			if (!input.mouse.rclick && input.mouse.rclickInitial.x != 9999) {
 				var dx = Math.pow(input.mouse.x - input.mouse.rclickInitial.x, 2);
@@ -1804,12 +1822,15 @@ $(function() {
 
 			followObject(world, world1.game.player.tObject.mesh, world.t.camera, cameraOptions);
 			
-			world.t.renderer.clear();
+			if(typeof world.t.renderer.clear != "undefined") {
+				world.t.renderer.clear();
+			}
 			world.t.renderer.render(world.t.scene, world.t.camera);
 			
 		}
-
-		world.t.renderer.clearDepth();
+		if(typeof world.t.renderer.clearDepth != "undefined") {
+			world.t.renderer.clearDepth();
+		}
 		world.t.renderer.render(world.t.HUD.scene, world.t.HUD.camera);
 	}
 	

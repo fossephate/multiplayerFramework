@@ -417,22 +417,22 @@ function createHealthBar() {
 
 	var hbOpts = {
 		radius: 4,
-		tubeDiameter: 5,
+		radius2: 5,
 		xPos: 10,
 		yPos: 10,
 		xScale: 10,
 		yScale: 10,
 		calcPos: function() {
 			var pos = {};
-			pos.x = (-window.innerWidth / 2) + (this.radius * this.xScale) + (this.tubeDiameter * 2) + this.xPos;
-			pos.y = (-window.innerHeight / 2) + (this.radius * this.yScale) + (this.tubeDiameter * 2) + this.yPos;
+			pos.x = (-window.innerWidth / 2) + (this.radius * this.xScale) + (this.radius2 * 2) + this.xPos;
+			pos.y = (-window.innerHeight / 2) + (this.radius * this.yScale) + (this.radius2 * 2) + this.yPos;
 			return pos;
 		}
 	};
 
 	var HB = {};
 
-	var healthBarGeometry = new THREE.RingGeometry(hbOpts.radius, hbOpts.tubeDiameter, 10, 8, 0, Math.PI * 2);
+	var healthBarGeometry = new THREE.RingGeometry(hbOpts.radius, hbOpts.radius2, 10, 8, 0, Math.PI * 2);
 	var healthBarMaterial = new THREE.MeshBasicMaterial({
 		color: 0xffff00,
 		side: THREE.DoubleSide
@@ -458,7 +458,7 @@ function createHealthBar() {
 		//var increase = Math.PI * 2 / 100;
 		//var y = Math.sin(counter) / 2 + 0.5;
 		//counter += increase;
-		var ringGeometry = new THREE.RingGeometry(this.options.radius, this.options.tubeDiameter, 10, 8, 0, Math.PI * health);
+		var ringGeometry = new THREE.RingGeometry(this.options.radius, this.options.radius2, 10, 8, 0, Math.PI * health);
 		this.mesh.scale.set(this.options.xScale, this.options.yScale, 1);
 		this.mesh.geometry.dispose();
 		this.mesh.geometry = ringGeometry;
@@ -647,16 +647,16 @@ function createXPBar() {
 
 
 function createXPBar2(radius, xPos, yPos, barLength) {
-	
+
 	var XPB = {};
 	XPB.bg = {};
 	XPB.options = {};
 	XPB.options.radius = radius || 8;
-	XPB.options.xPos = xPos || window.innerWidth/4;
+	XPB.options.xPos = xPos || window.innerWidth / 4;
 	XPB.options.yPos = yPos || 10;
-	XPB.options.barLength = barLength || window.innerWidth/2;
+	XPB.options.barLength = barLength || window.innerWidth / 2;
 	XPB.options.barLength2 = 0;
-	
+
 	XPB.options.calcCylinderPos = function(barLength, isbg) {
 		var pos = {};
 		if (isbg) {
@@ -682,23 +682,23 @@ function createXPBar2(radius, xPos, yPos, barLength) {
 		}
 		return pos;
 	};
-	
-	
-	
-	
+
+
+
+
 	var XPBOpts = XPB.options;
-	
-	
+
+
 
 	var bgCylinderGeometry = new THREE.CylinderGeometry(XPBOpts.radius, XPBOpts.radius, XPBOpts.barLength, 32);
 	var bgSphereGeometry = new THREE.SphereGeometry(XPBOpts.radius, 32, 32);
 	var bgBarMaterial = new THREE.MeshBasicMaterial({
 		color: 0x333333,
 	});
-	
+
 	XPB.bg.cMesh = new THREE.Mesh(bgCylinderGeometry, bgBarMaterial);
-	XPB.bg.cMesh.rotation.z = Math.PI/2;
-	
+	XPB.bg.cMesh.rotation.z = Math.PI / 2;
+
 	XPB.bg.sMesh1 = new THREE.Mesh(bgSphereGeometry, bgBarMaterial);
 	XPB.bg.sMesh2 = new THREE.Mesh(bgSphereGeometry, bgBarMaterial);
 
@@ -715,19 +715,19 @@ function createXPBar2(radius, xPos, yPos, barLength) {
 	var barMaterial = new THREE.MeshBasicMaterial({
 		color: 0x990099,
 	});
-	
+
 	XPB.cMesh = new THREE.Mesh(cylinderGeometry, barMaterial);
 	XPB.cMesh.rotation.z = Math.PI / 2;
 	XPB.sMesh1 = new THREE.Mesh(sphereGeometry, barMaterial);
 	XPB.sMesh2 = new THREE.Mesh(sphereGeometry, barMaterial);
-	
+
 	var cylinderPos = XPBOpts.calcCylinderPos(XPBOpts.barLength2);
 	XPB.cMesh.position.set(cylinderPos.x, cylinderPos.y, -10);
 	var spherePos1 = XPBOpts.calcSpherePos(1, false);
 	XPB.sMesh1.position.set(spherePos1.x, spherePos1.y, -10);
 	var spherePos2 = XPBOpts.calcSpherePos(2, false);
 	XPB.sMesh2.position.set(spherePos2.x, spherePos2.y, -10);
-	
+
 	XPB.options.percent = -1;
 
 	world1.t.HUD.scene.add(XPB.bg.cMesh);
@@ -754,15 +754,15 @@ function createXPBar2(radius, xPos, yPos, barLength) {
 
 	//XPB.update = function(currentXP, currentLevel) {
 	XPB.update = function(percent) {
-		
-		if(this.options.percent == percent) {
+
+		if (this.options.percent == percent) {
 			return;
 		}
 		this.options.percent = percent;
 		//currentXP/100*currentLevel+1;
 		//var levelMaxXP = 100*currentLevel+1;
 		//this.options.barLength2 = (currentXP / levelMaxXP) * this.options.barLength;
-		
+
 		this.options.barLength2 = (percent) * this.options.barLength;
 		var bgCylinderPos = this.options.calcCylinderPos(this.options.barLength, true);
 		this.bg.cMesh.position.set(bgCylinderPos.x, bgCylinderPos.y, -20);
@@ -770,18 +770,28 @@ function createXPBar2(radius, xPos, yPos, barLength) {
 		this.bg.sMesh1.position.set(bgSpherePos1.x, bgSpherePos1.y, -20);
 		var bgSpherePos2 = this.options.calcSpherePos(2, true);
 		this.bg.sMesh2.position.set(bgSpherePos2.x, bgSpherePos2.y, -20);
-		
+
 		var spherePos1 = this.options.calcSpherePos(1, false);
 		this.sMesh1.position.set(spherePos1.x, spherePos1.y, -10);
 		var spherePos2 = this.options.calcSpherePos(2, false);
 		this.sMesh2.position.set(spherePos2.x, spherePos2.y, -10);
-		
+
 		var cylinderGeometry = new THREE.CylinderGeometry(this.options.radius - 2, this.options.radius - 2, this.options.barLength2, 32);
 		this.cMesh.geometry.dispose();
 		this.cMesh.geometry = cylinderGeometry;
 		var cylinderPos = this.options.calcCylinderPos(this.options.barLength2, false);
 		this.cMesh.position.set(cylinderPos.x, cylinderPos.y, -10);
 	};
+
+
+	XPB.mouseOver = function() {
+		console.log(this.options.percent + "%");
+	};
+	XPB.cMesh.scope = XPB;
+	XPB.cMesh.mouseOver = function() {
+		this.scope.mouseOver();
+	};
+
 	return XPB;
 }
 
@@ -936,8 +946,7 @@ function roundRect2(ctx, x, y, width, height, radius, fill, stroke) {
 
 
 // ctx, x, y, width, height, rows, columns, radius
-function drawGrid(ctx, x, y, width, height, rows, columns, radius) {
-	
+function drawGrid(ctx, x, y, width, height, rows, columns, radius, BW, BH) {
 	if (typeof radius === 'number') {
 		radius = {
 			tl: radius,
@@ -969,51 +978,34 @@ function drawGrid(ctx, x, y, width, height, rows, columns, radius) {
 	ctx.closePath();
 	ctx.fill();
 	ctx.stroke();
-	
+
 	var container = {};
 	container.width = width;
 	container.height = height;
 	container.rows = rows;
 	container.columns = columns;
 	container.boxes = {};
-	
-	var boxWidth = width/columns;
-	var boxHeight = height/rows;
-	
-	
-	
-	
-	
-	for(var i = 0; i < container.columns; i++) {
-		for(var j = 0; j < container.rows; j++) {
-			var k = i+(j*container.columns);
+	var boxWidth = BW || width / columns;
+	var boxHeight = BH || height / rows;
+	for (var i = 0; i < container.columns; i++) {
+		for (var j = 0; j < container.rows; j++) {
+			var k = i + (j * container.columns);
 			container.boxes[k] = {
-				x: i*boxWidth,
-				y: j*boxHeight,
+				x: (i * boxWidth) + x,
+				y: (j * boxHeight) + y,
 				width: boxWidth,
 				height: boxHeight
 			};
 		}
 	}
-	
 	// ctx, x, y, width, height, radius, fill, stroke
 	ctx.fillStyle = "#000000";
 	//ctx.beginPath();
-	for(var i = 0; i < rows*columns; i++) {
+	for (var i = 0; i < rows * columns; i++) {
 		var b = container.boxes[i];
 		roundRect2(ctx, b.x, b.y, b.width, b.height, 0, false, true);
 	}
-	
-	
-	
-	
-	
-	
 	return container;
-	
-	
-	
-	
 }
 
 
@@ -1039,7 +1031,7 @@ function createHealthBarSprite(health, maxHealth) {
 	if (!health) {
 		health = 100;
 	}
-	var hp = health/maxHealth;
+	var hp = health / maxHealth;
 	var canvas = document.createElement('canvas');
 	var context = canvas.getContext('2d');
 	canvas.width = 2048;
@@ -1058,7 +1050,7 @@ function createHealthBarSprite(health, maxHealth) {
 	} else {
 		context.fillStyle = "#46f72e";
 	}
-	roundRect2(context, 512, 512, hp*1024, 128, 64, true, true);
+	roundRect2(context, 512, 512, hp * 1024, 128, 64, true, true);
 
 	var texture = new THREE.Texture(canvas);
 	texture.magFilter = THREE.NearestFilter;
@@ -1073,17 +1065,17 @@ function createHealthBarSprite(health, maxHealth) {
 	var spriteObject = new THREE.Object3D();
 	spriteObject.add(sprite);
 
-	
-	
+
+
 	var obj = {};
 	obj.mesh = spriteObject;
 	obj.health = health;
 	obj.maxHealth = maxHealth;
 	obj.sprite = sprite;
 	obj.update = function(health, maxHealth) {
-		if(this.health == health) {
-			if(maxHealth) {
-				if(this.maxHealth == maxHealth){
+		if (this.health == health) {
+			if (maxHealth) {
+				if (this.maxHealth == maxHealth) {
 					return;
 				}
 			} else {
@@ -1096,7 +1088,7 @@ function createHealthBarSprite(health, maxHealth) {
 		if (!health) {
 			health = 100;
 		}
-		var hp = health/maxHealth;
+		var hp = health / maxHealth;
 		var canvas = document.createElement('canvas');
 		var context = canvas.getContext('2d');
 		canvas.width = 2048;
@@ -1114,7 +1106,7 @@ function createHealthBarSprite(health, maxHealth) {
 		} else {
 			context.fillStyle = "#46f72e";
 		}
-		roundRect2(context, 512, 512, hp*1024, 128, 64, true, true);
+		roundRect2(context, 512, 512, hp * 1024, 128, 64, true, true);
 		var texture = new THREE.Texture(canvas);
 		texture.magFilter = THREE.NearestFilter;
 		texture.minFilter = THREE.LinearMipMapLinearFilter;
@@ -1126,17 +1118,17 @@ function createHealthBarSprite(health, maxHealth) {
 		sprite.scale.set(10, 10, 1);
 		//var spriteObject = new THREE.Object3D();
 		//spriteObject.add(sprite);
-		
-		
+
+
 		this.mesh.remove(this.sprite);
 		this.mesh.add(sprite);
 		this.sprite = sprite;
-		
+
 		this.mesh = spriteObject;
 		this.health = health;
 		this.maxHealth = maxHealth;
 	};
-	
+
 	return obj;
 }
 /*
@@ -1169,15 +1161,8 @@ function createHUDInventory() {
 	canvas.width = 2048;
 	canvas.height = 2048;
 	context.fillStyle = "#ffffff";
-	
-	
-	
 	// ctx, x, y, width, height, rows, columns, radius
-	
 	var container = drawGrid(context, 0, 0, 2048, 2048, 5, 4, 5);
-	
-	
-
 	var texture = new THREE.Texture(canvas);
 	texture.magFilter = THREE.NearestFilter;
 	texture.minFilter = THREE.LinearMipMapLinearFilter;
@@ -1187,33 +1172,19 @@ function createHUDInventory() {
 	});
 	var sprite = new THREE.Sprite(spriteMaterial);
 	sprite.scale.set(250, 250, 1);
-	
-
 	var spriteObject = new THREE.Object3D();
 	spriteObject.add(sprite);
 	spriteObject.position.set(300, -150, 0);
-	
-	
-
-	
-	
 	var obj = {};
 	obj.mesh = spriteObject;
 	obj.sprite = sprite;
 	obj.update = function() {
-		
-		
-		
-		
 		this.mesh.remove(this.sprite);
 		this.mesh.add(sprite);
 		this.sprite = sprite;
-		
 		this.mesh = spriteObject;
 	};
-	
 	world1.t.HUD.scene.add(obj.mesh);
-	
 	return obj;
 }
 
@@ -1226,61 +1197,61 @@ function createHUDInventory() {
 
 
 function drawCapsule(ctx, x, y, radius, length, fillColor) {
-	
+
 	//ctx.scale(1/window.innerWidth, 1/window.innerHeight);
-	
+
 	var lineWidth = 1;
 	var lineColor = '#000000';
-	if(fillColor) {
-		
+	if (fillColor) {
+
 	} else {
 		fillColor = '#FFFFFF';
 	}
-	
+
 	ctx.fillStyle = fillColor;
 	ctx.lineWidth = lineWidth;
 	ctx.strokeStyle = lineColor;
-	
-	
+
+
 	/*var r1x1 = radius+x;
 	var r1y1 = 0+y;
 	var r1Width = length-(radius*2);
 	var r1Height = radius*2;
 	ctx.rect(r1x1, r1y1, r1Width, r1Height);
 	ctx.stroke();*/
-	
+
 	// Draw sphere 1
-	var c1X = radius+x;
-	var c1Y = radius+y;
+	var c1X = radius + x;
+	var c1Y = radius + y;
 	ctx.beginPath();
-	ctx.arc(c1X, c1Y, radius, 0, 2*Math.PI, false);
+	ctx.arc(c1X, c1Y, radius, 0, 2 * Math.PI, false);
 	ctx.closePath();
 	ctx.fill();
 	ctx.stroke();
-	
-	
+
+
 	// Draw sphere 2
-	var c2X = radius+x + (length-(radius*2));
-	var c2Y = radius+y;
+	var c2X = radius + x + (length - (radius * 2));
+	var c2Y = radius + y;
 	ctx.beginPath();
-	ctx.arc(c2X, c2Y, radius, 0, 2*Math.PI, false);
+	ctx.arc(c2X, c2Y, radius, 0, 2 * Math.PI, false);
 	ctx.closePath();
 	ctx.fill();
 	ctx.stroke();
-	
+
 	// Draw rectangle
 	/*var r2x1 = radius+x;
 	var r2y1 = 0+y+(lineWidth);
 	var r2Width = length-(radius*2);
 	var r2Height = (radius*2)-(lineWidth*2);
 	ctx.fillRect(r2x1, r2y1, r2Width, r2Height);*/
-	
-	var r2x1 = radius+x;
-	var r2y1 = 0+y;
-	var r2Width = length-(radius*2);
-	var r2Height = radius*2;
+
+	var r2x1 = radius + x;
+	var r2y1 = 0 + y;
+	var r2Width = length - (radius * 2);
+	var r2Height = radius * 2;
 	ctx.fillRect(r2x1, r2y1, r2Width, r2Height);
-	
+
 	//ctx.fillRect(0, 0, 99999, 99999);
 	//ctx.rect(0, 0, 4096, 4096);
 	//ctx.rect(0, 0, cWidth, cHeight);
@@ -1295,54 +1266,60 @@ function createLoadScreen() {
 	obj.loadBar1;
 	obj.loadBar2;
 	obj.loadScreen;
-	
-	
+
+
 	var screenTexture = new THREE.TextureLoader().load("./img/grass1.jpg");
-	var screenMaterial = new THREE.SpriteMaterial( { map: screenTexture } );
+	var screenMaterial = new THREE.SpriteMaterial({
+		map: screenTexture
+	});
 	obj.loadScreen = new THREE.Sprite(screenMaterial);
 	obj.loadScreen.scale.set(window.innerWidth, window.innerHeight, 1);
 	obj.loadScreen.position.set(0, 0, 2);
-	
-	
+
+
 	var radius, context, canvas, texture, spriteMaterial, length;
-	
-	
+
+
 	canvas = document.createElement('canvas');
 	context = canvas.getContext('2d');
 	canvas.width = 1024;
 	canvas.height = 1024;
 	radius = 10;
-	
-	drawCapsule(context, canvas.width/4, (canvas.height/2)-radius, radius, canvas.width/2, '#FFFFFF');
+
+	drawCapsule(context, canvas.width / 4, (canvas.height / 2) - radius, radius, canvas.width / 2, '#FFFFFF');
 	texture = new THREE.Texture(canvas);
 	texture.needsUpdate = true;
-	spriteMaterial = new THREE.SpriteMaterial({map: texture});
-	
+	spriteMaterial = new THREE.SpriteMaterial({
+		map: texture
+	});
+
 	obj.loadBar1 = new THREE.Sprite(spriteMaterial);
 	obj.loadBar1.scale.set(window.innerWidth, window.innerWidth, 1);
-	obj.loadBar1.position.set(0, (-window.innerHeight/2)+radius+10, 3);
-	
+	obj.loadBar1.position.set(0, (-window.innerHeight / 2) + radius + 10, 3);
+
 	canvas = document.createElement('canvas');
 	context = canvas.getContext('2d');
 	canvas.width = 1024;
 	canvas.height = 1024;
-	
+
 	radius = 10;
 	length = 200;
-	drawCapsule(context, canvas.width/4, (canvas.height/2)-radius, radius, length, '#154AA5');
+	drawCapsule(context, canvas.width / 4, (canvas.height / 2) - radius, radius, length, '#154AA5');
 	texture = new THREE.Texture(canvas);
 	texture.needsUpdate = true;
-	spriteMaterial = new THREE.SpriteMaterial({map: texture});
-	
+	spriteMaterial = new THREE.SpriteMaterial({
+		map: texture
+	});
+
 	obj.loadBar2 = new THREE.Sprite(spriteMaterial);
 	obj.loadBar2.scale.set(window.innerWidth, window.innerWidth, 1);
-	obj.loadBar2.position.set(0, (-window.innerHeight/2)+radius+10, 4);
-	
-	
-	
+	obj.loadBar2.position.set(0, (-window.innerHeight / 2) + radius + 10, 4);
 
-	
-	
+
+
+
+
+
 
 	obj.update = function(progress) {
 		world1.t.HUD.scene.remove(this.loadBar2);
@@ -1352,33 +1329,35 @@ function createLoadScreen() {
 		canvas.height = 1024;
 
 		var radius = 10;
-		var length = progress*(canvas.width/2);
-		
-		drawCapsule(context, canvas.width/4, (canvas.height/2)-radius, radius, length, '#154AA5');
+		var length = progress * (canvas.width / 2);
+
+		drawCapsule(context, canvas.width / 4, (canvas.height / 2) - radius, radius, length, '#154AA5');
 		var texture = new THREE.Texture(canvas);
 		texture.needsUpdate = true;
-		var spriteMaterial = new THREE.SpriteMaterial({map: texture});
-		
+		var spriteMaterial = new THREE.SpriteMaterial({
+			map: texture
+		});
+
 		this.loadBar2 = new THREE.Sprite(spriteMaterial);
 		this.loadBar2.scale.set(window.innerWidth, window.innerWidth, 1);
-		this.loadBar2.position.set(0, (-window.innerHeight/2)+radius+10, 4);
+		this.loadBar2.position.set(0, (-window.innerHeight / 2) + radius + 10, 4);
 		world1.t.HUD.scene.add(this.loadBar2);
-		
-		if(progress == 1) {
+
+		if (progress == 1) {
 			setTimeout(function(scope) {
 				world1.t.HUD.scene.remove(scope.loadBar1);
 				world1.t.HUD.scene.remove(scope.loadBar2);
 				world1.t.HUD.scene.remove(scope.loadScreen);
 			}, 2000, this);
 		}
-		
+
 		//this.mesh.remove(this.sprite);
 		//this.mesh.add(sprite);
 		//this.sprite = sprite;
 		//this.mesh = spriteObject;
-		
+
 	};
-	
+
 	world1.t.HUD.scene.add(obj.loadScreen);
 	world1.t.HUD.scene.add(obj.loadBar1);
 	world1.t.HUD.scene.add(obj.loadBar2);
@@ -1590,7 +1569,7 @@ function assetHolder() {
 		var scope = this.scope;
 		var funcs = scope.onProgressFuncs;
 		for (var i = 0; i < funcs.length; i++) {
-			funcs[i](loaded/total);
+			funcs[i](loaded / total);
 		}
 	};
 
@@ -1615,6 +1594,14 @@ function assetHolder() {
 		//var texturePath = THREE.Loader.prototype.extractUrlBase(url);
 		var loader = new THREE.XHRLoader(this.manager);
 		loader.load(url, function(text) {
+			/*var json;
+			try {
+				json = JSON.parse(text);
+			} catch(err) {
+				console.log(name);
+				scope.loadModel(name, url, texturePath);
+				return;
+			}*/
 			var json = JSON.parse(text);
 			var metadata = json.metadata;
 			if (metadata !== undefined) {
@@ -1717,7 +1704,7 @@ console.log(testB);
 
 
 
-  /*var sound1 = new THREE.Audio(world1.t.audioListener);
+/*var sound1 = new THREE.Audio(world1.t.audioListener);
   sound1.load('./sounds/sfx/footsteps/footsteps.mp3');
 	sound1.autoplay = true;
 	sound1.setLoop(true);
@@ -1821,8 +1808,8 @@ function createPhysBody(shape, mass) {
 				// CHANGE LATER
 				if (!isRotated || isRotated) {
 					tempBody.addShape(cylinderShape);
-					tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, height/2));
-					tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, -height/2));
+					tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, height / 2));
+					tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, -height / 2));
 				} else if (isRotated) {
 					// TODO
 				}
@@ -1861,11 +1848,11 @@ function createEnemy(type) {
 			var enemy = new THREE.BlendCharacter(world1.t.AH);
 			enemy.loadFast("abababe");
 			enemy.scale.set(20, 20, 20);
-			enemy.applyWeight('walk', 1/3);
+			enemy.applyWeight('walk', 1 / 3);
 			var q = new THREE.Quaternion();
-			q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
+			q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
 			enemy.quaternion.multiply(q);
-			q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
+			q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2);
 			enemy.quaternion.multiply(q);
 			var tempBody = createPhysBody("capsule")(1, 3);
 			pObject = new createPhysicsObject(enemy, tempBody, world1, "enemy");
@@ -1905,6 +1892,216 @@ function createEnemy(type) {
 	*/
 
 
+function spell(spellSlot, spellName) {
+	var spell1 = {};
+	
+	if(spellSlot) {
+		spell1.slot = spellSlot;
+	} else {
+		throw new Error("No spellSlot specified!");
+	}
+	
+	if(spellName) {
+		spell1.name = spellName;
+	} else {
+		spell1.name = "none";
+	}
+	
+	var slot = spell1.slot;
+	var pos = spell1.slot.mesh.position;
+	var bW = slot.width-2;
+	var bH = slot.height-2;
+	
+	var geometry = new THREE.BoxGeometry(bW, bH, 0.1);
+	var material = new THREE.MeshBasicMaterial({
+		color: 0x00ff00
+	});
+	
+	
+	if(spell1.name == "fireball") {
+		var texture = new THREE.TextureLoader().load("img/spells/fireball/icon/fireball.jpg");
+// 		texture.wrapS = THREE.RepeatWrapping;
+// 		texture.wrapT = THREE.RepeatWrapping;
+// 		texture.repeat.set(4, 4);
+		
+		material.map = texture;
+		material.map.needsUpdate = true;
+		
+		//var pos = spell1.slot.mesh.position;
+		spell1.mesh = new THREE.Mesh(geometry, material);
+		spell1.mesh.position.set(pos.x, pos.y, 1);
+		
+		spell1.timer = new createCooldownTimer(pos.x-(1*spell1.slot.width), pos.y-(1*spell1.slot.width));
+	}
+	
+	if(spell1.name == "none") {
+		var texture = new THREE.TextureLoader().load("img/spells/none/icon/none.jpg");
+// 		texture.wrapS = THREE.RepeatWrapping;
+// 		texture.wrapT = THREE.RepeatWrapping;
+// 		texture.repeat.set(4, 4);
+		material.map = texture;
+		material.map.needsUpdate = true;
+		//var pos = spell1.slot.mesh.position;
+		spell1.mesh = new THREE.Mesh(geometry, material);
+		spell1.mesh.position.set(pos.x, pos.y, 1);
+		//spell1.timer = new createCooldownTimer(pos.x-(1*spell1.slot.width), pos.y-(1*spell1.slot.width));
+	}
+	
+	spell1.update = function() {
+		
+	};
+	
+	spell1.recalc = function() {
+		
+	}
+	
+	
+	
+	
+	world1.t.HUD.scene.add(spell1.mesh);
+	
+	return spell1;
+}
+
+
+
+function spellSlot(width, height, pos, spellName) {
+	var spellSlot1 = {};
+	//spellSlot.spellNumber = spellNum;
+	
+	spellSlot1.width = width;
+	spellSlot1.height = height;
+	var geometry = new THREE.BoxGeometry(spellSlot1.width, spellSlot1.height, 0.1);
+	
+	var texture = new THREE.TextureLoader().load("img/spellSlot/spellSlot.png");
+	texture.wrapS = THREE.RepeatWrapping;
+	texture.wrapT = THREE.RepeatWrapping;
+	texture.repeat.set(4, 4);
+	
+	var material = new THREE.MeshBasicMaterial({
+		map: texture,
+		//color: 0x00ff00
+	});
+	
+	spellSlot1.mesh = new THREE.Mesh(geometry, material);
+	spellSlot1.mesh.position.set(pos.x, pos.y, 0);
+	
+	spellSlot1.spell = new spell(spellSlot1, spellName);
+	
+	
+	spellSlot1.update = function() {
+		
+	};
+	
+	spellSlot1.recalc = function() {
+		
+	};
+	
+	
+	
+	
+	world1.t.HUD.scene.add(spellSlot1.mesh);
+	
+	return spellSlot1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function createSpellBar() {
+	
+	//var bW = 50;
+	//var bH = 50;
+	var bW = window.innerWidth/40;
+	var bH = window.innerWidth/40;
+
+	var geometry = new THREE.BoxGeometry(bW, bH, 0.1);
+	var material = new THREE.MeshBasicMaterial({
+		color: 0x00ff00
+	});
+	/*var cube = new THREE.Mesh(geometry, material);
+	var pos = new THREE.Vector2();
+	pos.x = 0;
+	pos.y = ((-window.innerHeight/2)*(2/3));
+	cube.position.set(pos.x, pos.y, 0);*/
+
+
+
+	var container = {};
+	container.pos = new THREE.Vector2();
+	container.pos.x = 0;
+	container.pos.y = (-window.innerHeight/2)*(2/3);
+	container.rows = 2;
+	container.columns = 10;
+	container.width = bW*container.columns;//500
+	container.height = bW*container.rows;//100
+	container.spellSlots = {};
+
+
+
+
+
+	for (var i = 0; i < container.rows; i++) {
+		for (var j = 0; j < container.columns; j++) {
+			
+			var k = (i*container.columns) + j;
+			
+			
+			
+			//var cube = new THREE.Mesh(geometry, material);
+			
+			var pos = new THREE.Vector2();
+			pos.x = j*bW*1.2 - (container.width/2) + container.pos.x;
+			pos.y = i*bH*1.2 - (container.height/2) + container.pos.y;
+			//cube.position.set(pos.x, pos.y, 0);
+			//console.log(k);
+			//console.log(pos.x, pos.y);
+			//var spellSlot = new spellSlot(pos, k);
+			var spellSlot1;
+			
+			if(k == 1) {
+				spellSlot1 = new spellSlot(bW, bH, pos, "fireball");
+			} else {
+				spellSlot1 = new spellSlot(bW, bH, pos);
+			}
+
+			/*if(k < 3) {
+				var spellSlot = new spellSlot(pos, k);
+				//cube.timer = new createCooldownTimer(pos.x+(window.innerWidth/2)-(1*bW), pos.y+(window.innerHeight/2)-(1*bW));
+			}*/
+			container.spellSlots[k] = spellSlot1;
+			
+			
+			//world1.t.HUD.scene.add(cube);
+		}
+	}
+	
+	container.update = function() {
+		
+	};
+	
+	container.recalc = function() {
+		for(var i = 0; i < this.spellSlots.length; i++) {
+			if(typeof this.spellSlots[i].update !== "undefined") {
+				//this.spellSlots[i].upda
+			}
+		}
+	};
+	
+
+	//world1.t.HUD.scene.add(cube);
+
+	return container;
+}
 
 
 
@@ -1921,4 +2118,139 @@ function createEnemy(type) {
 
 
 
+function createCooldownTimer(x, y, width) {
+	//console.log(Math.round(x), Math.round(y));
+	
+	var bW = ((window.innerWidth/40)/2);
+	var xScale = 0.95;
+	var yScale = 0.95;
+	var timeRemaining = Math.round(Math.random()*60);
+	var totalTime = timeRemaining;
+	
+	var hbOpts = {
+		timeRemaining: timeRemaining,
+		totalTime: totalTime,
+		bW: ((window.innerWidth/40)/2),
+		radius: (bW)*0.7*xScale,//4
+		radius2: (bW)*yScale,//5
+		xPos: x || 0,
+		yPos: y || 0,
+		xScale: xScale,
+		yScale: yScale,
+		calcPos: function() {
+			this.bW = ((window.innerWidth/40)/2);
+			var pos = {};
+			pos.x = (this.bW*2) + this.xPos;//pos.x = (-window.innerWidth/2) + /*this.radius + */(this.radius2*2) + this.xPos;
+			pos.y = (this.bW*2) + this.yPos;//pos.y = (-window.innerHeight/2) + /*this.radius + */(this.radius2*2) + this.yPos;
+			return pos;
+		}
+	};
+
+	var HB = {};
+
+	var healthBarGeometry = new THREE.RingGeometry(hbOpts.radius, hbOpts.radius2, 10, 8, 0, Math.PI*2);
+	var healthBarMaterial = new THREE.MeshBasicMaterial({
+		color: 0xffff00,
+		side: THREE.DoubleSide
+	});
+	var healthBarMesh = new THREE.Mesh(healthBarGeometry, healthBarMaterial);
+	healthBarMesh.scale.set(hbOpts.xScale, hbOpts.yScale, 1);
+	healthBarMesh.rotation.y = Math.PI;
+
+	var pos = hbOpts.calcPos();
+	healthBarMesh.position.set(pos.x, pos.y, 2);
+
+	HB.mesh = healthBarMesh;
+
+	HB.options = hbOpts;
+
+	HB.recalc = function() {
+		var pos = hbOpts.calcPos();
+		this.mesh.position.set(pos.x, pos.y, 2);
+	};
+
+	HB.update = function(timeRemaining, totalTime) {
+		var ratio = timeRemaining / totalTime;
+		var ringGeometry = new THREE.RingGeometry(this.options.radius, this.options.radius2, 10, 8, 0, Math.PI * health);
+		this.mesh.scale.set(this.options.xScale, this.options.yScale, 1);
+		this.mesh.geometry.dispose();
+		this.mesh.geometry = ringGeometry;
+		this.mesh.material.color.setRGB(1.6 - ratio, ratio);
+	};
+
+	world1.t.HUD.scene.add(HB.mesh);
+
+	return HB;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+var a;
+var loader = new THREE.JSONLoader();
+loader.load(
+	// resource URL
+	'models/wizard/wizard.json',
+	// Function when resource is loaded
+	function ( collada ) {
+		a = collada;
+		console.log(collada);
+	},
+	// Function called when download progresses
+	function ( xhr ) {
+		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+	}
+);
+
+
+
+var a;
+var loader = new THREE.ColladaLoader();
+loader.load(
+	// resource URL
+	'models/wizard/wizard.dae',
+	// Function when resource is loaded
+	function ( collada ) {
+		a = collada;
+		console.log(collada);
+	},
+	// Function called when download progresses
+	function ( xhr ) {
+		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+	}
+);
+
+
+var a;
+var loader = new THREE.AssimpJSONLoader();
+loader.load(
+	// resource URL
+	'models/wizard/wizard.json',
+	// Function when resource is loaded
+	function ( collada ) {
+		a = collada;
+		console.log(collada);
+	},
+	// Function called when download progresses
+	function ( xhr ) {
+		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+	}
+);
+
+*/
 

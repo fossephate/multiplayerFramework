@@ -382,6 +382,7 @@ player.prototype.viewObj = function() {
 		health: this.health,
 		level: this.level,
 		experience: this.experience,
+		cooldowns: this.cooldowns,
 		animTo: this.animTo,
 		warpTime: this.warpTime,
 	};
@@ -485,12 +486,13 @@ player.prototype.move = function() {
 		}
 	}
 
-	if (keys.indexOf("jump") > -1 && this.temp.isGrounded == true) {
+	if (keys.indexOf("jump") > -1 && this.temp.isGrounded === true && this.temp.isJumping === false) {
 		this.animTo = "jump";
 		this.gainXP(10);
 		//this.score += 1;
 		this.temp.isJumping = true;
-		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 1), new CANNON.Vec3(0, 0, 0));
+		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3(0, 0, 0));
+		this.phys.position.z += 0.5;
 	}
 
 	if (keys.indexOf("moveForward") == -1 && keys.indexOf("moveBackward") == -1 && this.temp.isGrounded == true) {
@@ -550,11 +552,13 @@ player.prototype.move = function() {
 
 
 	this.temp.inputVelocity.applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.z);
-	if (this.temp.isGrounded == true) {
+	if (this.temp.isGrounded === true) {
 		this.phys.velocity.x = this.temp.inputVelocity.x;
 		this.phys.velocity.y = this.temp.inputVelocity.y;
 		this.phys.velocity.z = 0;
 	}
+	
+
 
 	var px = Math.pow(this.phys.velocity.x, 2);
 	var py = Math.pow(this.phys.velocity.y, 2);
@@ -571,23 +575,27 @@ player.prototype.move = function() {
 	if (result.hasHit) {
 		var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
 		
-		if(this.temp.isGrounded == true && result.distance < 2 && result.distance > 0) {
-			this.phys.position.z += 0 - result.distance;
+		if(result.distance < 1 && result.distance > 0 && this.temp.isJumping === false) {
+			this.phys.position.z += 0.01 - result.distance;
 		}
 		
 		if (result.distance < 0.1) {
 			this.temp.isGrounded = true;
 			
-			if (keys.indexOf("jump") == -1) {
-				this.temp.isJumping = false;
-			}
-		} else if(result.distance > 1) {
+		} else {
 			this.temp.isGrounded = false;
 		}
+		
+
 		
 	} else {
 		this.temp.isGrounded = true;
 	}
+	
+	if (keys.indexOf("jump") == -1 && this.temp.isGrounded === true) {
+		this.temp.isJumping = false;
+	}
+	
 };
 
 function enemy(level, health, name) {
