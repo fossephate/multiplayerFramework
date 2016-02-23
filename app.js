@@ -450,7 +450,7 @@ player.prototype.move = function() {
 
 	this.temp.inputVelocity.set(0, 0, 0);
 	if (keys.indexOf("moveForward") > -1 && this.temp.isGrounded == true) {
-		this.animTo = "walk";
+		this.animTo = "walking_inPlace";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
 		if (rotatedV.x > 0) {
 			this.temp.inputVelocity.x = -rotatedV.x;
@@ -459,7 +459,7 @@ player.prototype.move = function() {
 		}
 	}
 	if (keys.indexOf("moveBackward") > -1 && this.temp.isGrounded == true) {
-		this.animTo = "walk";
+		this.animTo = "walking_inPlace";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
 		if (rotatedV.x < 0) {
 			this.temp.inputVelocity.x = -rotatedV.x;
@@ -468,7 +468,7 @@ player.prototype.move = function() {
 		}
 	}
 	if (keys.indexOf("moveLeft") > -1 && this.temp.isGrounded == true) {
-		this.animTo = "walk";
+		this.animTo = "left_strafe_walking_inPlace";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
 		if (rotatedV.y > 0) {
 			this.temp.inputVelocity.y = -rotatedV.y;
@@ -477,7 +477,7 @@ player.prototype.move = function() {
 		}
 	}
 	if (keys.indexOf("moveRight") > -1 && this.temp.isGrounded == true) {
-		this.animTo = "walk";
+		this.animTo = "right_strafe_walking_inPlace";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
 		if (rotatedV.y < 0) {
 			this.temp.inputVelocity.y = -rotatedV.y;
@@ -540,7 +540,7 @@ player.prototype.move = function() {
 	}
 
 	if (keys.indexOf("castFireball") > -1 && this.target != null && this.cooldowns.globalCooldown === 0) {
-		this.animTo = "idle_with_gun_firing";
+		this.animTo = "fireball";
 		this.cooldowns.globalCooldown = 60 * 2;
 
 		var playerNode = gs.findPlayerByName(this.target);
@@ -563,7 +563,7 @@ player.prototype.move = function() {
 	var px = Math.pow(this.phys.velocity.x, 2);
 	var py = Math.pow(this.phys.velocity.y, 2);
 	var pz = Math.sqrt(px + py);
-	if (pz < 0.3 && this.animTo == "walk") {
+	if (pz < 0.3 && (this.animTo == "walking_inPlace" || this.animTo == "left_strafe_walking_inPlace" || this.animTo == "right_strafe_walking_inPlace")) {
 		this.animTo = "idle";
 	}
 

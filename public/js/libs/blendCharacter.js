@@ -66,6 +66,7 @@ THREE.BlendCharacter = function(assetHolder) {
 
 	this.play = function(animName, weight) {
 		//console.log("play('%s', %f)", animName, weight);
+		console.log(animName);
 		return this.mixer.clipAction(animName).
 		setEffectiveWeight(weight).play();
 	};

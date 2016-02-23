@@ -1909,8 +1909,8 @@ function spell(spellSlot, spellName) {
 	
 	var slot = spell1.slot;
 	var pos = spell1.slot.mesh.position;
-	var bW = slot.width-2;
-	var bH = slot.height-2;
+	var bW = slot.width-4;
+	var bH = slot.height-4;
 	
 	var geometry = new THREE.BoxGeometry(bW, bH, 0.1);
 	var material = new THREE.MeshBasicMaterial({
@@ -1935,7 +1935,7 @@ function spell(spellSlot, spellName) {
 	}
 	
 	if(spell1.name == "none") {
-		var texture = new THREE.TextureLoader().load("img/spells/none/icon/none.jpg");
+		var texture = new THREE.TextureLoader().load("img/spells/none/icon/greycross.svg");
 // 		texture.wrapS = THREE.RepeatWrapping;
 // 		texture.wrapT = THREE.RepeatWrapping;
 // 		texture.repeat.set(4, 4);

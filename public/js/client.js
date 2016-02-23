@@ -464,7 +464,7 @@ $(function() {
 		});
 		
 		var modelList = {
-			"player": "models/marineAnim.json",
+			"player": "models/wizard/wizard6.json",
 			"treeBark": "models/tree1.json",
 			"treeLeaves": "models/tree2.json",
 			"abababe": "models/abababe.json",
@@ -689,10 +689,10 @@ $(function() {
 						player.loadFast("player");
 						
 						player.scale.set(0.02, 0.02, 0.02);
-						player.applyWeight('idle', 1/3);
-						player.applyWeight('walk', 1/3);
-						player.applyWeight('run', 1/3);
-						player.applyWeight('jump', 1/100);
+						//player.applyWeight('idle', 1/3);
+						//player.applyWeight('walk', 1/3);
+						//player.applyWeight('run', 1/3);
+						//player.applyWeight('jump', 1/100);
 						
 						var q = new THREE.Quaternion();
 						q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
@@ -1174,10 +1174,10 @@ $(function() {
 		var player = new THREE.BlendCharacter(world1.t.AH);
 		player.loadFast("player");
 		player.scale.set(0.02, 0.02, 0.02);
-		player.applyWeight('idle', 1/3);
-		player.applyWeight('walk', 1/3);
-		player.applyWeight('run', 1/3);
-		player.applyWeight('jump', 1/100);
+		//player.applyWeight('idle', 1/3);
+		//player.applyWeight('walk', 1/3);
+		//player.applyWeight('run', 1/3);
+		//player.applyWeight('jump', 1/100);
 		var q = new THREE.Quaternion();
 		q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
 		player.quaternion.multiply(q);
