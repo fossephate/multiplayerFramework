@@ -40,7 +40,6 @@ THREE.BlendCharacter = function(assetHolder) {
 		var geometry = model.geometry;
 		var materials = model.materials;
 		
-		
 		/*var originalMaterial = materials[0];
 		scope.originalMaterial = originalMaterial;
 		originalMaterial.skinning = true;
@@ -66,9 +65,8 @@ THREE.BlendCharacter = function(assetHolder) {
 
 	this.play = function(animName, weight) {
 		//console.log("play('%s', %f)", animName, weight);
-		console.log(animName);
-		return this.mixer.clipAction(animName).
-		setEffectiveWeight(weight).play();
+		//console.log(animName);
+		return this.mixer.clipAction(animName).setEffectiveWeight(weight).play();
 	};
 	
 	this.crossfade = function(fromAnimName, toAnimName, duration) {

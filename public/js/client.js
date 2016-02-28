@@ -19,7 +19,7 @@ var hfBody;
 var socket;
 var debug = false;
 var sound1;
-//var models = {};w
+//var models = {};
 
 //end of super global variables (testing)
 $(function() {
@@ -354,11 +354,12 @@ $(function() {
 
 
 
-
+	// Connect to the server
 	//var socket;
 	socket = io('http://f1v3.net', {
 		path: '/8100/socket.io'
 	});
+	// When the server is connected to:
 	socket.on('connection', function(data) {
 		console.log(data);
 	});
@@ -376,7 +377,8 @@ $(function() {
 				character: character
 			});
 		}
-		//world1.game.player.username = character;
+		//world1.game.player.username = character
+		// hide the title screen
 		$('#titleScreen').modal('hide');
 		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
 			//world1.t.camera.aspect = (window.innerWidth/2)/(window.innerHeight/2);
@@ -385,9 +387,6 @@ $(function() {
 			//world1.t.renderer.setSize(window.innerWidth/2, window.innerHeight/2);
 			//world1.t.renderer.setSize(1024, 1024);
 			input.joystick = new VirtualJoystick({
-				//stationaryBase: true,
-				//baseX: 200,
-				//baseY: 200,
 				mouseSupport: true,
 				limitStickTravel: true,
 				stickRadius: 50,
@@ -395,7 +394,8 @@ $(function() {
 			});
 		}
 	}
-
+	
+	// on change of render settings
 	$("#renderSetter").on('change', function(event) {
 		var newRenderer = $("#renderSetter").val();
 		if (typeof world1.t !== "undefined") {
@@ -412,7 +412,8 @@ $(function() {
 			document.body.appendChild(wt.renderer.domElement);
 		}
 	});
-
+	
+	// custom keyboard layout change
 	$("#layoutSetter").on('change', function(event) {
 		var newLayout = $("#layoutSetter").val();
 		if (newLayout == "wasd") {
@@ -442,17 +443,12 @@ $(function() {
 
 
 	});
-
-	/*$("#playGuest").on('click', function(event) {
-		event.preventDefault();
-		login(true, "wizard");
-	});*/
-
+	
+	
+	// On confirmed connection
 	socket.on('initData', function(data) {
 		world1.game.player.id = socket.id;
 		world1.game.player.username = data.username;
-		//world1.game.connected = true;
-		
 		
 		var loadScreen = new createLoadScreen();
 		world1.t.AH.onProgressFuncs.push(function(progress) {
@@ -460,19 +456,20 @@ $(function() {
 		});
 		
 		world1.t.AH.onloadFuncs.push(function(progress) {
+			loadScreen.update(1);
 			world1.game.connected = true;
 		});
 		
+		// list of models to load
 		var modelList = {
-			"player": "models/wizard/wizard6.json",
+			"wizard": "assets/models/characters/players/wizard/final/wizard.json",
+			"player": "models/wizard/final4.json",
 			"treeBark": "models/tree1.json",
 			"treeLeaves": "models/tree2.json",
 			"abababe": "models/abababe.json",
 		};
+		// Load models
 		world1.t.AH.loadModels(modelList);
-		
-		/*world1.t.AH.onProgressFuncs.push(
-			loadScreen.update(progress));*/
 		
 	});
 
@@ -486,7 +483,7 @@ $(function() {
 
 		return false;
 	});
-
+	
 	$('#shootButton').on('click touchstart', function() {
 		shootLaser();
 		input.action.shoot = true;
@@ -497,7 +494,7 @@ $(function() {
 		return false;
 	});
 
-
+	
 	$('#fireballButton').on('click touchstart', function() {
 		input.action.castFireball = true;
 
@@ -627,24 +624,7 @@ $(function() {
 
 		world1.game.visiblePlayersData = data.vn;
 
-		/*var scores = [];
-		for (var i = 0; i < vpd.length; i++) {
-			if (vpd[i].type == "player") {
-				scores.push({
-					username: vpd[i].username,
-					score: vpd[i].score
-				});
-			}
-		}
-		scores = scores.sort(function(a, b) {
-			return b.score - a.score;
-		});
-		$("#scores").empty();
-		for (var i = 0; i < scores.length; i++) {
-			$("#scores").append("<li>" + scores[i].username + ": " + scores[i].score + "</li>");
-		}*/
-
-
+		// THIS IS A MESS (procrastinating cleanup)
 		for (var i = 0; i < vpd.length; i++) {
 			var playerObject = world1.game.player.tObject;
 			if(!world1.game.connected) {
@@ -689,16 +669,12 @@ $(function() {
 						player.loadFast("player");
 						
 						player.scale.set(0.02, 0.02, 0.02);
-						//player.applyWeight('idle', 1/3);
-						//player.applyWeight('walk', 1/3);
-						//player.applyWeight('run', 1/3);
-						//player.applyWeight('jump', 1/100);
 						
 						var q = new THREE.Quaternion();
 						q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
 						player.quaternion.multiply(q);
-						q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
-						player.quaternion.multiply(q);
+						//q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
+						//player.quaternion.multiply(q);
 						
 						
 						var tempBody = createPhysBody("capsule")(1, 3.2);
@@ -1174,10 +1150,7 @@ $(function() {
 		var player = new THREE.BlendCharacter(world1.t.AH);
 		player.loadFast("player");
 		player.scale.set(0.02, 0.02, 0.02);
-		//player.applyWeight('idle', 1/3);
-		//player.applyWeight('walk', 1/3);
-		//player.applyWeight('run', 1/3);
-		//player.applyWeight('jump', 1/100);
+		
 		var q = new THREE.Quaternion();
 		q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
 		player.quaternion.multiply(q);
@@ -1431,7 +1404,7 @@ $(function() {
 		color: {
 			value: [new THREE.Color('yellow'), new THREE.Color('red')]
 		},
-		particleCount: 100,
+		particleCount: 20,
 		alive: true,
 		duration: 0.05,
 		maxAge: {
@@ -1462,7 +1435,7 @@ $(function() {
 			size: {
 				value: 1
 			},
-			particleCount: 2000,
+			particleCount: 100,
 		};
 
 		var emitter1 = new SPE.Emitter(fireballSettings);
