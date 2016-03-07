@@ -3,7 +3,7 @@
     "materials": [{
         "specularCoef": 50,
         "DbgName": "barkMaterial",
-        "mapDiffuse": "../img/BarkDecidious0107_S.jpg",
+        "mapDiffuse": "./bark.jpg",
         "depthWrite": true,
         "colorDiffuse": [0.64,0.64,0.64],
         "blending": "NormalBlending",

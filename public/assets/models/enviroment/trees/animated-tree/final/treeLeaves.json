@@ -3,7 +3,7 @@
     "materials": [{
         "specularCoef": 50,
         "DbgName": "leaveMaterial",
-        "mapDiffuse": "../img/Leaves0118_6_S.png",
+        "mapDiffuse": "./leaves.png",
         "depthWrite": true,
         "colorDiffuse": [0.64,0.64,0.64],
         "blending": "NormalBlending",

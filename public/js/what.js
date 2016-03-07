@@ -1,10 +1,11 @@
 var snack = 'Meow Mix';
 
 function getFood(food) {
-  //if (food) {
-  //var snack = 'Friskies';
-  //return snack;
-  //}
+  if (food) {
+    console.log("what");
+    var snack = 'Friskies';
+    return snack;
+  }
   console.log(snack);
   return snack;
 }

@@ -1742,7 +1742,7 @@ function assetHolder() {
 	
 	this.loadAssets = function(assetList) {
 		for (var i in assetList) {
-			if(typeof this.files[assetList[i]] == "undefined"){
+			if(typeof this.assets.files[assetList[i]] == "undefined"){
 				this.loadFile(i);
 			}
 		}
@@ -1751,7 +1751,7 @@ function assetHolder() {
 	
 	this.loadAssetsOfType = function(type, assetList) {
 		for (var i in assetList) {
-			if(typeof this.files[assetList[i]] == "undefined"){
+			if(typeof this.assets.files[assetList[i]] == "undefined"){
 				this.loadFile(i);
 			}
 		}

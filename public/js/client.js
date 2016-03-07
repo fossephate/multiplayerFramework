@@ -475,9 +475,9 @@ $(function() {
 		
 		// list of models to load
 		var modelList = {
-			"wizard": "assets/models/characters/players/wizard/final/wizard.json",
-			"paladin": "assets/models/characters/players/wizard/final/wizard.json",
-			"rogue": "assets/models/characters/players/wizard/final/wizard.json",
+			"wizard": "assets/models/characters/players/wizard/final/final4.json",
+			"paladin": "assets/models/characters/players/wizard/final/final4.json",
+			"rogue": "assets/models/characters/players/wizard/final/final4.json",
 			"treeBark": "assets/models/enviroment/trees/animated-tree/final/treeBark.json",
 			"treeLeaves": "assets/models/enviroment/trees/animated-tree/final/treeLeaves.json",
 			"abababe": "models/abababe.json",
@@ -885,7 +885,7 @@ $(function() {
 
 	world1.t.AH = new assetHolder();
 	var fileList = [
-		"assets/models/characters/players/wizard/final/wizard.json",
+		"assets/models/characters/players/wizard/final/final4.json",
 		"assets/models/enviroment/trees/animated-tree/final/treeBark.json",
 		"assets/models/enviroment/trees/animated-tree/final/treeLeaves.json",
 		//"models/abababe.json",
