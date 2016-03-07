@@ -1,0 +1,2189 @@
+###############################################
+OpenGameArt.org automatically generated credits file notice:
+
+THIS FILE IS FOR INFORMATIONAL PURPOSES ONLY.  NO WARRANTY OF ANY KIND IS EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL OPENGAMEART.ORG BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE USE OF THIS FILE OR THE INFORMATION IN IT.
+
+In plain English:  This credits file is automatically generated to the best of our ability, but it remains YOUR RESPONSIBILITY as a game developer to ensure that the art you use is attributed properly.  That is, we can't be held liable even if all of the information in this file is completely wrong.   In addition, some of the art listed in this file may have SPECIAL ATTRIBUTION INSTRUCTIONS that ask that you credit the artist in a particular way, rather than a verbatim copyright notice.  In those cases, you will probably need to hand-edit this file to comply with their instructions.  In some older art, attribution instructions may be included in the art description itself.  Please check the art page to be sure.
+
+We recommend that you delete this notice when you're sure the information here is correct and the attribution instructions are properly followed.  If you aren't the game developer and you're seeing this notice here in the credits, it probably means that the developer hasn't properly verified the attribution information contained herein even though it said they were supposed to do it right on the page where they downloaded this file.  
+###############################################
+
+Title:
+    Night Demon
+
+Author:
+    nubux
+
+URL:
+    http://opengameart.org/content/night-demon
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * demon.rar
+
+----------------------------------------
+
+Title:
+    Evil Tree Creature
+
+Author:
+    Benjinsmith
+
+URL:
+    http://opengameart.org/content/evil-tree-creature
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    My name: Benji Smith.  Anything else is optional.
+
+File(s):
+    * Tree_Creature.blend
+    * Tree-Creature_Diffuse_Map.png
+    * Tree-Creature_Normal_Map.png
+
+----------------------------------------
+
+Title:
+    Dwarf - fixed
+
+Author:
+    MrBeast
+
+URL:
+    http://opengameart.org/content/dwarf-fixed
+
+License(s):
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * fixeddwarf.zip
+
+----------------------------------------
+
+Title:
+    Animated Archer
+
+Author:
+    Clement Wu, Nikolaus & Botanic
+
+URL:
+    http://opengameart.org/content/animated-archer
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * archer_version_3.blend
+    * Archer.png
+
+----------------------------------------
+
+Title:
+    Animated Knight
+
+Author:
+    Clement Wu, Nikolaus & Botanic
+
+URL:
+    http://opengameart.org/content/animated-knight
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * knight.blend
+    * Knight.png
+
+----------------------------------------
+
+Title:
+    Brigand2
+
+Author:
+    AnthonyMyers
+
+URL:
+    http://opengameart.org/content/brigand2
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    http://anthonymyers.daportfolio.com/
+concept art (Konstantin Maystrenko)original concept is here:
+http://conceptartworld.com/?p=20179 thanks radiatoryan for the link
+
+
+File(s):
+    * Dude2.zip
+
+----------------------------------------
+
+Title:
+    Wizard
+
+Author:
+    AnthonyMyers
+
+URL:
+    http://opengameart.org/content/wizard-4
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * Wizard.zip
+
+----------------------------------------
+
+Title:
+    Brigand
+
+Author:
+    AnthonyMyers
+
+URL:
+    http://opengameart.org/content/brigand
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    concept art (Konstantin Maystrenko)
+
+File(s):
+    * Dude.zip
+
+----------------------------------------
+
+Title:
+    Werebear 3D
+
+Author:
+    johndh
+
+URL:
+    http://opengameart.org/content/werebear-3d
+
+License(s):
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * werebear.blend
+
+----------------------------------------
+
+Title:
+    Sheep (rigged, textured and animated)
+
+Author:
+    p0ss
+
+URL:
+    http://opengameart.org/content/sheep-rigged-textured-and-animated
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * sheepies.blend
+
+----------------------------------------
+
+Title:
+    Orc FLARE 3D
+
+Author:
+    johndh
+
+URL:
+    http://opengameart.org/content/orc-flare-3d
+
+License(s):
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * orc_flare_0.blend
+
+----------------------------------------
+
+Title:
+    Undead male
+
+Author:
+    TiZiana
+
+URL:
+    http://opengameart.org/content/undead-male
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * undead.zip
+
+----------------------------------------
+
+Title:
+    Rigged, textured Mutant
+
+Author:
+    thecubber
+
+URL:
+    http://opengameart.org/content/rigged-textured-mutant
+
+License(s):
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * mutant_final.blend
+
+----------------------------------------
+
+Title:
+    Treasure Chest Animated Idle/Open
+
+Author:
+    WeaponGuy (orig auth) TheKingofDemons rigg/anim
+
+URL:
+    http://opengameart.org/content/treasure-chest-animated-idleopen
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * treasurechestopen.blend
+    * treasurechestidle.blend
+    * chestnormtext.ugh_.rar
+    * chestnormtext.x_0.rar
+
+----------------------------------------
+
+Title:
+    Rigged, textured Dwarf model
+
+Author:
+    thecubber
+
+URL:
+    http://opengameart.org/content/rigged-textured-dwarf-model
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+Copyright/Attribution Notice:
+    Model by thecubber, commissioned by the OpenGameArt.org community (http://opengameart.org)
+
+File(s):
+    * dwarf_rigging_066_blender2_49_03_1.blend
+    * dwarf_rigging_066_blender2_56.blend
+
+----------------------------------------
+
+Title:
+    Wyvern
+
+Author:
+    Skorpio
+
+URL:
+    http://opengameart.org/content/wyvern-0
+
+License(s):
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * wyvern.zip
+
+----------------------------------------
+
+Title:
+    Rock Golem
+
+Author:
+    Dm3d
+
+URL:
+    http://opengameart.org/content/rock-golem
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    the original creator of the golem is hendori-sama[1], with rigging improvments and uv work done by umask007[2].
+
+
+[1]http://www.blendswap.com/blends/view/68618
+[2]http://opengameart.org/content/fireicestone-golem
+
+File(s):
+    * RockGolem.blend
+
+----------------------------------------
+
+Title:
+    Goth female - Fleur du Mal
+
+Author:
+    TiZiana
+
+URL:
+    http://opengameart.org/content/goth-female-fleur-du-mal
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * fleur.zip
+
+----------------------------------------
+
+Title:
+    Training Dummy
+
+Author:
+    p0ss
+
+URL:
+    http://opengameart.org/content/training-dummy
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * trainingpoledummy.blend
+    * trainingpoledummy.obj
+
+----------------------------------------
+
+Title:
+    Training Target
+
+Author:
+    p0ss
+
+URL:
+    http://opengameart.org/content/training-target
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * trainingtarget.blend
+    * trainingtarget.obj
+
+----------------------------------------
+
+Title:
+    zombie
+
+Author:
+    pixelhouse
+
+URL:
+    http://opengameart.org/content/zombie
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * zombie.zip
+
+----------------------------------------
+
+Title:
+    Shield of death
+
+Author:
+    kindland
+
+URL:
+    http://opengameart.org/content/shield-of-death
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    no credits required, enjoy.
+
+File(s):
+    * TESTSHIELD.zip
+
+----------------------------------------
+
+Title:
+    Medieval Blacksmith
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-blacksmith
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 75729_Blacksmith1Upload_blend.zip
+
+----------------------------------------
+
+Title:
+    Medieval Tavern
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-tavern
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 75282_ThePaintedWench_02Upload_blend.zip
+
+----------------------------------------
+
+Title:
+    Medieval Well
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-well
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 55087_well.zip
+
+----------------------------------------
+
+Title:
+    Medieval Gatehouse
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-gatehouse
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 76122_GateHouse2Upload_blend.zip
+
+----------------------------------------
+
+Title:
+    Mage Tower
+
+Author:
+    djonvincent
+
+URL:
+    http://opengameart.org/content/mage-tower
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    Attribute this site, opengameart.org!
+
+File(s):
+    * mage_tower.blend
+
+----------------------------------------
+
+Title:
+    Old Outpost - Bleed&#039;s Game Art (HD)
+
+Author:
+    Bleed
+
+URL:
+    http://opengameart.org/content/old-outpost-bleeds-game-art-hd
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    Credit is Optional but Appreciated. You can use :
+"Bleed - http://remusprites.carbonmade.com/"
+
+File(s):
+    * Isometric.zip
+    * Side.zip
+    * Top.zip
+
+----------------------------------------
+
+Title:
+    Beetle Golem [Animated]
+
+Author:
+    killyoverdrive
+
+URL:
+    http://opengameart.org/content/beetle-golem-animated
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * BeetleGolem_v3.blend
+
+----------------------------------------
+
+Title:
+    Fire/Ice/Stone Golem
+
+Author:
+    umask007
+
+URL:
+    http://opengameart.org/content/fireicestone-golem
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    The textures used to bake the normal and diffuse map are by user yughues. 
+The original model can be found on:
+http://www.blendswap.com/blends/view/68618
+
+File(s):
+    * golem.blend
+
+----------------------------------------
+
+Title:
+    Evil Giant Rat
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/evil-giant-rat
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * rat.blend
+
+----------------------------------------
+
+Title:
+    Knight
+
+Author:
+    piacenti
+
+URL:
+    http://opengameart.org/content/knight-2
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    I&#039;d appreciate if you let me know you are using this in a real project.
+
+File(s):
+    * armored knight.zip
+
+----------------------------------------
+
+Title:
+    Bartender
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/bartender
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * bartender-IK.blend
+
+----------------------------------------
+
+Title:
+    Rabbit
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/rabbit-0
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * rabbit.blend
+
+----------------------------------------
+
+Title:
+    Deer Female
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/deer-female
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * doe.blend
+
+----------------------------------------
+
+Title:
+    Old Deer Male
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/old-deer-male
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * deer1.blend
+
+----------------------------------------
+
+Title:
+    Monk
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/monk
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * MONK.blend
+
+----------------------------------------
+
+Title:
+    Forest Monster
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/forest-monster
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * forest-monster.7z
+
+----------------------------------------
+
+Title:
+    Mudeater (animated)
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/mudeater-animated
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * mudeater.blend
+
+----------------------------------------
+
+Title:
+    Chest (Animated)
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/chest-animated
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * chest3-final.blend
+
+----------------------------------------
+
+Title:
+    Undead Squirrel (ANIMATED)
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/undead-squirrel-animated
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * undeadsquirrell.zip
+
+----------------------------------------
+
+Title:
+    Chicken (animated)
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/chicken-animated
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * chicken.zip
+
+----------------------------------------
+
+Title:
+    Rooster (Animated)
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/rooster-animated
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * rooster.zip
+
+----------------------------------------
+
+Title:
+    Goblin
+
+Author:
+    CDmir
+
+Collaborators:
+    TinyWorlds
+
+URL:
+    http://opengameart.org/content/goblin-1
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * goblin-FINAL.blend
+
+----------------------------------------
+
+Title:
+    Rigged, textured elven archer
+
+Author:
+    thecubber
+
+URL:
+    http://opengameart.org/content/rigged-textured-elven-archer
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * ELF_rig_057_fin.blend
+
+----------------------------------------
+
+Title:
+    Open Tempest 3D hard suit, textured
+
+Author:
+    thecubber
+
+URL:
+    http://opengameart.org/content/open-tempest-3d-hard-suit-textured
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * suit_final.blend
+    * diffuse_normal.zip
+
+----------------------------------------
+
+Title:
+    Open Tempest 3D Venusian model; textured
+
+Author:
+    thecubber
+
+URL:
+    http://opengameart.org/content/open-tempest-3d-venusian-model-textured
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * venusia_fin.blend
+    * tex.zip
+
+----------------------------------------
+
+Title:
+    Rigged, textured mage
+
+Author:
+    thecubber
+
+URL:
+    http://opengameart.org/content/rigged-textured-mage
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * mage_final.blend
+
+----------------------------------------
+
+Title:
+    Staff
+
+Author:
+    yd
+
+URL:
+    http://opengameart.org/content/staff-1
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * staff01.blend
+
+----------------------------------------
+
+Title:
+    Animated Mage
+
+Author:
+    Clement Wu, Nikolaus & Botanic
+
+URL:
+    http://opengameart.org/content/animated-mage
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * mage.blend
+    * Mage.png
+
+----------------------------------------
+
+Title:
+    Animated Female Mage
+
+Author:
+    Clement Wu, Nikolaus & Botanic
+
+URL:
+    http://opengameart.org/content/animated-female-mage
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * female_mage_texture.png
+    * female_mage_v002.blend
+
+----------------------------------------
+
+Title:
+    The Dark Priest
+
+Author:
+    piacenti
+
+URL:
+    http://opengameart.org/content/the-dark-priest
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * dark priest game.blend
+    * textures.zip
+
+----------------------------------------
+
+Title:
+    Spider - Animated
+
+Author:
+    PantherOne
+
+URL:
+    http://opengameart.org/content/spider-animated
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    Please attribute/credit "Panther-One".
+
+File(s):
+    * Spider.blend
+    * Spider UV.png
+    * Spider.png
+
+----------------------------------------
+
+Title:
+    Troll Mauler
+
+Author:
+    piacenti
+
+URL:
+    http://opengameart.org/content/troll-mauler
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    I appreciate if you let me know you are using the model.
+
+File(s):
+    * troll.blend
+    * troll.gif
+    * troll2.gif
+
+----------------------------------------
+
+Title:
+    Animated daemon
+
+Author:
+    umask007
+
+URL:
+    http://opengameart.org/content/animated-daemon
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    The original model is based on:
+http://www.blendswap.com/blends/view/18761
+
+File(s):
+    * daemon4.blend
+
+----------------------------------------
+
+Title:
+    Elemental Golem
+
+Author:
+    Grefuntor
+
+URL:
+    http://opengameart.org/content/elemental-golem
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    Please attribute Grefuntor, or if you don&#039;t mind, drop a link to
+http://atmostatic.blogspot.com
+
+File(s):
+    * ElementalGolem - Blend.zip
+    * ElementalGolem - obj.zip
+
+----------------------------------------
+
+Title:
+    lava golem
+
+Author:
+    gavlig
+
+URL:
+    http://opengameart.org/content/lava-golem
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * golem_clean.blend.zip
+
+----------------------------------------
+
+Title:
+    Wizard
+
+Author:
+    piacenti
+
+URL:
+    http://opengameart.org/content/wizard-3
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+File(s):
+    * wizard_low_poly.zip
+
+----------------------------------------
+
+Title:
+    FLARE Skeleton Mod - Skeletal Occultist
+
+Author:
+    VWolfdog
+
+Collaborators:
+    Clint Bellanger
+
+URL:
+    http://opengameart.org/content/flare-skeleton-mod-skeletal-occultist
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * skeleton_occultist.blend
+    * skeleton_occultist.png
+
+----------------------------------------
+
+Title:
+    FLARE Mod - High Skeleton Mage
+
+Author:
+    VWolfdog
+
+Collaborators:
+    Clint Bellanger
+
+URL:
+    http://opengameart.org/content/flare-mod-high-skeleton-mage
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * skeleton_mage_high.blend
+    * skeleton_mage_high.png
+
+----------------------------------------
+
+Title:
+    Octaminator (Engine-Ready)
+
+Author:
+    Teh_Bucket
+
+URL:
+    http://opengameart.org/content/octaminator-engine-ready
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    Teh_Bucket and raymoohawk
+
+File(s):
+    * Octaminator_lowpoly_final.blend
+    * Octaminator.zip
+
+----------------------------------------
+
+Title:
+    WarWolf
+
+Author:
+    TripleSnail
+
+URL:
+    http://opengameart.org/content/warwolf
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    Original author:
+http://www.blendswap.com/blends/view/56015
+
+File(s):
+    * WarWolf.blend
+
+----------------------------------------
+
+Title:
+    Medieval Waterpowered Sawmill
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-waterpowered-sawmill
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 75340_WaterPoweredSawmillUpload_blend.zip
+
+----------------------------------------
+
+Title:
+    Medieval Church
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-church
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 75990_Church1Upload_blend.zip
+
+----------------------------------------
+
+Title:
+    Medieval House Pack
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-house-pack
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 75519_House1Upload_blend.zip
+    * 75861_House2_1Upload_blend.zip
+    * 75862_House3Upload_blend.zip
+    * 75864_House4Upload_blend.zip
+
+----------------------------------------
+
+Title:
+    Modular Medieval House Pack 01
+
+Author:
+    hreikin
+
+URL:
+    http://opengameart.org/content/modular-medieval-house-pack-01
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson and Hreikin
+
+File(s):
+    * MedievalHousePack01.zip
+
+----------------------------------------
+
+Title:
+    Modular Medieval House Pack 02
+
+Author:
+    hreikin
+
+URL:
+    http://opengameart.org/content/modular-medieval-house-pack-02
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson and Hreikin
+
+File(s):
+    * MedievalHousePack02.zip
+
+----------------------------------------
+
+Title:
+    Modular Medieval House Pack 03
+
+Author:
+    hreikin
+
+URL:
+    http://opengameart.org/content/modular-medieval-house-pack-03
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson and Hreikin
+
+File(s):
+    * MedievalHousePack03.zip
+
+----------------------------------------
+
+Title:
+    Modular Medieval House Pack 04
+
+Author:
+    hreikin
+
+URL:
+    http://opengameart.org/content/modular-medieval-house-pack-04
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson and Hreikin
+
+File(s):
+    * MedievalHousePack04.zip
+
+----------------------------------------
+
+Title:
+    Modular Medieval House Pack 05
+
+Author:
+    hreikin
+
+URL:
+    http://opengameart.org/content/modular-medieval-house-pack-05
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson and Hreikin
+
+File(s):
+    * MedievalHousePack05.zip
+
+----------------------------------------
+
+Title:
+    Modular Medieval House Pack 06
+
+Author:
+    hreikin
+
+URL:
+    http://opengameart.org/content/modular-medieval-house-pack-06
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson and Hreikin
+
+File(s):
+    * MedievalHousePack06.zip
+
+----------------------------------------
+
+Title:
+    Modular Medieval Building Pack
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/modular-medieval-building-pack
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 74694_Windows1Upload_blend.zip
+    * 74695_Doors1Upload_blend.zip
+    * 74696_HousePack1_2Upload_blend.zip
+    * 74697_HousePack2_2Upload_blend.zip
+    * 74698_BalconyUpload_blend.zip
+    * 74699_ChimneyUpload_blend.zip
+    * 74700_BuildingExtensionsUpload_blend.zip
+    * 74701_StairsUpload_blend.zip
+    * 74702_ExtraRoof1Upload_blend.zip
+    * 74703_SignsUpload_blend.zip
+
+----------------------------------------
+
+Title:
+    Medieval Props Pack 2
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-props-pack-2
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 55181_props2.zip
+
+----------------------------------------
+
+Title:
+    Medieval Props Pack 3
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-props-pack-3
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 55189_props3.zip
+
+----------------------------------------
+
+Title:
+    Medieval Smith Pack
+
+Author:
+    Daniel Andersson
+
+URL:
+    http://opengameart.org/content/medieval-smith-pack
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+Copyright/Attribution Notice:
+    None required, but it would be nice if you could credit Daniel Andersson.
+
+File(s):
+    * 75579_Smith1Upload_blend.zip
+
+----------------------------------------
+
+Title:
+    Robo Welder
+
+Author:
+    Bartheinz
+
+URL:
+    http://opengameart.org/content/robo-welder
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * Robot_Welder.zip
+    * Robot_WelderUnity.zip
+
+----------------------------------------
+
+Title:
+    Female Npc
+
+Author:
+    umask007
+
+URL:
+    http://opengameart.org/content/female-npc
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    Eye texture:
+http://opengameart.org/content/eyeballs
+Hair:
+http://www.blendswap.com/blends/view/48987
+Base model was made with makehuman.
+
+File(s):
+    * femaleNpc.blend.zip
+
+----------------------------------------
+
+Title:
+    Rigged, textured Executioner
+
+Author:
+    thecubber
+
+URL:
+    http://opengameart.org/content/rigged-textured-executioner
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+Copyright/Attribution Notice:
+    Model by thecubber, commissioned by the OpenGameArt.org community (http://opengameart.org)
+
+File(s):
+    * exec_rigged.blend_.7z
+    * executioner_nude.blend_.7z
+
+----------------------------------------
+
+Title:
+    Dark Elf, game-ready and animated
+
+Author:
+    Danimal
+
+URL:
+    http://opengameart.org/content/dark-elf-game-ready-and-animated
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    Credit Contmike, Danimal and Lamoot 
+
+File(s):
+    * DarkElf-Final.zip
+
+----------------------------------------
+
+Title:
+    Elf, game-ready and animated
+
+Author:
+    Danimal
+
+URL:
+    http://opengameart.org/content/elf-game-ready-and-animated
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    Credit Contmike and Danimal
+
+File(s):
+    * Elf-Final.zip
+
+----------------------------------------
+
+Title:
+    Animated Defender AKA Brigand
+
+Author:
+    Danimal
+
+URL:
+    http://opengameart.org/content/animated-defender-aka-brigand
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    You need to credit:
+Konstantin Maystrenko->Concept;
+AnthonyMyers->Modeller;
+Danimal->Retopo/Rigging/Animation
+
+File(s):
+    * Defender.zip
+
+----------------------------------------
+
+Title:
+    Tetine Elfe
+
+Author:
+    Tetine
+
+URL:
+    http://opengameart.org/content/tetine-elfe
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * Tetine_Elfe.blend
+
+----------------------------------------
+
+Title:
+    Mech
+
+Author:
+    Skorpio
+
+URL:
+    http://opengameart.org/content/mech
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+
+File(s):
+    * mech4.zip
+
+----------------------------------------
+
+Title:
+    Rigged, textured Barbarian
+
+Author:
+    thecubber
+
+URL:
+    http://opengameart.org/content/rigged-textured-barbarian
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+Copyright/Attribution Notice:
+    Model by thecubber, commissioned by the OpenGameArt.org community (http://opengameart.org)
+
+File(s):
+    * low_barbarian_rig_051.zip
+
+----------------------------------------
+
+Title:
+    Rigged, textured Reptile
+
+Author:
+    thecubber
+
+URL:
+    http://opengameart.org/content/rigged-textured-reptile
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+Copyright/Attribution Notice:
+    Model by thecubber, commissioned by the OpenGameArt.org community (http://opengameart.org)
+
+File(s):
+    * raptile_rig_fin.blend_.7z
+
+----------------------------------------
+
+Title:
+    Bag of coins
+
+Author:
+    yd
+
+URL:
+    http://opengameart.org/content/bag-of-coins
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * purse01.blend
+
+----------------------------------------
+
+Title:
+    Fantasy Training Target
+
+Author:
+    Danimal
+
+URL:
+    http://opengameart.org/content/fantasy-training-target
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    A link back to:
+http://opengameart.org/users/danimal
+
+File(s):
+    * TrainingTarget.zip
+
+----------------------------------------
+
+Title:
+    Mecha Training Dummy
+
+Author:
+    Danimal
+
+URL:
+    http://opengameart.org/content/mecha-training-dummy
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    A link back to my profile:
+http://opengameart.org/users/danimal
+
+File(s):
+    * training dummy.zip
+
+----------------------------------------
+
+Title:
+    Oil lamp
+
+Author:
+    Danimal
+
+URL:
+    http://opengameart.org/content/oil-lamp-0
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+Copyright/Attribution Notice:
+    Credit me
+
+File(s):
+    * Lamp.zip
+
+----------------------------------------
+
+Title:
+    Adventurer-militia-peasant low poly
+
+Author:
+    Danimal
+
+URL:
+    http://opengameart.org/content/adventurer-militia-peasant-low-poly
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    Inclusion in credits if you use the model
+
+File(s):
+    * Adventurer-Militia.zip
+    * 3 more skins.zip
+
+----------------------------------------
+
+Title:
+    Painterly Spell Icons part 3
+
+Author:
+    J. W. Bjerk
+
+URL:
+    http://opengameart.org/content/painterly-spell-icons-part-3
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+Copyright/Attribution Notice:
+    J. W. Bjerk (eleazzaar) -- www.jwbjerk.com/art  -- find this and other open art at: http://opengameart.org
+
+File(s):
+    * painterly-spell-icons-3.zip
+
+----------------------------------------
+
+Title:
+    Painterly Spell Icons part 4
+
+Author:
+    eleazzaar
+
+URL:
+    http://opengameart.org/content/painterly-spell-icons-part-4
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+Copyright/Attribution Notice:
+    J. W. Bjerk (eleazzaar) -- www.jwbjerk.com/art  -- find this and other open art at: http://opengameart.org
+
+File(s):
+    * painterly-spell-icons-4.zip
+
+----------------------------------------
+
+Title:
+    Painterly Spell Icons part 1
+
+Author:
+    J. W. Bjerk
+
+URL:
+    http://opengameart.org/content/painterly-spell-icons-part-1
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+Copyright/Attribution Notice:
+    J. W. Bjerk (eleazzaar) -- www.jwbjerk.com/art  -- find this and other open art at: http://opengameart.org
+
+File(s):
+    * painterly-spell-icons-1.zip
+
+----------------------------------------
+
+Title:
+    Painterly Spell Icons part 2
+
+Author:
+    eleazzaar
+
+URL:
+    http://opengameart.org/content/painterly-spell-icons-part-2
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+Copyright/Attribution Notice:
+    J. W. Bjerk (eleazzaar) -- www.jwbjerk.com/art  -- find this and other open art at: http://opengameart.org
+
+File(s):
+    * painterly-spell-icons-2.zip
+
+----------------------------------------
+
+Title:
+    Weapon Icons 32x32px (painterly)
+
+Author:
+    Scrittl
+
+URL:
+    http://opengameart.org/content/weapon-icons-32x32px-painterly
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+
+File(s):
+    * WeaponIcons32x32.zip
+    * weaponIcons32x32_png_Transparent.zip
+    * weaponIcons32x32_GIMP_XCF.zip
+
+----------------------------------------
+
+Title:
+    Ice Spell Icons
+
+Author:
+    HorrorPen
+
+URL:
+    http://opengameart.org/content/ice-spell-icons
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * Ice Icons.zip
+
+----------------------------------------
+
+Title:
+    Attack Icons Wesnoth
+
+Author:
+    eleazzaar
+
+URL:
+    http://opengameart.org/content/attack-icons-wesnoth
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+Copyright/Attribution Notice:
+    J. W. Bjerk (eleazzaar) -- www.jwbjerk.com/art -- find this and other open art at: http://opengameart.org
+
+File(s):
+    * attacks.7z
+
+----------------------------------------
+
+Title:
+    colored ability icons
+
+Author:
+    random223
+
+URL:
+    http://opengameart.org/content/colored-ability-icons
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+
+SPECIAL ATTRIBUTION INSTRUCTIONS:
+    Ancient Beast project http://AncientBeast.com
+random223 http://random223.deviantart.com
+
+File(s):
+    * old Ancient Beast icons.zip
+
+----------------------------------------
+
+Title:
+    3D Castle / Dungeon Tileset Extended
+
+Author:
+    rubberduck
+
+URL:
+    http://opengameart.org/content/3d-castle-dungeon-tileset-extended
+
+License(s):
+    * CC0 ( http://creativecommons.org/publicdomain/zero/1.0/legalcode )
+
+File(s):
+    * dungeon-tileset-extended.zip
+
+----------------------------------------
+
+Title:
+    Crossbow
+
+Author:
+    MikeeUSA
+
+URL:
+    http://opengameart.org/content/crossbow-0
+
+License(s):
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * crossbow3.blend
+    * crossbowwork.zip
+
+----------------------------------------
+
+Title:
+    Short Sword
+
+Author:
+    MikeeUSA
+
+URL:
+    http://opengameart.org/content/short-sword
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * shortsword.blend
+
+----------------------------------------
+
+Title:
+    longsword
+
+Author:
+    MikeeUSA
+
+URL:
+    http://opengameart.org/content/longsword
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * longsword.blend
+
+----------------------------------------
+
+Title:
+    Broad Axe
+
+Author:
+    MikeeUSA
+
+URL:
+    http://opengameart.org/content/broad-axe
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * broadaxe.blend
+
+----------------------------------------
+
+Title:
+    Rapier
+
+Author:
+    MikeeUSA
+
+URL:
+    http://opengameart.org/content/rapier-0
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * rapier.blend
+
+----------------------------------------
+
+Title:
+    Composite Bow
+
+Author:
+    MikeeUSA
+
+URL:
+    http://opengameart.org/content/composite-bow
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * compositebowwork.blend
+
+----------------------------------------
+
+Title:
+    longbow
+
+Author:
+    MikeeUSA
+
+URL:
+    http://opengameart.org/content/longbow
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * longbowwork3.blend
+
+----------------------------------------
+
+Title:
+    Baloon
+
+Author:
+    MikeeUSA
+
+URL:
+    http://opengameart.org/content/baloon
+
+License(s):
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * baloon.blend
+
+----------------------------------------
+
+Title:
+    3 houses
+
+Author:
+    Alejandro CG
+
+URL:
+    http://opengameart.org/content/3-houses
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+
+File(s):
+    * 3houses.zip
+
+----------------------------------------
+
+Title:
+    Animated Priest
+
+Author:
+    Clement Wu, Nikolaus & Botanic
+
+URL:
+    http://opengameart.org/content/animated-priest
+
+License(s):
+    * CC-BY 3.0 ( http://creativecommons.org/licenses/by/3.0/legalcode )
+    * CC-BY-SA 3.0 ( http://creativecommons.org/licenses/by-sa/3.0/legalcode )
+    * GPL 3.0 ( http://www.gnu.org/licenses/gpl-3.0.html )
+    * GPL 2.0 ( http://www.gnu.org/licenses/old-licenses/gpl-2.0.html )
+
+File(s):
+    * priest_v002.blend
+    * priest_texture.png
+
+----------------------------------------
+
+
