@@ -1,14 +1,5 @@
 hover text
-//create load bar/screen
 inventory
 combat
-//footsteps and other sound effects
-//interpolate movement
 add cooldown buttons/countdown timers
 
-
-
-done:
-added a loading screen
-added footsteps sfx --almost
-made it so that the xpbar didn't constantly recalculate its geometry

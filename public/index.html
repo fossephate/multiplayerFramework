@@ -4,73 +4,73 @@
 <head>
 	<title>mmo</title>
 	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<!--<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:700">-->
-	<!--<link rel="stylesheet" href="css/libs/bootstrap.min.css">-->
+
+
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-	<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">-->
+
 	<link rel="stylesheet" href="css/libs/mobile-console.min.css">
 	<link rel="stylesheet" href="css/libs/sweetalert.css">
 	<link rel="stylesheet" href="css/stylesheet.css">
 
 
-	<!--<script type="text/javascript" src="js/libs/jquery.min.js"></script>-->
+
 	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-	<!--<script type="text/javascript" src="js/libs/socket.io-1.3.7.js"></script>-->
-	<!--<script type="text/javascript" src="http://f1v3.net/8100/socket.io/socket.io.js"></script>-->
+
+
 	<script type="text/javascript" src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
-	<!--<script type="text/javascript" src="js/libs/bootstrap.min.js"></script>-->
+
 	<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-	<!--<script type="text/javascript" src="js/libs/three.min.js"></script>-->
+
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r74/three.min.js"></script>
-	<!--<script type="text/javascript" src="js/libs/three.dev.min.js"></script>-->
-	<!--<script type="text/javascript" src="js/libs/cannon.min.js"></script>-->
+	<!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r74/three.js"></script>-->
+
+
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
 	
 	<script type="text/javascript" src="js/libs/localforage.min.js"></script>
+	<!--<script type="text/javascript" src="js/libs/localforage.js"></script>-->
+	<!--<script type="text/javascript" src="js/libs/rhaboo.min.js"></script>-->
 
 	<script type="text/javascript" src="js/libs/cannonDebugRenderer.js"></script>
 
-	<!--<script type="text/javascript" src="js/libs/stats.min.js"></script>-->
+
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
 
 	<script type="text/javascript" src="js/libs/mobile-console.js"></script>
 
 	<script type="text/javascript" src="js/unused-atm/randomColor.js"></script>
-	<!--<script type="text/javascript" src="js/libs/laserbeam.js"></script>-->
-	<!--<script type="text/javascript" src="js/libs/goblin.js"></script>
-	<script type="text/javascript" src="js/libs/goblin.min.js"></script>-->
+
+
 	<script type="text/javascript" src="js/libs/sweetalert.min.js"></script>
 	<script type="text/javascript" src="js/libs/skyShader.js"></script>
 	<script type="text/javascript" src="js/libs/SPE.min.js"></script>
 	<script type="text/javascript" src="js/libs/THREE.Terrain.js"></script>
-	
-	
+
+
 	<script type="text/javascript" src="js/libs/projector.js"></script>
 	<script type="text/javascript" src="js/libs/canvasRenderer.js"></script>
 	<script type="text/javascript" src="js/libs/SVGRenderer.js"></script>
 	<script type="text/javascript" src="js/libs/softwareRenderer.js"></script>
-	
-	<script type="text/javascript" src="js/libs/CSS2DRenderer.js"></script>
+
+	<!--<script type="text/javascript" src="js/libs/CSS2DRenderer.js"></script>
 	<script type="text/javascript" src="js/libs/CSS3DRenderer.js"></script>
-	<script type="text/javascript" src="js/libs/CSS3DStereoRenderer.js"></script>
-	
-	
+	<script type="text/javascript" src="js/libs/CSS3DStereoRenderer.js"></script>-->
+
+
 	<script type="text/javascript" src="js/libs/blendCharacter.js"></script>
-	
-	<script type="text/javascript" src="js/libs/ColladaLoader.js"></script>
-	<!--<script type="text/javascript" src="js/libs/ColladaLoader2.js"></script>-->
-	<script type="text/javascript" src="js/libs/AssimpJSONLoader.js"></script>
-	
+
+	<!--<script type="text/javascript" src="js/libs/ColladaLoader.js"></script>-->
+
 	<script type="text/javascript" src="js/libs/virtualjoystick.js"></script>
 	<script type="text/javascript" src="js/functions.js"></script>
 	<script type="text/javascript" src="js/client.js"></script>
 	<script type="text/javascript" src="js/login.js"></script>
-	<!--<script type="text/javascript" src="js/libs/threeInspector.js"></script>-->
 
-	<!--<link rel="shortcut icon" href="img/icon.png">-->
+
+
 </head>
 
 <body>
@@ -81,7 +81,7 @@
 			<input id="msgIn" autocomplete="off" />
 			<button id="send">Send</button>
 		</div>
-		
+
 		<div id="hudButtons">
 			<button id="jumpButton" class="btn btn-default" style="z-index: 9;">Jump</button><br>
 			<button id="shootButton" class="btn btn-default" style="z-index: 9;">Shoot</button><br>
@@ -93,12 +93,9 @@
 
 
 
-
-
-
 	<div class="modal fade" id="titleScreen" role="dialog">
 		<div class="modal-dialog">
-			<!-- Modal content-->
+
 			<div class="modal-content">
 				<div class="modal-header">
 					<h4 class="modal-title">MMO</h4>
@@ -107,19 +104,19 @@
 				<div class="modal-body">
 
 
-					<form role="form">
+					<form>
 						<div id="guest-ls" class="form-group">
 							<button type="button" data-toggle="modal" data-target="#login-signup" class="btn btn-play btn-primary btn-needs-server">Login / Signup</button>
-							<br clear="both">
+							<br>
 						</div>
 
 						<div id="characterSelector" class="btn-group" data-toggle="input">
-							
+
 							<div class="col-xs-6 col-md-4">
 								<label class="radio-thumbnail text-center">
 									<input class="whichChar" value="wizard" type="radio" name="radios">
 									<div class="thumbnail">
-										<img src="./img/snow1.jpg" alt="...">
+										<img src="assets/models/icons/spells/painterly-spell-icons-1/fireball-sky-1.png" alt="...">
 										<div class="caption">
 											<h5>Guest</h5>
 											<h5>Lvl 0 Wizard</h5>
@@ -128,12 +125,12 @@
 									</div>
 								</label>
 							</div>
-							
+
 							<div class="col-xs-6 col-md-4">
 								<label class="radio-thumbnail text-center">
 									<input class="whichChar" value="rogue" type="radio" name="radios">
 									<div class="thumbnail">
-										<img src="./img/snow1.jpg" alt="...">
+										<img src="assets/models/icons/spells/painterly-spell-icons-1/enchant-acid-3.png" alt="...">
 										<div class="caption">
 											<h5>Guest</h5>
 											<h5>Lvl 0 Rogue</h5>
@@ -142,12 +139,12 @@
 									</div>
 								</label>
 							</div>
-							
+
 							<div class="col-xs-6 col-md-4">
 								<label class="radio-thumbnail text-center">
 									<input class="whichChar" value="paladin" type="radio" name="radios">
 									<div class="thumbnail">
-										<img src="./img/snow1.jpg" alt="...">
+										<img src="assets/models/icons/spells/painterly-spell-icons-1/protect-orange-3.png" alt="...">
 										<div class="caption">
 											<h5>Guest</h5>
 											<h5>Lvl 0 Paladin</h5>
@@ -156,7 +153,7 @@
 									</div>
 								</label>
 							</div>
-							
+
 						</div>
 
 						<div class="form-group">
@@ -164,11 +161,11 @@
 							<button type="button" onclick="$('#settings, #instructions').toggle();return false;" class="btn btn-info btn-settings">
 								<i class="glyphicon glyphicon-cog"></i>
 							</button>
-							<br clear="both">
+							<br>
 						</div>
 						<div class="form-group" style="text-align: center;">
 							<b id="numOfPlayers">0</b> Player(s) online
-							<br clear="both">
+							<br>
 						</div>
 						<div id="settings" class="checkbox" style="display:none;">
 							<hr>
@@ -248,7 +245,7 @@
 										<li>A: That isn't a question, and, I know, its a work in progress.</li>
 									</ul>
 								</li>
-								
+
 								<li>
 									Q: Is this on github?
 									<ul>
@@ -257,272 +254,182 @@
 								</li>
 							</ul>
 							
-							
 						</div>
-						<!--<hr style="margin-top: 4px; margin-bottom: 4px;">
-						<div id="warning" class="text-muted" style="text-align: left;">
-							MIT <a href="MIT.txt">License</a>
-						</div>
-					</div>
-					<!--<br clear="both">-->
-
-
-
-
-
-
-
-
-
-
-
-
-
+						
 					</div>
 					<div class="modal-footer">
 						<div id="warning" class="text-muted small" style="text-align: left;">
 							MIT <a href="MIT.txt">License</a>
 						</div>
-						<!--<span class="label label-warning">MIT <a href="MIT.txt">License</a></span>-->
+						
 					</div>
 				</div>
 			</div>
 		</div>
+	</div>
 
 
 
 
 
+	<div class="modal fade" id="login-signup" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-body">
 
+					<ul class="nav nav-tabs nav-justified">
+						<li class="active"><a href="#tab1" data-toggle="tab">Sign in</a></li>
+						<li><a href="#tab2" data-toggle="tab">New account</a></li>
+					</ul>
 
-
-
-
-
-
-
-
-
-
-
-
-
-		<!-- Modal -->
-		<div class="modal fade" id="login-signup" role="dialog">
-			<div class="modal-dialog">
-				<!-- Modal content-->
-				<div class="modal-content">
-					<!--<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal">&times;</button>
-					<h4 class="modal-title">Modal Header</h4>
-				</div>-->
-
-					<div class="modal-body">
-
-						<ul class="nav nav-tabs nav-justified">
-							<li class="active"><a href="#tab1" data-toggle="tab">Sign in</a></li>
-							<li><a href="#tab2" data-toggle="tab">New account</a></li>
-						</ul>
-						<div class="tab-content">
-
-
-
-							<div class="tab-pane active" id="tab1">
-
-
-
-								<form id="login-form" class="form-signin">
-									<h2 class="form-signin-heading">Sign in</h2>
-									<label for="lmail" class="sr-only">Username</label>
-									<input type="username" id="lmail" class="form-control" placeholder="Username" required autofocus>
-									<label for="lpass" class="sr-only">Password</label>
-									<input type="password" id="lpass" class="form-control" placeholder="Password" required>
-									<div class="checkbox">
-										<label>
+					<div class="tab-content">
+						<div class="tab-pane active" id="tab1">
+							<form id="login-form" class="form-signin">
+								<h2 class="form-signin-heading">Sign in</h2>
+								<label for="lmail" class="sr-only">Username</label>
+								<input type="text" id="lmail" class="form-control" placeholder="Username" required autofocus>
+								<label for="lpass" class="sr-only">Password</label>
+								<input type="password" id="lpass" class="form-control" placeholder="Password" required>
+								<div class="checkbox">
+									<label>
 											<input type="checkbox" id="lremember" value="remember-me"> Remember me
 										</label>
-									</div>
-									<input class="btn btn-lg btn-primary btn-block" id="login" type="submit" value="Sign in">
-								</form>
+								</div>
+								<input class="btn btn-lg btn-primary btn-block" id="login" type="submit" value="Sign in">
+							</form>
+						</div>
 
-								<!--<form id="login-form" action="" method="post">
+						<div class="tab-pane" id="tab2">
+							<form id="signup-form" method="post">
+								<label class="" for="email">Email</label>
+								<input class="" name="email" id="smail" type="email" placeholder="Email">
+								<span class="">Error message here!</span>
 
-									<label class="" for="email">Email</label>
-									<input class="" name="email" id="lmail" type="username" placeholder="Email / Username">
-									<span class="">Error message here!</span>
+								<label class="" for="username">Username</label>
+								<input class="" name="username" id="suser" type="text" placeholder="Username">
+								<span class="">Error message here!</span>
+								<label class="" for="password">Password</label>
 
-									<label class="" for="password">Password</label>
-									<input class="" id="lpass" type="password" placeholder="Password">
-									<a href="" class="hide-password">Show</a>
-									<span class="cd-error-message">Error message here!</span>
-
-									<input type="checkbox" id="lremember" checked>
-									<label for="lremember">Remember me</label>
-									<input class="" type="submit" id="login">
-								</form>
-								<p class="cd-form-bottom-message"><a href="">Forgot your username / password?</a></p>-->
-
-
-
-
-
-
-
-
-
-							</div>
-
-							<div class="tab-pane" id="tab2">
-
-
-
-
-
-								<form id="signup-form" action="" method="post">
-
-									<label class="" for="email">Email</label>
-									<input class="" name="email" id="smail" type="email" placeholder="Email">
-									<span class="">Error message here!</span>
-
-									<label class="" for="username">Username</label>
-									<input class="" name="username" id="suser" type="username" placeholder="Username">
-									<span class="">Error message here!</span>
-
-									<label class="" for="password">Password</label>
-									<input class="" name="password" id="spass" type="password" placeholder="Password">
-									<a href="" class="hide-password">Show</a>
-									<span class="">Error message here!</span>
-									<input type="checkbox" id="agree">
-									<label for="agree" id="agree-label">I agree to nothing</label>
-									<input class="" type="submit" id="signup">
-								</form>
-
-
-
-
-
-
-
-
-
-							</div>
+								<input class="" name="password" id="spass" type="password" placeholder="Password">
+								<a href="" class="hide-password">Show</a>
+								<span class="">Error message here!</span>
+								<input type="checkbox" id="agree">
+								<label for="agree" id="agree-label">I agree to nothing</label>
+								<input class="" type="submit" id="signup">
+							</form>
 						</div>
 					</div>
-					<!--<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				</div>-->
+
 				</div>
 			</div>
 		</div>
+	</div>
 
 
 
 
 
+	<div class="modal fade" id="loadScreen" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
 
+				<div class="modal-header text-center">
+					<h4 class="modal-title">Loading (This will take a few minutes the first time)</h4>
+				</div>
 
+				<div class="modal-body">
 
-
-
-
-
-
-
-
-		<!-- Modal -->
-		<div class="modal fade" id="characterCreatorScreen" role="dialog">
-			<div class="modal-dialog">
-				<!-- Modal content-->
-				<div class="modal-content">
-					<div class="modal-header text-center">
-						<button type="button" class="close" onclick="$('#characterCreatorScreen').modal('hide');">&times;</button>
-						<h4 class="modal-title">Character Creator</h4>
+					<div class="progress">
+						<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
 					</div>
 
-					<div class="modal-body">
+				</div>
 
-						<form id="characterCreatorForm">
+			</div>
+		</div>
+	</div>
 
-							<!-- 							<div class="row"> -->
-							<div id="classSelector" class="btn-group" data-toggle="input">
 
-								<div class="col-xs-6 col-md-4">
-									<label class="radio-thumbnail text-center">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<div class="modal fade" id="characterCreatorScreen" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+
+				<div class="modal-header text-center">
+					<button type="button" class="close" onclick="$('#characterCreatorScreen').modal('hide');">&times;</button>
+					<h4 class="modal-title">Character Creator</h4>
+				</div>
+
+				<div class="modal-body">
+
+					<form id="characterCreatorForm">
+						<div id="classSelector" class="btn-group" data-toggle="input">
+							<div class="col-xs-6 col-md-4">
+								<label class="radio-thumbnail text-center">
 										<input value="wizard" type="radio" name="radios" checked>
 										<div class="thumbnail">
-											<img src="./img/snow1.jpg" alt="...">
+											<img src="assets/models/icons/spells/painterly-spell-icons-1/fireball-sky-1.png" alt="...">
 											<div class="caption">
 												<h3>Wizard</h3>
 												<p>Casts Spells</p>
 											</div>
 										</div>
 									</label>
-								</div>
-
-								<div class="col-xs-6 col-md-4">
-									<label class="radio-thumbnail text-center">
+							</div>
+							
+							<div class="col-xs-6 col-md-4">
+								<label class="radio-thumbnail text-center">
 										<input value="rogue" type="radio" name="radios">
 										<div class="thumbnail">
-											<img src="./img/grass1.jpg" alt="...">
+											<img src="assets/models/icons/spells/painterly-spell-icons-1/enchant-acid-3.png" alt="...">
 											<div class="caption">
 												<h3>Rogue</h3>
 												<p>Is also a Wizard</p>
 											</div>
 										</div>
 									</label>
-								</div>
-
-								<div class="col-xs-6 col-md-4">
-									<label class="radio-thumbnail text-center">
+							</div>
+							
+							<div class="col-xs-6 col-md-4">
+								<label class="radio-thumbnail text-center">
 										<input value="paladin" type="radio" name="radios">
 										<div class="thumbnail">
-											<img src="./img/beach_sand.png" alt="...">
+											<img src="assets/models/icons/spells/painterly-spell-icons-1/protect-orange-3.png" alt="...">
 											<div class="caption">
 												<h3>Paladin</h3>
 												<p>Is also a Wizard</p>
 											</div>
 										</div>
 									</label>
-								</div>
 							</div>
-							<!-- 							</div> -->
+						</div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-							<div class="input-group">
-								<span class="input-group-addon" id="sizing-addon2">Character Name:</span>
-								<input id="CCName" type="text" class="form-control" placeholder="Username" aria-describedby="sizing-addon2">
-							</div>
-
-							<br>
-
-
-							<input class="btn btn-lg btn-primary btn-block" type="submit" value="Create Character">
-
-						</form>
-
-
-					</div>
-
-					<!--<div class="modal-footer">
-					</div>-->
-
+						<div class="input-group">
+							<span class="input-group-addon" id="sizing-addon2">Character Name:</span>
+							<input id="CCName" type="text" class="form-control" placeholder="Username" aria-describedby="sizing-addon2">
+						</div>
+						<br>
+						<input class="btn btn-lg btn-primary btn-block" type="submit" value="Create Character">
+					</form>
 				</div>
+
 			</div>
 		</div>
-
+	</div>
 
 </body>
 

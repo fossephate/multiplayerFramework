@@ -299,6 +299,12 @@ node.prototype.collisionCheck = function(xMin, xMax, yMin, yMax, zMin, zMax) {
 };
 
 
+function spell(name, castTime) {
+	this.name = name;
+	this.castTime = castTime;
+}
+
+
 
 
 
@@ -348,6 +354,8 @@ function player(owner, username, classType) {
 	this.cooldowns.globalCooldown = 0;
 	this.animTo = "idle";
 	this.warpTime = 0.2;
+	this.casting = "none";
+	this.spells = [];
 
 	this.load = function(savedNode) {
 		var sn = savedNode;
@@ -365,7 +373,7 @@ function player(owner, username, classType) {
 		this.experience = sn.experience;
 	}
 }
-player.prototype = Object.create(node.prototype); // See note below
+player.prototype = Object.create(node.prototype);
 player.prototype.constructor = player;
 
 
@@ -441,6 +449,11 @@ player.prototype.reduceCooldowns = function() {
 	}
 };
 
+
+player.prototype.cast = function(spell) {
+	
+};
+
 player.prototype.move = function() {
 	var data = this.owner.data;
 	var keys = this.owner.keys;
@@ -509,16 +522,12 @@ player.prototype.move = function() {
 		var pVec0 = new CANNON.Vec3().copy(this.phys.position).vadd(new CANNON.Vec3(0, 0, 1));
 		var tVec1 = new THREE.Vector3(2, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.z);
 		var pVec1 = pVec0.vsub(new CANNON.Vec3(tVec1.x, tVec1.y, tVec1.z));
-
 		var tVec2 = new THREE.Vector3(1000, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.z);
 		var pVec2 = pVec0.vsub(new CANNON.Vec3(tVec2.x, tVec2.y, tVec2.z));
 		var test = {};
 		test.one = pVec1;
 		test.two = pVec2;
 		io.emit('shot', test);
-
-		
-
 		var result = new CANNON.RaycastResult();
 		gs.c.pw.raycastClosest(pVec1, pVec2, {}, result);
 		if (result.hasHit) {
@@ -538,10 +547,17 @@ player.prototype.move = function() {
 	if (data.target) {
 		this.target = data.target;
 	}
+	
+	if(data.cast) {
+		if(this.spells.indexOf(data.cast) > -1 && this.casting == "none") {
+			this.casting = data.cast;
+			this.cast(data.cast);
+		}
+	}
 
 	if (keys.indexOf("castFireball") > -1 && this.target != null && this.cooldowns.globalCooldown === 0) {
 		this.animTo = "fireball";
-		this.cooldowns.globalCooldown = 60 * 2;
+		this.cooldowns.globalCooldown = 60 * 10;
 
 		var playerNode = gs.findPlayerByName(this.target);
 		if (playerNode != null) {
@@ -759,7 +775,6 @@ io.on('connection', function(socket) {
 	console.log("gs.map.length: " + gs.map.length);
 
 	socket.on('disconnect', function() {
-
 		var i;
 
 		//ADDED
@@ -770,6 +785,7 @@ io.on('connection', function(socket) {
 		for (i = 0; i < usernames.length; i++) {
 			var clnode2 = gs.clients[socket.id].getNode(i);
 			tnodes.push(clnode2.saveObj());
+			
 			io.emit('numOfPlayersOnline', gs.playersOnline);
 			gs.c.pw.removeBody(clnode2.phys);
 			

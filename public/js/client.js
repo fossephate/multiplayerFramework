@@ -17,7 +17,7 @@ var tree2;
 var world1;
 var hfBody;
 var socket;
-var debug = false;
+var debug = true;
 var sound1;
 //var models = {};
 
@@ -380,6 +380,16 @@ $(function() {
 		//world1.game.player.username = character
 		// hide the title screen
 		$('#titleScreen').modal('hide');
+		$('#loadScreen').modal({
+			backdrop: "static",
+			keyboard: false,
+		});
+		$(".progress-bar").animate({
+  		width: "0%"
+		}, 10);
+
+		
+		
 		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
 			//world1.t.camera.aspect = (window.innerWidth/2)/(window.innerHeight/2);
 			//world1.t.camera.aspect = (window.innerWidth/2)/(window.innerHeight/2);
@@ -451,9 +461,12 @@ $(function() {
 		world1.game.player.username = data.username;
 		
 		var loadScreen = new createLoadScreen();
-		world1.t.AH.onProgressFuncs.push(function(progress) {
-			loadScreen.update(progress);
-		});
+		/*world1.t.AH.onProgressFuncs.push(function(progress) {
+			$(".progress-bar").animate({
+  			width: progress+"%"
+			}, 10);
+			//loadScreen.update(progress);
+		});*/
 		
 		world1.t.AH.onloadFuncs.push(function(progress) {
 			loadScreen.update(1);
@@ -463,9 +476,10 @@ $(function() {
 		// list of models to load
 		var modelList = {
 			"wizard": "assets/models/characters/players/wizard/final/wizard.json",
-			"player": "models/wizard/final4.json",
-			"treeBark": "models/tree1.json",
-			"treeLeaves": "models/tree2.json",
+			"paladin": "assets/models/characters/players/wizard/final/wizard.json",
+			"rogue": "assets/models/characters/players/wizard/final/wizard.json",
+			"treeBark": "assets/models/enviroment/trees/animated-tree/final/treeBark.json",
+			"treeLeaves": "assets/models/enviroment/trees/animated-tree/final/treeLeaves.json",
 			"abababe": "models/abababe.json",
 		};
 		// Load models
@@ -653,28 +667,36 @@ $(function() {
 					sound1.setRefDistance(20);
 					sound1.position.set(0, 0, -28);*/
 
-					world1.t.HUD.items.healthBar.update(vpd[i].health/100);
-					var percent = vpd[i].experience/(100*(vpd[i].level+1));
+					//world1.t.HUD.items.healthBar.update(vpd[i].health/100);
+					//var percent = vpd[i].experience/(100*(vpd[i].level+1));
 					//world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
-					world1.t.HUD.items.XPBar.update(percent);
-					world1.t.HUD.items.levelText.update(vpd[i].level);
+					//world1.t.HUD.items.XPBar.update(percent);
+					//world1.t.HUD.items.levelText.update(vpd[i].level);
 					continue;
 				}
 				if (typeof vp[vpd[i].username] == "undefined") {
 					//vp[vpd[i].username] = "placeholder";
+					var newPlayer;
+					switch(vpd[i].class) {
+						case "wizard":
+							newPlayer = new wizard(vpd[i]);
+							break;
+						case "rogue":
+							newPlayer = new rogue(vpd[i]);
+							break;
+						case "paladin":
+							newPlayer = new paladin(vpd[i]);
+							break;
+					}
 					
 					
-					if(world1.t.AH.loadedModels.indexOf("player") > -1) {
+					
+					
+					/*if(world1.t.AH.loadedModels.indexOf("player") > -1) {
 						var player = new THREE.BlendCharacter(world1.t.AH);
 						player.loadFast("player");
 						
 						player.scale.set(0.02, 0.02, 0.02);
-						
-						var q = new THREE.Quaternion();
-						q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
-						player.quaternion.multiply(q);
-						//q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
-						//player.quaternion.multiply(q);
 						
 						
 						var tempBody = createPhysBody("capsule")(1, 3.2);
@@ -692,7 +714,7 @@ $(function() {
 
 						pObject.items.classLabel = new makeTextSprite(vpd[i].class);
 						pObject.items.classLabel.scale.set(30, 30, 1);
-						pObject.items.classLabel.position.set(0, 150, 0);
+						pObject.items.classLabel.position.set(0, 350, 0);
 						//pObject.items.classLabel.position.copy(vpd[i].position);
 						//pObject.items.classLabel.position.y += 150;
 						pObject.mesh.add(pObject.items.classLabel);
@@ -700,7 +722,7 @@ $(function() {
 						//pObject.items.healthLabel = new createHealthText(vpd[i].health);
 						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
 						pObject.items.healthLabel.mesh.scale.set(20, 20, 1);
-						pObject.items.healthLabel.mesh.position.set(0, 200, 0);
+						pObject.items.healthLabel.mesh.position.set(0, 400, 0);
 						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
 						//pObject.items.healthLabel.mesh.position.y += 200;
 						pObject.mesh.add(pObject.items.healthLabel.mesh);
@@ -714,7 +736,7 @@ $(function() {
 						
 						pObject.mesh.username = vpd[i].username;
 						vp[vpd[i].username] = pObject;
-					}
+					}*/
 					
 					
 					
@@ -749,66 +771,8 @@ $(function() {
 					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
 					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
 				}
-
-
-
-				// ----------------------ENEMY --------------------
-				// ------------------------------------------------
-				// ------------------------------------------------
-			} else if (vpd[i].type == "enemy") {
-				if (typeof vp[vpd[i].username] == "undefined") {
-					
-					if(world1.t.AH.loadedModels.indexOf("abababe") > -1) {
-						
-						var pObject = createEnemy("abababe");
-						
-						
-						pObject.items.userLabel = new makeTextSprite(vpd[i].username);
-						pObject.items.userLabel.scale.set(1, 1, 1);
-						//pObject.items.userLabel.position.copy(vpd[i].position);
-						//pObject.items.userLabel.position.y += 250;
-						pObject.items.userLabel.position.set(0, 250, 0);
-						
-						pObject.mesh.add(pObject.items.userLabel);
-
-						/*pObject.items.classLabel = new makeTextSprite(vpd[i].class);
-						pObject.items.classLabel.position.set(0, 200, 0);
-						pObject.items.classLabel.scale.set(30, 30, 1);
-						pObject.mesh.add(pObject.items.classLabel);*/
-						
-						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
-						pObject.items.healthLabel.mesh.scale.set(1, 1, 1);
-						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
-						pObject.items.healthLabel.mesh.position.set(0, 200, 0);
-						//pObject.items.healthLabel.mesh.position.y += 200;
-						//pObject.items.healthLabel.mesh.position.set(0, 20, 0);
-						pObject.mesh.add(pObject.items.healthLabel.mesh);
-						
-						
-						pObject.mesh.username = vpd[i].username;
-						vp[vpd[i].username] = pObject;
-					}
-					
-				} else if (vp[vpd[i].username] != "placeholder" && typeof vp[vpd[i].username] != "undefined") {
-
-					vp[vpd[i].username].phys.position.copy(vpd[i].position);
-					vp[vpd[i].username].phys.quaternion.copy(vpd[i].quaternion);
-					vp[vpd[i].username].phys.velocity.copy(vpd[i].velocity);
-
-					vp[vpd[i].username].warpTime = vpd[i].warpTime;
-					vp[vpd[i].username].animTo = vpd[i].animTo;
-					
-					//vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
-
-					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI/2);
-					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
-					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
-				}
 				
 			}
-
-
-
 		}
 	});
 
@@ -920,13 +884,13 @@ $(function() {
 
 
 	world1.t.AH = new assetHolder();
-	/*var modelList = {
-		"player": "models/marineAnim.json",
-		"treeBark": "models/tree1.json",
-		"treeLeaves": "models/tree2.json",
-		"abababe": "models/abababe.json",
-	};
-	world1.t.AH.loadModels(modelList);*/
+	var fileList = [
+		"assets/models/characters/players/wizard/final/wizard.json",
+		"assets/models/enviroment/trees/animated-tree/final/treeBark.json",
+		"assets/models/enviroment/trees/animated-tree/final/treeLeaves.json",
+		//"models/abababe.json",
+	];
+	world1.t.AH.loadAssets(fileList);
 
 
 
@@ -1125,7 +1089,7 @@ $(function() {
 						//terrainScene.recieveShadow = true;
 						world1.t.scene.add(terrainScene.children[0]);
 					};
-					heightmap.src = "img/heightmap2.png";
+					heightmap.src = "img/heightmap.png";
 				});
 			});
 		});
@@ -1147,7 +1111,7 @@ $(function() {
 
 
 	world1.t.AH.onloadFuncs.push(function() {
-		var player = new THREE.BlendCharacter(world1.t.AH);
+		/*var player = new THREE.BlendCharacter(world1.t.AH);
 		player.loadFast("player");
 		player.scale.set(0.02, 0.02, 0.02);
 		
@@ -1181,7 +1145,10 @@ $(function() {
 		
 		
 		var tempBody = createPhysBody("capsule", 1)(1, 3.2); //3.76
-		world1.game.player.tObject = new createPhysicsObject(player, tempBody, world1, "player");
+		world1.game.player.tObject = new createPhysicsObject(player, tempBody, world1, "player");*/
+		
+		world1.game.player.tObject = new wizard();
+		
 	});
 
 
@@ -1193,7 +1160,7 @@ $(function() {
 		var treeBarkMesh = new THREE.BlendCharacter(world1.t.AH);
 		treeBarkMesh.loadFast("treeBark");
 		treeBarkMesh.scale.set(2, 2, 2);
-		treeBarkMesh.applyWeight('windAction', 1/3);
+		//treeBarkMesh.applyWeight('windAction', 1/3);
 		var q = new THREE.Quaternion();
 		q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
 		treeBarkMesh.quaternion.multiply(q);
@@ -1201,7 +1168,7 @@ $(function() {
 		treeBarkMesh.quaternion.multiply(q);
 		var treeLeavesMesh = new THREE.BlendCharacter(world1.t.AH);
 		treeLeavesMesh.loadFast("treeLeaves");
-		treeLeavesMesh.applyWeight('windAction', 1/3);
+		//treeLeavesMesh.applyWeight('windAction', 1/3);
 		treeBarkMesh.add(treeLeavesMesh);
 		var tempBody = createPhysBody("capsule", 1)(1, 3.2);
 		tree1 = new createPhysicsObject(treeBarkMesh, tempBody, world1, false);
@@ -1210,7 +1177,7 @@ $(function() {
 	
 	
 	
-	world1.t.AH.onloadFuncs.push(function() {
+	/*world1.t.AH.onloadFuncs.push(function() {
 		var enemy = new THREE.BlendCharacter(world1.t.AH);
 		enemy.loadFast("abababe");
 		enemy.scale.set(2, 2, 2);
@@ -1222,7 +1189,7 @@ $(function() {
 		enemy.quaternion.multiply(q);
 		var tempBody = createPhysBody("capsule", 1)(1, 2);
 		var pObject = new createPhysicsObject(enemy, tempBody, world1, "enemy");
-	});
+	});*/
 
 
 
@@ -1413,6 +1380,7 @@ $(function() {
 	};
 
 	function createFireball(pos1, rotation, isTarget) {
+		/*
 		var fireballSettings = {
 			maxAge: {
 				value: 1
@@ -1480,9 +1448,9 @@ $(function() {
 				var pos = pPhys.position;
 				this.position.value = this.position.value.set(pos.x, pos.y, pos.z);
 			}*/
-		};
+		/*};
 
-		return emitter1;
+		return emitter1;*/
 	}
 
 
@@ -1712,7 +1680,7 @@ $(function() {
 			
 			
 			//var dir = pMesh.rotation.y - (rclone.z + dirOffset);
-			var diff = (pry - (Math.PI/2)) - findNearestCoterminalAngle(pry, rclone.z);
+			var diff = (pry + (Math.PI/2)) - findNearestCoterminalAngle(pry, rclone.z);
 			if (wasKeyPressed) {
 				pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
 				pMesh.rotation.y -= diff/5;
@@ -1861,7 +1829,7 @@ $(function() {
 
 			var pMesh = world1.game.player.tObject.mesh;
 			var rclone = cameraOptions.rotateOffset.clone();
-			var diff = (pMesh.rotation.y - (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
+			var diff = (pMesh.rotation.y + (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
 			pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
 			if (diff > Math.PI/4) {
 				pMesh.rotation.y -= diff - Math.PI/4;
