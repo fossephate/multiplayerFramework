@@ -26,12 +26,6 @@ $(function() {
 	//(function(){var script=document.createElement('script');script.type='text/javascript';script.src='https://cdn.rawgit.com/zz85/zz85-bookmarklets/master/js/ThreeInspector.js';document.body.appendChild(script);})()
 	THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
 	//mobileConsole.show();
-	//CANNON.Quaternion.prototype.slerp = THREE.Quaternion.prototype.slerp;
-	
-	var preferences = {};
-	preferences.keyboardLayout = {};
-	
-	
 	input = {};
 	input.mouse = {};
 	input.mouse.x = 0;
@@ -63,34 +57,51 @@ $(function() {
 
 	input.keys = [];
 	input.key = {};
-	
-	input.options = {};
-	preferences.keyboardLayout = {};
-	preferences.keyboardLayout.moveForward = 87;
-	preferences.keyboardLayout.moveBackward = 83;
-	preferences.keyboardLayout.moveLeft = 65;
-	preferences.keyboardLayout.moveRight = 68;
-	preferences.keyboardLayout.jump = 32;
-	preferences.keyboardLayout.shoot = 69;
-	preferences.keyboardLayout.castFireball = 49;
 
-	preferences.keyboardLayout.left = 37;
-	preferences.keyboardLayout.right = 39;
-	preferences.keyboardLayout.up = 38;
-	preferences.keyboardLayout.down = 40;
+	input.layout = "wasd";
+	input.options = {};
+	input.options.layout = "wasd";
+	input.options.customLayout = {};
+	input.options.customLayout.moveForward = 87;
+	input.options.customLayout.moveBackward = 83;
+	input.options.customLayout.moveLeft = 65;
+	input.options.customLayout.moveRight = 68;
+	input.options.customLayout.jump = 32;
+	input.options.customLayout.shoot = 69;
+	input.options.customLayout.castFireball = 49;
+
+	input.options.customLayout.left = 37;
+	input.options.customLayout.right = 39;
+	input.options.customLayout.up = 38;
+	input.options.customLayout.down = 40;
 
 	input.action = {};
-	for (var i in preferences.keyboardLayout) {
+	for (var i in input.options.customLayout) {
 		input.action[i] = false;
 	}
-	
-	localforage.getItem('preferences').then(function(value) {
-		if(value) {
-			preferences = value;
-		}
-		localforage.setItem('preferences', preferences);
-	});
-	
+
+	input.key.space = false;
+	input.key.w = false;
+	input.key.s = false;
+	input.key.a = false;
+	input.key.d = false;
+	input.key.q = false;
+	input.key.e = false;
+	input.key.f = false;
+	input.key.b = false;
+	input.key.r = false;
+	input.key.shift = false;
+
+	input.key.up = false;
+	input.key.down = false;
+	input.key.left = false;
+	input.key.right = false;
+
+
+	input.key.n1 = false;
+	input.key.n2 = false;
+	input.key.n3 = false;
+	input.key.n4 = false;
 
 
 
@@ -164,6 +175,13 @@ $(function() {
 		for (var i = 0; i < touches.length; i++) {
 			input.touches.push(copyTouch(touches[i]));
 		}
+
+		//var evt = event.originalEvent;
+		//evt.preventDefault();
+		//var touch = evt.changedTouches[0];
+		/*if(touch.clientY < window.innerHeight/3) {
+		  $('#msgIn').focus();
+		}*/
 
 	});
 
@@ -256,58 +274,83 @@ $(function() {
 	});
 
 
-	var keyboardLayout = preferences.keyboardLayout;
+	var inputLayout = input.options.customLayout;
 
-	function handleKey(event) {
-		
-		var state;
-		switch(event.type) {
-			case "keydown":
-				state = true;
-				break;
-			case "keyup":
-				state = false;
-				break;
-		}
-		
+	function onKeyDown(event) {
 		//event.preventDefault();
 		//var keyCode = event.keyCode;
 		switch (event.keyCode) {
-			case keyboardLayout.jump: //space
-				input.action.jump = state;
+			case inputLayout.jump: //space
+				input.action.jump = true;
 				break;
-			case keyboardLayout.moveForward: //w
-				input.action.moveForward = state;
+			case inputLayout.moveForward: //w
+				input.action.moveForward = true;
 				break;
-			case keyboardLayout.moveBackward: //s
-				input.action.moveBackward = state;
+			case inputLayout.moveBackward: //s
+				input.action.moveBackward = true;
 				break;
-			case keyboardLayout.moveLeft: //a
-				input.action.moveLeft = state;
+			case inputLayout.moveLeft: //a
+				input.action.moveLeft = true;
 				break;
-			case keyboardLayout.moveRight: //d
-				input.action.moveRight = state;
+			case inputLayout.moveRight: //d
+				input.action.moveRight = true;
 				break;
-			case keyboardLayout.up: //up
-				input.action.up = state;
+			case inputLayout.up: //up
+				input.action.up = true;
 				break;
-			case keyboardLayout.down: //down
-				input.action.down = state;
+			case inputLayout.down: //down
+				input.action.down = true;
 				break;
-			case keyboardLayout.left: //left
-				input.action.left = state;
+			case inputLayout.left: //left
+				input.action.left = true;
 				break;
-			case keyboardLayout.right: //right
-				input.action.right = state;
+			case inputLayout.right: //right
+				input.action.right = true;
 				break;
-			case keyboardLayout.castFireball: //right
-				input.action.castFireball = state;
+			case inputLayout.castFireball: //right
+				input.action.castFireball = true;
 				break;
 		}
 	}
-	
-	window.addEventListener("keydown", handleKey, false);
-	window.addEventListener("keyup", handleKey, false);
+
+	function onKeyUp(event) {
+		//event.preventDefault();
+		//var keyCode = event.keyCode;
+		switch (event.keyCode) {
+			case inputLayout.jump: //space
+				input.action.jump = false;
+				break;
+			case inputLayout.moveForward: //w
+				input.action.moveForward = false;
+				break;
+			case inputLayout.moveBackward: //s
+				input.action.moveBackward = false;
+				break;
+			case inputLayout.moveLeft: //a
+				input.action.moveLeft = false;
+				break;
+			case inputLayout.moveRight: //d
+				input.action.moveRight = false;
+				break;
+			case inputLayout.up: //up
+				input.action.up = false;
+				break;
+			case inputLayout.down: //down
+				input.action.down = false;
+				break;
+			case inputLayout.left: //left
+				input.action.left = false;
+				break;
+			case inputLayout.right: //right
+				input.action.right = false;
+				break;	
+			case inputLayout.castFireball: //right
+				input.action.castFireball = false;
+				break;
+		}
+	}
+	window.addEventListener("keydown", onKeyDown, false);
+	window.addEventListener("keyup", onKeyUp, false);
 
 
 
@@ -384,15 +427,15 @@ $(function() {
 	$("#layoutSetter").on('change', function(event) {
 		var newLayout = $("#layoutSetter").val();
 		if (newLayout == "wasd") {
-			preferences.keyboardLayout.moveForward = 87;
-			preferences.keyboardLayout.moveBackward = 83;
-			preferences.keyboardLayout.moveLeft = 65;
-			preferences.keyboardLayout.moveRight = 68;
+			input.options.customLayout.moveForward = 87;
+			input.options.customLayout.moveBackward = 83;
+			input.options.customLayout.moveLeft = 65;
+			input.options.customLayout.moveRight = 68;
 		} else if (newLayout == "asdf") {
-			preferences.keyboardLayout.moveForward = 65;
-			preferences.keyboardLayout.moveBackward = 83;
-			preferences.keyboardLayout.moveLeft = 68;
-			preferences.keyboardLayout.moveRight = 70;
+			input.options.customLayout.moveForward = 65;
+			input.options.customLayout.moveBackward = 83;
+			input.options.customLayout.moveLeft = 68;
+			input.options.customLayout.moveRight = 70;
 		}
 	});
 
@@ -601,24 +644,16 @@ $(function() {
 			if (vpd[i].type == "player") {
 				if (vpd[i].username == world1.game.player.username) {
 
-					// cannonjs's lerp function is weird
-						playerObject.phys.position.lerp(vpd[i].position, 0.6, playerObject.phys.position);
-						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, playerObject.phys.position);
-						
-						//playerObject.phys.position.copy(vpd[i].position);
-						//var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.6);
-						//playerObject.phys.position.copy(newPos);
-					// cannonjs's lerp function is weird
-					
-					// cannonjs doesn't have a slerp for quaternions but threejs's can be used anyways
-					
-					//THREE.Quaternion.slerp(playerObject.phys.quaternion, vpd[i].quaternion, playerObject.phys.quaternion, 0.6);
+					//playerObject.phys.position.copy(vpd[i].position);
 					playerObject.phys.quaternion.copy(vpd[i].quaternion);
-					
 					playerObject.phys.velocity.copy(vpd[i].velocity);
+					//playerObject.phys.position.lerp(vpd[i].position, 0.4);
 
-					playerObject.mesh.warpTime = vpd[i].warpTime;
-					playerObject.mesh.animTo = vpd[i].animTo;
+					playerObject.warpTime = vpd[i].warpTime;
+					playerObject.animTo = vpd[i].animTo;
+
+					var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.6);
+					playerObject.phys.position.copy(newPos);
 
 					//var half = new THREE.Vector3().copy(vpd[i].position).sub(playerObject.phys.position.clone()).multiplyScalar(0.5);
 					//playerObject.phys.position.vadd(half);
@@ -703,36 +738,32 @@ $(function() {
 					
 					
 				} else if (typeof vp[vpd[i].username] != "undefined") {
-					
-					
-					// cannonjs's lerp function is weird
-						vp[vpd[i].username].phys.position.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
-						
-						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
-					
-						//vp[vpd[i].username].phys.position.copy(vpd[i].position);
-						//var newPos = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.6);
-						//vp[vpd[i].username].phys.position.copy(newPos);
-					// cannonjs's lerp function is weird
-					
-					// cannonjs doesn't have a slerp for quaternions but threejs's can be used
-					
-					//THREE.Quaternion.slerp(vp[vpd[i].username].phys.quaternion, vpd[i].quaternion, vp[vpd[i].username].phys.quaternion, 0.6);
-					
+
+					//vp[vpd[i].username].phys.position.copy(vpd[i].position);
 					vp[vpd[i].username].phys.quaternion.copy(vpd[i].quaternion);
 					vp[vpd[i].username].phys.velocity.copy(vpd[i].velocity);
-					//vp[vpd[i].username].quaternion.slerp(vpd[i].quaternion, 0.6);
+					//vp[vpd[i].username].phys.position.lerp(vpd[i].position, 0.4);
+					//vp[vpd[i].username].quaternion.slerp(vpd[i].quaternion, 0.4);
 					
 					
-
+					var newPos = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.6);
+					vp[vpd[i].username].phys.position.copy(newPos);
 					
 					
-					vp[vpd[i].username].mesh.warpTime = vpd[i].warpTime;
-					vp[vpd[i].username].mesh.animTo = vpd[i].animTo;
+					vp[vpd[i].username].warpTime = vpd[i].warpTime;
+					vp[vpd[i].username].animTo = vpd[i].animTo;
 					
 					
 					vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
 					
+					
+					//var half = new THREE.Vector3().copy(vpd[i].position).sub(vp[vpd[i].username].phys.position.clone()).multiplyScalar(0.5);
+					//vp[vpd[i].username].phys.position.vadd(half);
+					//var test = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.9);
+					//vp[vpd[i].username].phys.position.copy(test);
+					//var oldRotation = vp[vpd[i].username].mesh.quaternion.clone()
+					//var test = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z).multiply(vp[vpd[i].username].mesh.quaternion);
+
 					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI/2);
 					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
 					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
@@ -1009,6 +1040,29 @@ $(function() {
 
 
 	world1.t.AH.onloadFuncs.push(function() {
+		/*var player = new THREE.BlendCharacter(world1.t.AH);
+		player.loadFast("player");
+		player.scale.set(0.02, 0.02, 0.02);
+		
+		var q = new THREE.Quaternion();
+		q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
+		player.quaternion.multiply(q);
+		q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
+		player.quaternion.multiply(q);
+		player.username = world1.game.player.username;
+		
+		player.sfx = {};
+		player.sfx.footsteps = new THREE.PositionalAudio(world1.t.audioListener);
+		player.sfx.footsteps.load('./sounds/sfx/footsteps/footsteps.mp3');
+		player.sfx.footsteps.autoplay = true;
+		player.sfx.footsteps.setLoop(true);
+		player.sfx.footsteps.setVolume(0.5);
+		player.sfx.footsteps.playbackRate = 0.5;
+		player.sfx.footsteps.setRefDistance(20);
+		//player.sfx.footsteps.pause();
+		player.sfx.footsteps.position.set(0,0,0);
+		//player.sfx.footsteps.position.copy(player.position);
+		player.add(player.sfx.footsteps);*/
 		
 		
 		world1.t.HUD.items.healthBar = new createHealthBar();
@@ -1032,7 +1086,7 @@ $(function() {
 
 
 
-	/*world1.t.AH.onloadFuncs.push(function() {
+	world1.t.AH.onloadFuncs.push(function() {
 		var treeBarkMesh = new THREE.BlendCharacter(world1.t.AH);
 		treeBarkMesh.loadFast("treeBark");
 		treeBarkMesh.scale.set(2, 2, 2);
@@ -1048,7 +1102,7 @@ $(function() {
 		treeBarkMesh.add(treeLeavesMesh);
 		var tempBody = createPhysBody("capsule", 1)(1, 3.2);
 		tree1 = new createPhysicsObject(treeBarkMesh, tempBody, world1, false);
-	});*/
+	});
 	
 	
 	

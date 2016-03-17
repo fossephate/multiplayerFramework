@@ -31,12 +31,30 @@ THREE.BlendCharacter = function(assetHolder) {
 	};
 
 
-	this.loadFast = function(name, assetHolder) {
+	this.loadFast = function(url, assetHolder) {
+		
+		switch(url) {
+			case "wizard":
+				url = "assets/models/characters/players/wizard/final/wizard.json";
+				break;
+			case "treeLeaves":
+				url = "assets/models/enviroment/trees/animated-tree/final/treeLeaves.json";
+				break;
+			case "treeBark":
+				url = "assets/models/enviroment/trees/animated-tree/final/treeBark.json";
+				break;
+		}
+		
+		
+		
+		
+		
+		
 		var scope = this;
 		
 		var AH = this.AH || assetHolder;
 		
-		var model = AH.parseCachedModel(name);
+		var model = AH.parseCachedModel(url);
 		var geometry = model.geometry;
 		var materials = model.materials;
 		

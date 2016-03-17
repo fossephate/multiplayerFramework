@@ -1521,7 +1521,7 @@ function physicsFromHeightmap(src, callback) {
 var lf = localforage;
 
 localforage.config({
-	/*driver      : localforage.WEBSQL, // Force WebSQL; same as using setDriver()*/
+	driver: localforage.INDEXEDDB, // Force INDEXEDDB; same as using setDriver() // 3-9-16
 	name: 'mmo',
 	version: 1.0,
 	size: 4980736, // Size of database, in bytes. WebSQL-only for now.
@@ -1555,13 +1555,13 @@ localforage.getItem('key', function(err, value) {
 
 // IMPLEMENT THIS
 function fileInfo(url, name, type) {
-	if(url) {
+	if (url) {
 		this.url = url;
 	}
-	if(name) {
+	if (name) {
 		this.name = name;
 	}
-	if(type) {
+	if (type) {
 		this.type = type;
 	}
 }
@@ -1583,12 +1583,11 @@ function assetHolder() {
 	var scope = this;
 
 	this.assets = {};
-	this.assets.images = {};
-	this.assets.models = {};
-	this.assets.sounds = {}
-	this.assets.sounds.sfx = {};
-	this.assets.sounds.music = {};
 	this.assets.files = {};
+	
+
+	this.numberOfAssetsToLoad = 0;
+	this.numberOfLoadedAssets = 0;
 	
 	this.loadedModels = [];
 	this.modelList = [];
@@ -1611,17 +1610,10 @@ function assetHolder() {
 	});*/
 
 
-	
+
 
 	this.manager = new THREE.LoadingManager();
 	this.manager.scope = this;
-	this.manager.onProgress = function(loaded, total) {
-		var scope = this.scope;
-		var funcs = scope.onProgressFuncs;
-		for (var i = 0; i < funcs.length; i++) {
-			funcs[i](loaded / total);
-		}
-	};
 
 	this.manager.onLoad = function() {
 		var scope = this.scope;
@@ -1635,131 +1627,203 @@ function assetHolder() {
 	this.onProgressFuncs = [];
 	
 	
-	this.modelProgress = function() {
-		//scope.manager.onProgress(this.loadedModels.length, this.modelList.length);
-		var progress = (this.loadedModels.length/this.modelList.length)*100;
+	
+	this.assetProgress = function() {
+		var progress = (this.numberOfLoadedAssets / this.numberOfAssetsToLoad)*100;
 		console.log(progress);
-		$(".progress-bar").animate({
-  		width: progress+"%"
+		$("#loadScreenBar").animate({
+			width: progress + "%"
 		}, 10);
+		//$("#loadScreenText").text(progress);
 		
-		if(this.loadedModels.length == this.modelList.length) {
-			
-			localforage.setItem('assets', this.assets).then(function(value) {
-				console.log("assets stored");
-			});
-			$("#loadScreen").modal('hide');
-			
+		
+		if(progress == 100) {
 			scope.manager.onLoad();
 		}
 	};
 
 
-
-	this.loadModel = function(name, url, texPath) {
+	this.loadFile = function(url) {
+		var a = new THREE.Clock();
+		
 		var scope = this;
-		var texturePath = texturePath && (typeof texturePath === "string") ? texturePath : THREE.Loader.prototype.extractUrlBase(url);
-		
-		if(scope.assets.files[url]) {
-			var json = JSON.parse(scope.assets.files[url]);
-			scope.assets.models[name] = {};
-			scope.assets.models[name].json = json;
-			scope.assets.models[name].texturePath = texturePath;
-			scope.loadedModels.push(name);
-			scope.modelProgress();
-			return;
-		}
-		
 		localforage.getItem('files.' + url).then(function(value) {
 			if (value !== null) {
-				console.log(url);
-				scope.assets.files[url] = value;
-				var json = JSON.parse(scope.assets.files[url]);
-
-				scope.assets.models[name] = {};
-				scope.assets.models[name].json = json;
-				//scope.assets.models[name].file = 0;
-				scope.assets.models[name].texturePath = texturePath;
-				scope.loadedModels.push(name);
-				scope.modelProgress();
-			} else {
-				var loader = new THREE.XHRLoader(this.manager);
-				loader.load(url, function(text) {
-					var json = JSON.parse(text);
-					
-					scope.assets.models[name] = {};
-					scope.assets.models[name].json = json;
-					//scope.assets.models[name].file = text;
-					scope.assets.models[name].texturePath = texturePath;
-					scope.loadedModels.push(name);
-					localforage.setItem('files.'+url, text).then(function(value) {
-						console.log("value was set");
-					});
-					scope.modelProgress();
-				});
 				
-			}
-			
-		}, function(error) {
-			console.error(error);
-		});
-	};
-	
-	
-	this.loadFile = function(name, url) {
-		var scope = this;
-		localforage.getItem('files.' + url).then(function(value) {
-			if (value !== null) {
-				scope.assets.files[url] = value;
+				scope.assets.files[url] = {};
+				scope.assets.files[url].text = value;
+				
+				/*hamsters.tools.parseJson(scope.assets.files[url].text, function(parsed) {
+					scope.assets.files[url].parsed = parsed;
+					console.log("loaded and stored: " + url + " automatically.");
+					
+					scope.numberOfLoadedAssets += 1;
+					scope.assetProgress();
+				});*/
+				var parsed = JSON.parse(scope.assets.files[url].text);
+				scope.assets.files[url].parsed = parsed;
+				scope.numberOfLoadedAssets += 1;
+				scope.assetProgress();
+				console.log("loaded: " + url + " automatically.");
+
 			} else {
 				var loader = new THREE.XHRLoader(scope.manager);
 				loader.load(url, function(text) {
-					localforage.setItem('files.'+url, text).then(function(value) {
+					scope.assets.files[url] = {};
+					scope.assets.files[url].text = text;
+					
+					/*hamsters.tools.parseJson(scope.assets.files[url].text, function(parsed) {
+						scope.assets.files[url].parsed = parsed;
+						//console.log("loaded and stored: " + url + " automatically.");
+						scope.numberOfLoadedAssets += 1;
+						scope.assetProgress();
+					});*/
+					var parsed = JSON.parse(scope.assets.files[url].text);
+					scope.assets.files[url].parsed = parsed;
+					//scope.numberOfLoadedAssets += 1;
+					//scope.assetProgress();
+					
+					localforage.setItem('files.' + url, text).then(function(value) {
+						scope.numberOfLoadedAssets += 1;
+						scope.assetProgress();
 						console.log("loaded and stored: " + url + " manually.");
 					});
 				});
 			}
 		});
 	};
-	
-	
-	
-	this.parseCachedModel = function(name) {
+
+	this.parseCachedModel = function(url) {
+		/*hamsters.tools.parseJson(this.assets.files[url].text, function(json) {
+			return json;
+		});*/
+		
+		var texturePath = url.substring(0, url.lastIndexOf("/") + 1) + "textures/";
 		var jLoader = new THREE.JSONLoader();
-		var parsed = jLoader.parse(this.assets.models[name].json, this.assets.models[name].texturePath);
+		var parsed = jLoader.parse(this.assets.files[url].parsed, texturePath);
 		return parsed;
+
+		//var jLoader = new THREE.JSONLoader();
+		//var parsed = jLoader.parse(this.assets.models[name].json, this.assets.models[name].texturePath);
+		//return parsed;
 	};
-	
-	
-	this.loadModels = function(modelList) {
-		for (var i in modelList) {
-			this.modelList.push(i);
-			if(typeof this.assets.models[i] == "undefined"){
-				this.loadModel(i, modelList[i]);
-			}
-		}
-	}
-	
+
 	this.loadAssets = function(assetList) {
+		this.numberOfAssetsToLoad = assetList.length;
 		for (var i in assetList) {
-			if(typeof this.assets.files[assetList[i]] == "undefined"){
-				this.loadFile(i);
+			if (typeof this.assets.files[assetList[i]] == "undefined") {
+				this.loadFile(assetList[i]);
 			}
 		}
 	}
-	
-	
-	this.loadAssetsOfType = function(type, assetList) {
-		for (var i in assetList) {
-			if(typeof this.assets.files[assetList[i]] == "undefined"){
-				this.loadFile(i);
-			}
-		}
-	}
-	
-	
+
+
 }
 
+/*
+var params = {
+	'array': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+};
+hamsters.run(params, function() {
+	for(var i = 0; i < 100; i++) {
+		console.log("test");
+	}
+}, function(output) {
+	console.log(output);
+}, 4, true);
+
+
+
+
+
+
+
+localforage.setItem('test1', 'test2');
+
+var params = {
+	'array': [0, 1, 2, 3]
+};
+hamsters.run(params, function() {
+	self.importScripts('http://f1v3.net/mmo/js/libs/localforage.js');
+
+
+	localforage.getItem('test1').then(function(value) {
+		//console.log(value);
+	}, function(error) {
+		//console.error(error);
+	});
+	
+	
+	localforage.getItem('test1', function(err, result) {
+		//console.log(result);
+		rtn.data.push(result);
+	});
+
+	//console.log(rtn);
+}, function(output) {
+	console.log(output);
+}, 1, true);
+
+
+
+
+
+
+
+
+localforage.setItem('test1', 'test2');
+
+var params = {
+	'array': []
+};
+hamsters.run(params, function() {
+	importScripts('http://f1v3.net/mmo/js/libs/localforage.js');
+	localforage.getItem('test1').then(function(value) {
+		console.log(value);
+	}, function(error) {
+		console.log(error);
+	});
+	setTimeout(function() {
+		rtn.data.push("test5364456");
+	}, 0);
+	rtn.data.push("test6");
+	
+}, function(output) {
+	console.log(output);
+}, 1, true);
+
+
+
+
+
+
+
+
+
+localforage.setItem('test1', 'test2');
+localforage.getItem('test1').then(function(value) {
+	console.log(value);
+}, function(error) {
+	console.error(error);
+});
+
+
+
+
+function() {
+  var params = {'array':[0,1,2,3,4,5,6,7,8,9]};
+  hamsters.run(params, function() {
+      var arr = params.array;
+      arr.forEach(function(item) {
+        rtn.data.push((item * 120)/10);
+      });
+  }, function(output) {
+     return output;
+  }, 4, true);
+}
+
+
+*/
 
 
 
@@ -1777,48 +1841,12 @@ a.onProgress = function ( item, loaded, total ) {
 
 THREE.Cache.enabled = true;
 
-//AH.loadModel("player", "models/marineAnim.json");
-/*var modelList = {};
-modelList.player = "models/marineAnim.json";
-modelList.treeBark = "models/tree1.json";
-modelList.treeLeaves = "models/tree2.json";*/
 
-/*var AH = new assetHolder();
-var modelList = {
-	"player": "models/marineAnim.json",
-	"treeBark": "models/tree1.json",
-	"treeLeaves": "models/tree2.json",
-	"abababe": "models/abababe.json",
-};
-AH.loadModels(modelList);*/
-
-
-
-
-//THREE.Cache.get( "models/marineAnim.json" );
-/*
-
-var mob = [];
-for(var i = 0; i < 10; i++) {
-
-	var testA = AH.parseCachedModel("player");
-	mob.push(testA);
-}
-
-*/
-
-
-/*
-var testA = AH.parseCachedModel("player");
-var testB = AH.parseCachedModel("player");
-console.log(testA);
-console.log(testB);
-*/
 
 
 
 function account() {
-	
+
 }
 
 
@@ -1841,25 +1869,25 @@ function account() {
 
 
 function character() {
-	
+
 	this.mesh = new THREE.BlendCharacter(world1.t.AH);
 	this.phys;
 
-	//this.mesh.warpTime = 0.2;
-	//this.mesh.animTo = "none";
-	//this.mesh.animPlaying = "none";
-	
+	this.mesh.warpTime = 0.2;
+	this.mesh.animTo = "none";
+	this.mesh.animPlaying = "none";
+
 	this.loadModel = function(name, scale) {
 		this.mesh.loadFast(name);
-		
-		if(scale) {
+
+		if (scale) {
 			
 			var q = new THREE.Quaternion();
 			q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
 			this.mesh.quaternion.multiply(q);
 			q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
 			this.mesh.quaternion.multiply(q);
-			
+
 			this.mesh.scale.set(scale.x, scale.y, scale.z);
 		}
 		world1.c.objects.push(this);
@@ -1867,65 +1895,43 @@ function character() {
 		world1.c.pw.addBody(this.phys);
 	};
 	
-	this.createPhys = function() {
-		
-	};
 	
-	this.mesh.meshOffset = new THREE.Vector3(0, 0, 2);
+
+	this.mesh.meshOffset = new THREE.Vector3(0, 0, 0);
 	this.update = function() {
-		if (typeof this.mesh != "undefined") {
-			var net = new THREE.Vector3().copy(this.phys.position).add(this.mesh.meshOffset);
-			this.mesh.position.copy(net);
-			
-			if (this.mesh.animPlaying == "none") {
-				this.mesh.animTo = "idle";
-				this.mesh.animPlaying = "idle";
-				this.mesh.warpTime = 0.2;
-				this.mesh.updateSpeed = 0.02;
-				this.mesh.play(this.mesh.animTo);
-			}
-			if(this.mesh.animTo2) {
-				this.mesh.warp(this.mesh.animPlaying, this.mesh.animTo2, this.mesh.warpTime);
-				this.mesh.animPlaying = this.mesh.animTo2;
-			} else if (this.mesh.animTo !== this.mesh.animPlaying) {
-				this.mesh.warp(this.mesh.animPlaying, this.mesh.animTo, this.mesh.warpTime);
-				this.mesh.animPlaying = this.mesh.animTo;
-			}
-			this.mesh.update(this.mesh.updateSpeed);
+		if (typeof this.mesh.position == "undefined") {
+			return;
 		}
+		var net = new THREE.Vector3().copy(this.phys.position).add(this.mesh.meshOffset);
+		
+		this.mesh.position.copy(net);
+
+		if (this.mesh.animPlaying == "none") {
+			this.mesh.animTo = "idle";
+			this.mesh.animPlaying = "idle";
+			this.mesh.warpTime = 0.2;
+			this.mesh.updateSpeed = 0.02;
+			this.mesh.play(this.mesh.animTo);
+		}
+		if (this.mesh.animTo2) {
+			this.mesh.warp(this.mesh.animPlaying, this.mesh.animTo2, this.mesh.warpTime);
+			this.mesh.animPlaying = this.mesh.animTo2;
+		} else if (this.mesh.animTo !== this.mesh.animPlaying) {
+			this.mesh.warp(this.mesh.animPlaying, this.mesh.animTo, this.mesh.warpTime);
+			this.mesh.animPlaying = this.mesh.animTo;
+		}
+		this.mesh.update(this.mesh.updateSpeed);
 	};
-
-	/*var length = world.c.objects.length;
-	world.c.objects.push(testObject);
-	world.t.scene.add(world.c.objects[length].mesh);
-	world.c.pw.addBody(world.c.objects[length].phys);*/
 }
 
 
 
 
-	/*node.call(this);
-	this.type = "enemy";
-	this.class = "enemy";
-	this.username = "blob"+Math.floor(Math.random()*5000);
-
-	this.rotation2 = new CANNON.Vec3(0, 0, 0);
-	this.health = health;
-	this.level = level;
-	this.animTo = "idle";
-	this.warpTime = 0.2;
-enemy.prototype = Object.create(node.prototype); // See note below
-enemy.prototype.constructor = enemy;*/
-
-
-function createPlayer() {
-	
-}
 
 
 function playerConstructor(playerData) {
 	character.call(this);
-	this.mesh.meshOffset = new THREE.Vector3(0, 0, 2);
+	this.mesh.meshOffset = new THREE.Vector3(0, 0, -2);
 	this.phys = createPhysBody("capsule")(1, 3.2);
 	this.items = {};
 	this.inventory = {};
@@ -1933,8 +1939,8 @@ function playerConstructor(playerData) {
 	this.level = 0;
 	this.health = 100;
 	this.username = "john";
-	
-	if(playerData) {
+
+	if (playerData) {
 		this.items.userLabel = new makeTextSprite(playerData.username);
 		this.items.userLabel.scale.set(50, 50, 1);
 		this.items.userLabel.position.set(0, 250, 0);
@@ -1950,8 +1956,8 @@ function playerConstructor(playerData) {
 		this.items.healthLabel.mesh.position.set(0, 400, 0);
 		this.mesh.add(this.items.healthLabel.mesh);
 	}
-	
-	
+
+
 }
 playerConstructor.prototype = Object.create(character.prototype);
 playerConstructor.prototype.constructor = playerConstructor;
@@ -1960,7 +1966,7 @@ playerConstructor.prototype.constructor = playerConstructor;
 function wizard() {
 	playerConstructor.call(this);
 	this.class = "wizard";
-	this.loadModel("wizard", new THREE.Vector3(0.02, 0.02, 0.02));
+	this.loadModel("assets/models/characters/players/wizard/final/wizard.json", new THREE.Vector3(0.02, 0.02, 0.02));
 }
 wizard.prototype = Object.create(playerConstructor.prototype);
 wizard.prototype.constructor = wizard;
@@ -1970,7 +1976,7 @@ wizard.prototype.constructor = wizard;
 function rogue() {
 	playerConstructor.call(this);
 	this.class = "rogue";
-	this.loadModel("wizard", new THREE.Vector3(0.02, 0.02, 0.02));
+	this.loadModel("assets/models/characters/players/wizard/final/wizard.json", new THREE.Vector3(0.02, 0.02, 0.02));
 }
 rogue.prototype = Object.create(playerConstructor.prototype);
 rogue.prototype.constructor = rogue;
@@ -1980,7 +1986,7 @@ rogue.prototype.constructor = rogue;
 function paladin() {
 	playerConstructor.call(this);
 	this.class = "paladin";
-	this.loadModel("wizard", new THREE.Vector3(0.02, 0.02, 0.02));
+	this.loadModel("assets/models/characters/players/wizard/final/wizard.json", new THREE.Vector3(0.02, 0.02, 0.02));
 }
 paladin.prototype = Object.create(playerConstructor.prototype);
 paladin.prototype.constructor = paladin;
@@ -1991,13 +1997,13 @@ paladin.prototype.constructor = paladin;
 function prop() {
 	this.mesh;
 	this.phys;
-	
+
 	this.loadModel = function(url) {
-		
+
 	};
-	
+
 	this.createPhys = function() {
-		
+
 	};
 }
 
@@ -2005,13 +2011,13 @@ function prop() {
 function terrain() {
 	this.mesh;
 	this.phys;
-	
+
 	this.loadModel = function(url) {
-		
+
 	};
-	
+
 	this.createPhys = function() {
-		
+
 	};
 }
 
@@ -2047,7 +2053,7 @@ function createPhysicsObject(mesh, phys, world, type) {
 			if (typeof this.mesh != "undefined") {
 
 				var net = new THREE.Vector3().copy(this.phys.position).add(this.meshOffset);
-				if(this.mesh.position.distanceTo(net) > 1) {
+				if (this.mesh.position.distanceTo(net) > 1) {
 					this.mesh.position.lerp(net, 0.1);
 				}
 
@@ -2057,7 +2063,7 @@ function createPhysicsObject(mesh, phys, world, type) {
 					this.warpTime = 0.2;
 					this.mesh.play(this.animTo);
 				}
-				if(this.animTo2) {
+				if (this.animTo2) {
 					this.mesh.warp(this.animPlaying, this.animTo2, this.warpTime);
 					this.animPlaying = this.animTo2;
 				} else if (this.animTo !== this.animPlaying) {
@@ -2171,7 +2177,7 @@ function createEnemy(type) {
 
 
 function creature() {
-	
+
 }
 
 
@@ -2204,6 +2210,7 @@ function creature() {
 	*/
 
 var noSpellTexture = new THREE.TextureLoader().load("img/spells/none/icon/greycross.svg");
+
 function spell(spellSlot, spellName) {
 	var spell1 = {};
 
@@ -2409,10 +2416,10 @@ function createSpellBar() {
 			}
 		}
 	};
-	
-	
+
+
 	container.addSpell = function(slot, spell) {
-		
+
 	};
 
 

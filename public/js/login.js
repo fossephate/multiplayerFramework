@@ -28,7 +28,7 @@ $(document).ready(function() {
 				error("login", "password", false);
 				alert("success");
 				// TODO: CLEAR FORM
-				$('#login-signup').modal("hide");
+				$('#loginSignUpWindow').modal("hide");
 				checkifLoggedIn();
 			},
 			error: function(e) {
@@ -37,7 +37,7 @@ $(document).ready(function() {
 					error("login", "password", false);
 					alert("success");
 					// TODO: CLEAR FORM
-					$('#login-signup').modal("hide");
+					$('#loginSignUpWindow').modal("hide");
 					checkifLoggedIn();
 					//$('.cd-user-modal').removeClass('is-visible');
 					return;
@@ -83,7 +83,7 @@ $(document).ready(function() {
 				error("signup", "username", false);
 				error("signup", "password", false);
 				// TODO: CLEAR FORM
-				$('#login-signup').modal("hide");
+				$('#loginSignUpWindow').modal("hide");
 				alert("success");
 				checkifLoggedIn();
 			},

@@ -192,6 +192,57 @@ button#fireballButton {
 }
 
 
+#keyboardLayoutConfig {
+	margin-top: 5px;
+	margin-left: 5px;
+	border: 1px solid red;
+	width: 40%;
+	height: 50%;
+	/*display: inline-block;
+	text-align: right;*/
+	/*position: fixed;*/
+	/*top: 10px;
+	left: 10px;*/
+}
+
+.actionText {
+	width: 50%;
+	/*left: 0;
+	margin: 5px 0;*/
+	margin-top: 5px;
+	margin-bottom: 5px;
+	margin-left: 10px;
+	background-color: #888;
+	text-align: center;
+	display: inline-block;
+	vertical-align: middle;
+	line-height: 50px;
+	font-weight: bold;
+	/*font-size: 20px;*/
+	color: #333;
+}
+
+.buttonConfig {
+	float: right;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	margin-right: 10px;
+	/*right: 0;
+	position: absolute;
+	margin: 5px 0;*/
+	height: 50px;
+	width: 50px;
+	background-color: #888;
+	text-align: center;
+	display: inline-block;
+	vertical-align: middle;
+	line-height: 50px;
+	font-weight: bold;
+	/*font-size: 20px;*/
+	color: #333;
+}
+
+
 
 
 /*div#scoreboard {

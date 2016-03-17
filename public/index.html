@@ -11,6 +11,8 @@
 
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/6.1.5/css/bootstrap-slider.min.css">
+	
 	<link rel="stylesheet" href="css/libs/mobile-console.min.css">
 	<link rel="stylesheet" href="css/libs/sweetalert.css">
 	<link rel="stylesheet" href="css/stylesheet.css">
@@ -21,15 +23,19 @@
 
 
 	<script type="text/javascript" src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
-
+	
 	<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r74/three.min.js"></script>
-	<!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r74/three.js"></script>-->
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/6.1.5/bootstrap-slider.min.js"></script>
+	
+	<!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r74/three.min.js"></script>-->
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r74/three.js"></script>
 
 
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
-	
+
+	<script type="text/javascript" src="js/libs/hamsters.js"></script>
+
+
 	<script type="text/javascript" src="js/libs/localforage.min.js"></script>
 	<!--<script type="text/javascript" src="js/libs/localforage.js"></script>-->
 	<!--<script type="text/javascript" src="js/libs/rhaboo.min.js"></script>-->
@@ -106,7 +112,7 @@
 
 					<form>
 						<div id="guest-ls" class="form-group">
-							<button type="button" data-toggle="modal" data-target="#login-signup" class="btn btn-play btn-primary btn-needs-server">Login / Signup</button>
+							<button type="button" data-toggle="modal" data-target="#loginSignUpWindow" class="btn btn-play btn-primary btn-needs-server">Login / Signup</button>
 							<br>
 						</div>
 
@@ -158,7 +164,7 @@
 
 						<div class="form-group">
 							<button type="button" id="playBtn" class="btn btn-play btn-primary btn-needs-server">Play</button>
-							<button type="button" onclick="$('#settings, #instructions').toggle();return false;" class="btn btn-info btn-settings">
+							<button type="button" data-toggle="modal" data-target="#settingsWindow" class="btn btn-info btn-settings">
 								<i class="glyphicon glyphicon-cog"></i>
 							</button>
 							<br>
@@ -167,11 +173,15 @@
 							<b id="numOfPlayers">0</b> Player(s) online
 							<br>
 						</div>
-						<div id="settings" class="checkbox" style="display:none;">
-							<hr>
-							<div style="margin: 6px;">
-								Renderer:
-								<select id="renderSetter">
+					</form>
+					
+					
+					
+					<!--<div id="settings" class="checkbox" style="display:none;">
+						<hr>
+						<div style="margin: 6px;">
+							Renderer:
+							<select id="renderSetter">
 									<option value="WebGLRenderer">Webgl</option>
 									<option value="CanvasRenderer">Canvas</option>
 									<option value="SVGRenderer">SVG</option>
@@ -181,109 +191,188 @@
 									<option value="CSS3DRenderer">CSS3DRenderer</option>
 									<option value="CSS3DStereoRenderer">CSS3DStereoRenderer</option>
 								</select>
-								<br> Layout:
-								<select id="layoutSetter">
+							<br> Layout:
+							<select id="layoutSetter">
 									<option value="wasd">wasd</option>
 									<option value="asdf">asdf</option>
-								</select>
-							</div>
+							</select>
 						</div>
-					</form>
-					<div id="instructions" class="resize">
-						<hr>
-						<div id="info">
-							<b>Controls:</b>
-							<ul>
-								<li>WASD/ASDF to move (configurable in settings)</li>
-								<li>Space to Jump</li>
-								<li>Right click and drag to turn character + camera</li>
-								<li>Left click and drag to turn camera only</li>
-								<li>Scroll to zoom in and out</li>
-							</ul>
-							<b>New Features:</b>
-							<ul style="background-color: #FFFF4C">
-								<li><b>NEW! 1-24-16</b> Added classes, (no difference between them yet).</li>
-								<li><b>NEW! 1-24-16</b> Character selection menu.</li>
-								<li><b>NEW! 1-24-16</b> Character creation menu.</li>
-								<li><b>NEW! 1-24-16</b> Massive rewrite server side and major UI changes.</li>
-								<li><b>NEW! 12-23-15</b> XP bar at the bottom of the screen.</li>
-								<li><strike><b>NEW! 12-23-15</b> Huge improvements and adjustments to the UI you're currently looking at.</strike></li>
-								<li><b>NEW! 12-23-15</b> Even better character turning.</li>
-								<li><b>NEW! 12-23-15</b> Camera movement fixes and adjustments.</li>
-								<li><b>NEW! 12-23-15</b> Made a min and max zoom level (as per request).</li>
-								<li><strike><b>NEW! 12-23-15</b> Hovering over health bar makes it turn red (soon to show % instead).</strike></li>
-								<li>
-									<b>NEW! 12-22-15</b> Sweet error messages!
-									<ul>
-										<li>
-											<button onclick='DCMessage()'>D/C Message</button>
-										</li>
-										<li>
-											<button onclick='serverDownMessage()'>Server Down Message</button>
-										</li>
-									</ul>
-								</li>
-								<li><b>NEW! 12-21-15</b> Working health bar (bottom left corner).</li>
-								<li><b>NEW! 12-(0-20)-15</b> Working shoot and jump buttons.</li>
-								<li><b>NEW! 11-(0-30)-15</b> Server side storing of information (health, positiion, etc...) upon logging out if logged in (not as a guest).</li>
-							</ul>
-							<b>Features:</b>
-							<ul>
-								<li><b><i><u>IT'S AN MMO!</u></i></b></li>
-								<li>Programmed (server and client side) by Matthew Fosse</li>
-								<li>Physics objects created for other players client side</li>
-								<li>Player physics objects removed on server on exit</li>
-								<li><b><i>Completly</i></b> functional login and registration</li>
-								<li><b><i>Even better</i></b> (than before) WoW controls</li>
-								<li><b><i><u>Passwords are hashed and salted!</u></i></b> (and probably secure)</li>
-							</ul>
-							<b>FAQ:</b>
-							<ul>
-								<li>
-									Q: This game sucks!
-									<ul>
-										<li>A: That isn't a question, and, I know, its a work in progress.</li>
-									</ul>
-								</li>
+					</div>-->
+					<hr>
+					<div id="info">
+						<b>Controls:</b>
+						<ul>
+							<li>WASD/ASDF to move (configurable in settings)</li>
+							<li>Space to Jump</li>
+							<li>Right click and drag to turn character + camera</li>
+							<li>Left click and drag to turn camera only</li>
+							<li>Scroll to zoom in and out</li>
+						</ul>
+						<b>New Features:</b>
+						<ul style="background-color: #FFFF4C">
+							<li><b>NEW! 3-17-16</b> Working on everything & new settings window.</li>
+							<li><b>NEW! 1-24-16</b> Added classes, (no difference between them yet).</li>
+							<li><b>NEW! 1-24-16</b> Character selection menu.</li>
+							<li><b>NEW! 1-24-16</b> Character creation menu.</li>
+							<li><b>NEW! 1-24-16</b> Massive rewrite server side and major UI changes.</li>
+							<li><b>NEW! 12-23-15</b> XP bar at the bottom of the screen.</li>
+							<li><strike><b>NEW! 12-23-15</b> Huge improvements and adjustments to the UI you're currently looking at.</strike></li>
+							<li><b>NEW! 12-23-15</b> Even better character turning.</li>
+							<li><b>NEW! 12-23-15</b> Camera movement fixes and adjustments.</li>
+							<li><b>NEW! 12-23-15</b> Made a min and max zoom level (as per request).</li>
+							<li><strike><b>NEW! 12-23-15</b> Hovering over health bar makes it turn red (soon to show % instead).</strike></li>
+							<li>
+								<b>NEW! 12-22-15</b> Sweet error messages!
+								<ul>
+									<li>
+										<button onclick='DCMessage()'>D/C Message</button>
+									</li>
+									<li>
+										<button onclick='serverDownMessage()'>Server Down Message</button>
+									</li>
+								</ul>
+							</li>
+							<li><b>NEW! 12-21-15</b> Working health bar (bottom left corner).</li>
+							<li><b>NEW! 12-(0-20)-15</b> Working shoot and jump buttons.</li>
+							<li><b>NEW! 11-(0-30)-15</b> Server side storing of information (health, positiion, etc...) upon logging out if logged in (not as a guest).</li>
+						</ul>
+						<b>Features:</b>
+						<ul>
+							<li><b><i><u>IT'S AN MMO!</u></i></b></li>
+							<li>Programmed (server and client side) by Matthew Fosse</li>
+							<li>Physics objects created for other players client side</li>
+							<li>Player physics objects removed on server on exit</li>
+							<li><b><i>Completly</i></b> functional login and registration</li>
+							<li><b><i>Even better</i></b> (than before) WoW controls</li>
+							<li><b><i><u>Passwords are hashed and salted!</u></i></b> (and probably secure)</li>
+						</ul>
+						<b>FAQ:</b>
+						<ul>
+							<li>
+								Q: This game sucks!
+								<ul>
+									<li>A: That isn't a question, and, I know, its a work in progress.</li>
+								</ul>
+							</li>
 
-								<li>
-									Q: Is this on github?
-									<ul>
-										<li>A: Yes, find it <a href="http://github.com/mfosse/mmo">here</a>.</li>
-									</ul>
-								</li>
-							</ul>
-							
-						</div>
-						
+							<li>
+								Q: Is this on github?
+								<ul>
+									<li>A: Yes, find it <a href="http://github.com/mfosse/mmo">here</a>.</li>
+								</ul>
+							</li>
+						</ul>
+
 					</div>
 					<div class="modal-footer">
 						<div id="warning" class="text-muted small" style="text-align: left;">
 							MIT <a href="MIT.txt">License</a>
 						</div>
-						
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-
-
-
-
-
-	<div class="modal fade" id="login-signup" role="dialog">
-		<div class="modal-dialog">
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<div class="modal fade" id="settingsWindow" role="dialog">
+		<div class="modal-dialog modal-lg">
 			<div class="modal-content">
+				
+				<div class="modal-header">
+					<h3 class="modal-title text-center">Settings</h3>
+				</div>
+				
 				<div class="modal-body">
 
 					<ul class="nav nav-tabs nav-justified">
-						<li class="active"><a href="#tab1" data-toggle="tab">Sign in</a></li>
-						<li><a href="#tab2" data-toggle="tab">New account</a></li>
+						<li class="active"><a href="#keyboardSettingsFrame" data-toggle="tab">keyboard</a></li>
+						<li><a href="#soundSettingsFrame" data-toggle="tab">sound</a></li>
+						<li><a href="#videoSettingsFrame" data-toggle="tab">video</a></li>
 					</ul>
 
 					<div class="tab-content">
-						<div class="tab-pane active" id="tab1">
+						<div class="tab-pane active" id="keyboardSettingsFrame">
+							
+							<div id="keyboardLayoutConfig">
+								<div class="actionText">Move Forward</div><div class="buttonConfig" title="forward" id="forward">w</div><br>
+								<div class="actionText">Move Backward</div><div class="buttonConfig" title="back" id="back">s</div><br>
+								<div class="actionText">Move Left</div><div class="buttonConfig" title="left" id="left">a</div><br>
+								<div class="actionText">Move Right</div><div class="buttonConfig" title="right" id="right">d</div><br>
+								<div class="actionText">Jump</div><div class="buttonConfig" title="up" id="up">space</div><br>
+								<div class="actionText">Show Inventory</div><div class="buttonConfig" title="show inventory" id="inventory">i</div><br>
+								<input type="button" id="resetControls" value="Reset" />
+							</div>
+						</div>
+
+						<div class="tab-pane" id="soundSettingsFrame">
+							<div id="volumeConfig">
+								<div class="actionText">Master Volume</div><div class="buttonConfig" title="forward" id="forward"></div><br>
+							</div>
+							
+							<input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="1" data-slider-value="50"/>
+							<!--
+								$('#ex1').slider({
+									formatter: function(value) {
+										return 'Current value: ' + value;
+									}
+								});
+							-->
+							
+							sound stuff
+						</div>
+						
+						<div class="tab-pane" id="videoSettingsFrame">
+							video stuff
+						</div>
+						
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+
+
+	<div class="modal fade" id="loginSignUpWindow" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				
+				
+				<div class="modal-body">
+
+					<ul class="nav nav-tabs nav-justified">
+						<li class="active"><a href="#signInFrame" data-toggle="tab">Sign in</a></li>
+						<li><a href="#signUpFrame" data-toggle="tab">New account</a></li>
+					</ul>
+
+					<div class="tab-content">
+						<div class="tab-pane active" id="signInFrame">
 							<form id="login-form" class="form-signin">
 								<h2 class="form-signin-heading">Sign in</h2>
 								<label for="lmail" class="sr-only">Username</label>
@@ -299,7 +388,7 @@
 							</form>
 						</div>
 
-						<div class="tab-pane" id="tab2">
+						<div class="tab-pane" id="signUpFrame">
 							<form id="signup-form" method="post">
 								<label class="" for="email">Email</label>
 								<input class="" name="email" id="smail" type="email" placeholder="Email">
@@ -340,7 +429,10 @@
 				<div class="modal-body">
 
 					<div class="progress">
-						<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+						<div id="loadScreenBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+					</div>
+					<div class="loadScreenText">
+						0
 					</div>
 
 				</div>
@@ -390,7 +482,7 @@
 										</div>
 									</label>
 							</div>
-							
+
 							<div class="col-xs-6 col-md-4">
 								<label class="radio-thumbnail text-center">
 										<input value="rogue" type="radio" name="radios">
@@ -403,7 +495,7 @@
 										</div>
 									</label>
 							</div>
-							
+
 							<div class="col-xs-6 col-md-4">
 								<label class="radio-thumbnail text-center">
 										<input value="paladin" type="radio" name="radios">
