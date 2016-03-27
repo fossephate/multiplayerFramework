@@ -17,6 +17,59 @@
 	<link rel="stylesheet" href="css/libs/sweetalert.css">
 	<link rel="stylesheet" href="css/stylesheet.css">
 
+
+
+	<!--<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="js/libs/jquery.color.js"></script>
+
+
+	<script type="text/javascript" src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+
+	<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/6.1.5/bootstrap-slider.min.js"></script>
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r75/three.min.js"></script>
+
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+
+	<script type="text/javascript" src="js/libs/hamsters.js"></script>
+
+
+	<script type="text/javascript" src="js/libs/localforage.min.js"></script>
+	<!--<script type="text/javascript" src="js/libs/localforage.js"></script>-->
+	<!--<script type="text/javascript" src="js/libs/rhaboo.min.js"></script>-->
+
+	<!--<script type="text/javascript" src="js/libs/cannonDebugRenderer.js"></script>
+
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
+
+	<script type="text/javascript" src="js/libs/mobile-console.js"></script>
+
+	<script type="text/javascript" src="js/unused-atm/randomColor.js"></script>
+
+
+	<script type="text/javascript" src="js/libs/sweetalert.min.js"></script>
+	<script type="text/javascript" src="js/libs/skyShader.js"></script>
+	<script type="text/javascript" src="js/libs/SPE.min.js"></script>
+	<script type="text/javascript" src="js/libs/THREE.Terrain.js"></script>
+
+
+	<script type="text/javascript" src="js/libs/projector.js"></script>
+	<script type="text/javascript" src="js/libs/canvasRenderer.js"></script>
+	<script type="text/javascript" src="js/libs/SVGRenderer.js"></script>
+	<script type="text/javascript" src="js/libs/softwareRenderer.js"></script>
+
+
+	<script type="text/javascript" src="js/libs/blendCharacter.js"></script>
+
+	<!--<script type="text/javascript" src="js/libs/ColladaLoader.js"></script>-->
+
+	<!--<script type="text/javascript" src="js/libs/virtualjoystick.js"></script>
+	<script type="text/javascript" src="js/functions.js"></script>
+	<script type="text/javascript" src="js/client.js"></script>
+	<script type="text/javascript" src="js/login.js"></script>-->
 	<script src="http://f1v3.net/8100/socket.io/socket.io.js"></script>
 
 	<script type="text/javascript" src="js/bundle.js"></script>
@@ -25,38 +78,35 @@
 
 <body>
 
-	<!--<div id="hud" style="z-index: 11">
+	<div id="hud" style="z-index: 11">
 		<div class="chat" style="z-index: 9;">
 			<ul id="messages"></ul>
 			<input id="msgIn" autocomplete="off" />
 			<button id="send">Send</button>
-		</div>-
+		</div>
 
 		<div id="hudButtons">
 			<button id="jumpButton" class="btn btn-default" style="z-index: 9;">Jump</button><br>
 			<button id="shootButton" class="btn btn-default" style="z-index: 9;">Shoot</button><br>
 			<button id="fireballButton" class="btn btn-default" style="z-index: 9;">Cast Fireball</button>
 		</div>
-	</div>-->
-	
-	
-	<!--<div id="adsSection1">
-		<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-		<!-- google ad 1 -->
-		<!--<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6534908631362272" data-ad-slot="6456112943" data-ad-format="auto"></ins>
-		<script>
-			(adsbygoogle = window.adsbygoogle || []).push({});
-		</script>
-	</div>-->
+	</div>
+
+
+
 
 
 	<div class="modal fade" id="titleScreen" role="dialog">
-		<div class="modal-dialog modal-md">
+		<div class="modal-dialog">
+
 			<div class="modal-content">
 				<div class="modal-header">
 					<h4 class="modal-title">MMO</h4>
 				</div>
+
 				<div class="modal-body">
+
+
 					<form>
 						<div id="guest-ls" class="form-group">
 							<button type="button" data-toggle="modal" data-target="#loginSignUpWindow" class="btn btn-play btn-primary btn-needs-server">Login / Signup</button>
@@ -115,7 +165,7 @@
 								<i class="glyphicon glyphicon-cog"></i>
 							</button>
 							<br><br>
-							<button class="btn" onclick="localforage.clear().then(function(){swal('cleared cache')}); return false;">
+							<button class="btn" onclick="lf.clear().then(function(){swal('cleared cache')}); return false;">
 								Destroy localforage cache (Can sometimes fix things)
 							</button>
 							<br>
@@ -125,6 +175,30 @@
 							<br>
 						</div>
 					</form>
+
+
+
+					<!--<div id="settings" class="checkbox" style="display:none;">
+						<hr>
+						<div style="margin: 6px;">
+							Renderer:
+							<select id="renderSetter">
+									<option value="WebGLRenderer">Webgl</option>
+									<option value="CanvasRenderer">Canvas</option>
+									<option value="SVGRenderer">SVG</option>
+									<option value="SoftwareRenderer">SoftwareRenderer</option>
+									
+									<option value="CSS2DRenderer">CSS2DRenderer</option>
+									<option value="CSS3DRenderer">CSS3DRenderer</option>
+									<option value="CSS3DStereoRenderer">CSS3DStereoRenderer</option>
+								</select>
+							<br> Layout:
+							<select id="layoutSetter">
+									<option value="wasd">wasd</option>
+									<option value="asdf">asdf</option>
+							</select>
+						</div>
+					</div>-->
 					<hr>
 					<div id="info">
 						<b>Controls:</b>
@@ -231,30 +305,18 @@
 					<div class="tab-content">
 						<div class="tab-pane active" id="keyboardSettingsFrame">
 
-							<div id="keyboardLayoutConfig">
-								<!-- <tabindex="0"> -->
-								<div class="actionText">Move Forward</div>
-								<div class="buttonConfig" id="moveForward"></div><br>
-								<div class="actionText">Move Backward</div>
-								<div class="buttonConfig" id="moveBackward"></div><br>
-								<div class="actionText">Move Left</div>
-								<div class="buttonConfig" id="moveLeft"></div><br>
-								<div class="actionText">Move Right</div>
-								<div class="buttonConfig" id="moveRight"></div><br>
-								<div class="actionText">Jump</div>
-								<div class="buttonConfig" id="jump"></div><br>
-								<div class="actionText">Toggle Inventory</div>
-								<div class="buttonConfig" id="toggleInventory"></div><br>
-								<div class="actionText">Activate Spell Slot 1</div>
-								<div class="buttonConfig" id="activateSpellSlot1"></div><br>
-								<div class="actionText">Activate Spell Slot 2</div>
-								<div class="buttonConfig" id="activateSpellSlot2"></div><br>
-								<div class="actionText">Activate Spell Slot 3</div>
-								<div class="buttonConfig" id="activateSpellSlot3"></div><br>
-								<div class="actionText">Activate Spell Slot 4</div>
-								<div class="buttonConfig" id="activateSpellSlot4"></div><br>
-								<div class="actionText">Open Settings Window</div>
-								<div class="buttonConfig" id="openSettingsWindow"></div><br>
+							<div id="keyboardLayoutConfig"><!-- <tabindex="0"> -->
+								<div class="actionText">Move Forward</div><div class="buttonConfig" id="moveForward"></div><br>
+								<div class="actionText">Move Backward</div><div class="buttonConfig" id="moveBackward"></div><br>
+								<div class="actionText">Move Left</div><div class="buttonConfig" id="moveLeft"></div><br>
+								<div class="actionText">Move Right</div><div class="buttonConfig" id="moveRight"></div><br>
+								<div class="actionText">Jump</div><div class="buttonConfig" id="jump"></div><br>
+								<div class="actionText">Toggle Inventory</div><div class="buttonConfig" id="toggleInventory"></div><br>
+								<div class="actionText">Activate Spell Slot 1</div><div class="buttonConfig" id="activateSpellSlot1"></div><br>
+								<div class="actionText">Activate Spell Slot 2</div><div class="buttonConfig" id="activateSpellSlot2"></div><br>
+								<div class="actionText">Activate Spell Slot 3</div><div class="buttonConfig" id="activateSpellSlot3"></div><br>
+								<div class="actionText">Activate Spell Slot 4</div><div class="buttonConfig" id="activateSpellSlot4"></div><br>
+								<div class="actionText">Open Settings Window</div><div class="buttonConfig" id="openSettingsWindow"></div><br>
 								<!--<div class="actionText">Up</div><div class="buttonConfig" id="up"></div><br>
 								<div class="actionText">Down</div><div class="buttonConfig" id="down"></div><br>
 								<div class="actionText">Left</div><div class="buttonConfig" id="left"></div><br>
@@ -376,11 +438,14 @@
 				</div>
 
 				<div class="modal-body">
+
 					<div class="progress">
 						<div id="loadScreenBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
 					</div>
-					<img src="assets/textures/kirby.gif">
+					<div id="loadScreenText">0</div>
+
 				</div>
+
 			</div>
 		</div>
 	</div>

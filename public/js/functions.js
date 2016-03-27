@@ -1,4 +1,9 @@
-function getCookies() {
+var login = require('./login');
+
+
+var fn = {};
+
+fn.getCookies = function getCookies() {
 	var c = document.cookie,
 		v = 0,
 		cookies = {};
@@ -23,7 +28,7 @@ function getCookies() {
 	return cookies;
 }
 
-function getCookie(name) {
+fn.getCookie = function getCookie(name) {
 	return getCookies()[name];
 }
 
@@ -73,6 +78,27 @@ function clone2(obj) {
 	return temp;
 }
 
+function cloneJSON(obj) {
+    // basic type deep copy
+    if (obj === null || obj === undefined || typeof obj !== 'object')  {
+        return obj
+    }
+    // array deep copy
+    if (obj instanceof Array) {
+        var cloneA = [];
+        for (var i = 0; i < obj.length; ++i) {
+            cloneA[i] = cloneJSON(obj[i]);
+        }              
+        return cloneA;
+    }                  
+    // object deep copy
+    var cloneO = {};   
+    for (var i in obj) {
+        cloneO[i] = cloneJSON(obj[i]);
+    }                  
+    return cloneO;
+}
+
 function save(variable) {
 	//var textToSave = 'this is a test';
 	var hiddenElement = document.createElement('a');
@@ -80,6 +106,17 @@ function save(variable) {
 	hiddenElement.target = '_blank';
 	hiddenElement.download = 'myFile.txt';
 	hiddenElement.click();
+}
+
+
+// replace with https://github.com/kaimallea/isMobile
+// also look into requirejs / browserify / somee other library handler
+fn.isMobile = function isMobile() {
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 
@@ -112,7 +149,7 @@ function findHUDPosition(obj) {
 
 
 
-function webglAvailable() {
+fn.webglAvailable = function webglAvailable() {
 	try {
 		var canvas = document.createElement('canvas');
 		return !!(window.WebGLRenderingContext && (
@@ -130,7 +167,7 @@ function webglAvailable() {
 
 
 
-function makeTextSprite(message, parameters) {
+fn.makeTextSprite = function makeTextSprite(message, parameters) {
 	if (parameters === undefined) parameters = {};
 	var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
 	var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
@@ -280,7 +317,7 @@ function whenDo(variables, operator, istypeof, callback, frequency, params) {
 
 
 
-function limit(min, max, variable, teleport, teleportProp) {
+fn.limit = function limit(min, max, variable, teleport, teleportProp) {
 	if (!teleportProp) {
 		if (variable < min) {
 			if (teleport) {
@@ -307,12 +344,12 @@ function limit(min, max, variable, teleport, teleportProp) {
 }
 
 
-function randInt(min, max) {
+fn.randInt = function randInt(min, max) {
 	return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 
-function findNearestCoterminalAngle(current, target, offset) {
+fn.findNearestCoterminalAngle = function findNearestCoterminalAngle(current, target, offset) {
 	/*if(offset > Math.PI) {
 		target -= Math.PI;
 	}*/
@@ -413,7 +450,7 @@ function serverDownMessage() {
 
 
 
-function createHealthBar() {
+fn.createHealthBar = function createHealthBar() {
 
 	var hbOpts = {
 		radius: 4,
@@ -485,7 +522,7 @@ function createHealthBar() {
 
 
 
-function createXPBar() {
+fn.createXPBar = function createXPBar() {
 	var XPBOpts = {
 		radius: 8,
 		xPos: window.innerWidth / 4,
@@ -646,7 +683,7 @@ function createXPBar() {
 
 
 
-function createXPBar2(radius, xPos, yPos, barLength) {
+fn.createXPBar2 = function createXPBar2(radius, xPos, yPos, barLength) {
 
 	var XPB = {};
 	XPB.bg = {};
@@ -820,7 +857,7 @@ function createXPBar2(radius, xPos, yPos, barLength) {
 
 
 
-function createLevelText(currentLevel) {
+fn.createLevelText = function createLevelText(currentLevel) {
 	if (!currentLevel) {
 		currentLevel = -1;
 	}
@@ -1024,7 +1061,7 @@ function drawGrid(ctx, x, y, width, height, rows, columns, radius, BW, BH) {
 
 //function roundRect2(ctx, x, y, width, height, radius, fill, stroke) {
 
-function createHealthBarSprite(health, maxHealth) {
+fn.createHealthBarSprite = function createHealthBarSprite(health, maxHealth) {
 	if (!maxHealth) {
 		maxHealth = 100;
 	}
@@ -1155,7 +1192,7 @@ a.update(50);
 
 
 
-function createHUDInventory() {
+fn.createHUDInventory = function createHUDInventory() {
 	var canvas = document.createElement('canvas');
 	var context = canvas.getContext('2d');
 	canvas.width = 2048;
@@ -1261,10 +1298,8 @@ function drawCapsule(ctx, x, y, radius, length, fillColor) {
 
 
 
-function createLoadScreen() {
+fn.createLoadScreen = function createLoadScreen() {
 	var obj = {};
-	//obj.loadBar1;
-	//obj.loadBar2;
 	obj.loadScreen;
 
 
@@ -1275,92 +1310,12 @@ function createLoadScreen() {
 	obj.loadScreen = new THREE.Sprite(screenMaterial);
 	obj.loadScreen.scale.set(window.innerWidth, window.innerHeight, 1);
 	obj.loadScreen.position.set(0, 0, 2);
-
-
-	/*var radius, context, canvas, texture, spriteMaterial, length;
-
-
-	canvas = document.createElement('canvas');
-	context = canvas.getContext('2d');
-	canvas.width = 1024;
-	canvas.height = 1024;
-	radius = 10;
-
-	drawCapsule(context, canvas.width / 4, (canvas.height / 2) - radius, radius, canvas.width / 2, '#FFFFFF');
-	texture = new THREE.Texture(canvas);
-	texture.needsUpdate = true;
-	spriteMaterial = new THREE.SpriteMaterial({
-		map: texture
-	});
-
-	obj.loadBar1 = new THREE.Sprite(spriteMaterial);
-	obj.loadBar1.scale.set(window.innerWidth, window.innerWidth, 1);
-	obj.loadBar1.position.set(0, (-window.innerHeight / 2) + radius + 10, 3);
-
-	canvas = document.createElement('canvas');
-	context = canvas.getContext('2d');
-	canvas.width = 1024;
-	canvas.height = 1024;
-
-	radius = 10;
-	length = 200;
-	drawCapsule(context, canvas.width / 4, (canvas.height / 2) - radius, radius, length, '#154AA5');
-	texture = new THREE.Texture(canvas);
-	texture.needsUpdate = true;
-	spriteMaterial = new THREE.SpriteMaterial({
-		map: texture
-	});
-
-	obj.loadBar2 = new THREE.Sprite(spriteMaterial);
-	obj.loadBar2.scale.set(window.innerWidth, window.innerWidth, 1);
-	obj.loadBar2.position.set(0, (-window.innerHeight / 2) + radius + 10, 4);*/
-
-
-
-
-
-
-
-	obj.update = function(progress) {
-		/*world1.t.HUD.scene.remove(this.loadBar2);
-		var canvas = document.createElement('canvas');
-		var context = canvas.getContext('2d');
-		canvas.width = 1024;
-		canvas.height = 1024;
-
-		var radius = 10;
-		var length = progress * (canvas.width / 2);
-
-		drawCapsule(context, canvas.width / 4, (canvas.height / 2) - radius, radius, length, '#154AA5');
-		var texture = new THREE.Texture(canvas);
-		texture.needsUpdate = true;
-		var spriteMaterial = new THREE.SpriteMaterial({
-			map: texture
-		});
-
-		this.loadBar2 = new THREE.Sprite(spriteMaterial);
-		this.loadBar2.scale.set(window.innerWidth, window.innerWidth, 1);
-		this.loadBar2.position.set(0, (-window.innerHeight / 2) + radius + 10, 4);
-		world1.t.HUD.scene.add(this.loadBar2);*/
-
-		if (progress == 1) {
-			setTimeout(function(scope) {
-				//world1.t.HUD.scene.remove(scope.loadBar1);
-				//world1.t.HUD.scene.remove(scope.loadBar2);
-				world1.t.HUD.scene.remove(scope.loadScreen);
-			}, 2000, this);
-		}
-
-		//this.mesh.remove(this.sprite);
-		//this.mesh.add(sprite);
-		//this.sprite = sprite;
-		//this.mesh = spriteObject;
-
-	};
+	
+	obj.done = function() {
+		world1.t.HUD.scene.remove(this.loadScreen);
+	}
 
 	world1.t.HUD.scene.add(obj.loadScreen);
-	//world1.t.HUD.scene.add(obj.loadBar1);
-	//world1.t.HUD.scene.add(obj.loadBar2);
 	return obj;
 }
 
@@ -1386,7 +1341,7 @@ function createLoadScreen() {
 
 
 
-function targetPlayer(player) {
+fn.targetPlayer = function targetPlayer(player) {
 	var username = player.username;
 	var pos = player.position;
 
@@ -1411,12 +1366,63 @@ function targetPlayer(player) {
 	target.mesh.add(target.items.targetIcon);
 	target.items.targetIcon.position.y += 200;
 	target.items.targetIcon.rotation.x += Math.PI / 2;
-
-
-
-
 	//console.log(player);
 	//player.add(torus);
+}
+
+
+
+
+/*function getHeightData(img, options) {
+    var canvas = document.createElement( 'canvas' );
+    canvas.width = 128;
+    canvas.height = 128;
+    var context = canvas.getContext( '2d' );
+    var size = 128 * 128, data = new Float32Array( size );
+    context.drawImage(img,0,0);
+    for ( var i = 0; i < size; i ++ ) {
+        data[i] = 0
+    }
+		/*context = canvas.getContext('2d'),
+		rows = options.ySegments + 1,
+		cols = options.xSegments + 1,
+		spread = options.maxHeight - options.minHeight;
+		canvas.width = cols;
+		canvas.height = rows;*/
+		/*context.drawImage(options.heightmap, 0, 0, canvas.width, canvas.height);
+    var imgd = context.getImageData(0, 0, 128, 128);
+    var pix = imgd.data;
+    var j=0;
+    for (var i = 0, n = pix.length; i < n; i += (4)) {
+        var all = pix[i]+pix[i+1]+pix[i+2];
+        data[j++] = all/30;
+    }
+    return data;
+}*/
+
+
+fn.planeFromHeightmapSrc = function planeFromHeightmapSrc(heightmapSrc, textureSrc, callback) {
+	
+	var texLoader = new THREE.TextureLoader();
+	texLoader.load(heightmapSrc, function (heightmapImg) {
+		
+		var options = {};
+		var zValues = fromHeightmap2(heightmapImg.image, options);
+		// plane
+		var geometry = new THREE.PlaneGeometry(1024, 1024, 128, 128);
+		
+		var texLoader2 = new THREE.TextureLoader();
+		texLoader2.load(textureSrc, function(textureImg) {
+			
+			var material = new THREE.MeshLambertMaterial( { map: textureImg } );
+			var plane = new THREE.Mesh(geometry, material);
+			//set height of vertices
+			for ( var i = 0; i<plane.geometry.vertices.length; i++ ) {
+				plane.geometry.vertices[i].z = zValues[i];
+			}
+			callback(plane);
+		});
+	});
 }
 
 
@@ -1436,30 +1442,40 @@ function toArray2D(vertices, options) {
 	return tgt;
 }
 
-function fromHeightmap(g, options) {
-	var canvas = document.createElement('canvas'),
-		context = canvas.getContext('2d'),
-		rows = options.ySegments + 1,
-		cols = options.xSegments + 1,
-		spread = options.maxHeight - options.minHeight;
+
+function fromHeightmap2(heightmap, options) {
+	var zValues = [];
+	var canvas = document.createElement('canvas');
+	var context = canvas.getContext('2d');
+	
+	options.xSegments = options.xSegments ? options.xSegments : 128;
+	options.ySegments = options.ySegments ? options.ySegments : 128;
+	
+	options.xSize = options.xSize ? options.xSize : 1024;
+	options.ySize = options.ySize ? options.ySize : 1024;
+	
+	options.minHeight = options.minHeight ? options.minHeight : 0;
+	options.maxHeight = options.maxHeight ? options.maxHeight : 100;
+	
+	var rows = options.ySegments + 1;
+	var cols = options.xSegments + 1;
+	var spread = options.maxHeight - options.minHeight;
 	canvas.width = cols;
 	canvas.height = rows;
-
-	context.drawImage(options.heightmap, 0, 0, canvas.width, canvas.height);
-
+	context.drawImage(heightmap, 0, 0, canvas.width, canvas.height);
 	var data = context.getImageData(0, 0, canvas.width, canvas.height).data;
 	for (var row = 0; row < rows; row++) {
 		for (var col = 0; col < cols; col++) {
-			var i = row * cols + col,
-				idx = i * 4;
-			g[i].z = (data[idx] + data[idx + 1] + data[idx + 2]) / 765 * spread + options.minHeight;
-
+			var i = row * cols + col;
+			var idx = i * 4;
+			zValues[i] = (data[idx] + data[idx + 1] + data[idx + 2]) / 765 * spread + options.minHeight;
 		}
 	}
+	return zValues;
 }
 
 
-function physicsFromHeightmap(src, callback) {
+fn.physicsFromHeightmap = function physicsFromHeightmap(heightmapSrc, callback) {
 	var options = {};
 	options.xSegments = 128;
 	options.ySegments = 128;
@@ -1467,13 +1483,62 @@ function physicsFromHeightmap(src, callback) {
 	options.ySize = 1024;
 	options.minHeight = 0;
 	options.maxHeight = 100;
+	
+	var texLoader = new THREE.TextureLoader();
+	texLoader.load(heightmapSrc, function (heightmapImg) {
+		var zValues = fromHeightmap2(heightmapImg.image, options);
+		var geometry1 = new THREE.PlaneGeometry(options.xSize, options.ySize, options.xSegments, options.ySegments);
+		for(var i = 0; i < geometry1.vertices.length; i++) {
+			geometry1.vertices[i].z = zValues[i];
+		}
+		
+		// mesh
+		var geometry2 = new THREE.PlaneGeometry(options.xSize, options.ySize, options.xSegments, options.ySegments);
+		for(var i = 0; i < geometry2.vertices.length; i++) {
+			geometry2.vertices[i].z = zValues[i];
+		}
+		var material = new THREE.MeshLambertMaterial({
+			color: 0xffff00,
+			side: THREE.DoubleSide
+		});
+		var planeMesh = new THREE.Mesh(geometry2, material);
+		// mesh
+		
+		var vertices = toArray2D(geometry1.vertices, options);
+		vertices.reverse();
+		
+		var hfShape = new CANNON.Heightfield(vertices, {
+			elementSize: options.xSize / options.xSegments,
+		});
+		var hfBody = new CANNON.Body({
+			mass: 0,
+		});
+		hfBody.addShape(hfShape);
+		hfBody.shapeOffsets[0].x = -options.xSegments * hfShape.elementSize / 2;
+		hfBody.shapeOffsets[0].y = -options.xSegments * hfShape.elementSize / 2;
+		hfBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI);
+		callback(planeMesh, hfBody);
+	});
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
-	var heightmap = new Image();
+	/*var heightmap = new Image();
 	heightmap.onload = function() {
 		options.heightmap = this;
 
+		var zValues = fromHeightmap2(heightmap, options);
 		var geometry1 = new THREE.PlaneGeometry(options.xSize, options.ySize, options.xSegments, options.ySegments);
-		fromHeightmap(geometry1.vertices, options);
+		for(var i = 0; i < geometry1.vertices.length; i++) {
+			geometry1.vertices[i].z = zValues[i];
+		}
+		
 
 		//var geometry2 = geometry1.clone();
 		var geometry2 = new THREE.PlaneGeometry(options.xSize, options.ySize, options.xSegments, options.ySegments);
@@ -1509,7 +1574,7 @@ function physicsFromHeightmap(src, callback) {
 
 		callback(planeMesh, hfBody);
 	};
-	heightmap.src = src;
+	heightmap.src = src;*/
 }
 
 
@@ -1524,10 +1589,11 @@ localforage.config({
 	driver: localforage.INDEXEDDB, // Force INDEXEDDB; same as using setDriver() // 3-9-16
 	name: 'mmo',
 	version: 1.0,
-	size: 4980736, // Size of database, in bytes. WebSQL-only for now.
+	//size: 4980736, // Size of database, in bytes. WebSQL-only for now.
 	storeName: 'keyvaluepairs', // Should be alphanumeric, with underscores.
 	description: 'some description'
 });
+localforage.setDriver(localforage.INDEXEDDB);
 
 // with promises
 /*localforage.setItem('key', 'value').then(function(value) {
@@ -1552,20 +1618,6 @@ localforage.getItem('key', function(err, value) {
 	console.log(value);
 });*/
 
-
-// IMPLEMENT THIS
-function fileInfo(url, name, type) {
-	if (url) {
-		this.url = url;
-	}
-	if (name) {
-		this.name = name;
-	}
-	if (type) {
-		this.type = type;
-	}
-}
-
 /*
 	var fileList = [
 		"assets/models/characters/player/wizard/final/wizard.json",
@@ -1578,7 +1630,7 @@ function fileInfo(url, name, type) {
 
 
 
-function assetHolder() {
+fn.assetHolder = function assetHolder() {
 
 	var scope = this;
 
@@ -1636,76 +1688,114 @@ function assetHolder() {
 		}, 10);
 		//$("#loadScreenText").text(progress);
 		
-		
 		if(progress == 100) {
-			scope.manager.onLoad();
+			setTimeout(function() {
+				scope.manager.onLoad();
+			}, 1000);
 		}
 	};
 
 
 	this.loadFile = function(url) {
-		var a = new THREE.Clock();
-		
 		var scope = this;
 		localforage.getItem('files.' + url).then(function(value) {
 			if (value !== null) {
-				
 				scope.assets.files[url] = {};
-				scope.assets.files[url].text = value;
+				scope.assets.files[url].value = JSON.parse(value);
+				
+				scope.numberOfLoadedAssets += 1;
+				scope.assetProgress();
 				
 				/*hamsters.tools.parseJson(scope.assets.files[url].text, function(parsed) {
 					scope.assets.files[url].parsed = parsed;
-					console.log("loaded and stored: " + url + " automatically.");
+					console.log("loaded: " + url + " automatically.");
 					
 					scope.numberOfLoadedAssets += 1;
 					scope.assetProgress();
 				});*/
-				var parsed = JSON.parse(scope.assets.files[url].text);
-				scope.assets.files[url].parsed = parsed;
-				scope.numberOfLoadedAssets += 1;
-				scope.assetProgress();
+				
+				//var parsed = JSON.parse(scope.assets.files[url].text);
+				//scope.assets.files[url].parsed = parsed;
+				//var texturePath = url.substring(0, url.lastIndexOf("/") + 1) + "textures/";
+				//var jLoader = new THREE.JSONLoader();
+				//scope.assets.files[url].parsed = jLoader.parse(scope.assets.files[url].text, texturePath);
+				//scope.numberOfLoadedAssets += 1;
+				//scope.assetProgress();
 				console.log("loaded: " + url + " automatically.");
 
 			} else {
 				var loader = new THREE.XHRLoader(scope.manager);
-				loader.load(url, function(text) {
+				loader.load(url, function(value) {
 					scope.assets.files[url] = {};
-					scope.assets.files[url].text = text;
+					scope.assets.files[url].value = JSON.parse(value);
+					
+					scope.numberOfLoadedAssets += 1;
+					scope.assetProgress();
 					
 					/*hamsters.tools.parseJson(scope.assets.files[url].text, function(parsed) {
+						//var texturePath = url.substring(0, url.lastIndexOf("/") + 1) + "textures/";
+						//var jLoader = new THREE.JSONLoader();
+						//var parsed2 = jLoader.parse(parsed, texturePath);
 						scope.assets.files[url].parsed = parsed;
-						//console.log("loaded and stored: " + url + " automatically.");
+						
+						//scope.assets.files[url].parsed = parsed;
+						//console.log("loaded and stored: " + url + " manually.");
 						scope.numberOfLoadedAssets += 1;
 						scope.assetProgress();
 					});*/
-					var parsed = JSON.parse(scope.assets.files[url].text);
-					scope.assets.files[url].parsed = parsed;
+					
+					//var parsed = JSON.parse(scope.assets.files[url].text);
+					//scope.assets.files[url].parsed = parsed;
+					//var texturePath = url.substring(0, url.lastIndexOf("/") + 1) + "textures/";
+					//var jLoader = new THREE.JSONLoader();
+					//scope.assets.files[url].parsed = jLoader.parse(scope.assets.files[url].text, texturePath);
 					//scope.numberOfLoadedAssets += 1;
 					//scope.assetProgress();
+					//console.log("loaded: " + url + " manually.");
+					var storable = JSON.stringify(scope.assets.files[url].value);
 					
-					localforage.setItem('files.' + url, text).then(function(value) {
-						scope.numberOfLoadedAssets += 1;
-						scope.assetProgress();
+					localforage.setItem('files.'+url, storable).then(function(value) {
+						//scope.numberOfLoadedAssets += 1;
+						//scope.assetProgress();
 						console.log("loaded and stored: " + url + " manually.");
 					});
 				});
 			}
 		});
 	};
+	
+	
+	this.setFileInfo = function(url, newInfo) {
+		localforage.getItem('fileInfo.' + url).then(function(value) {
+			
+			if (value !== null) {
+				var oldInfo = value;
+				for(var i in newInfo) {
+					oldInfo[i] = newInfo[i];
+				}
+				newInfo = oldInfo;
+			}
+			
+			localforage.setItem('fileInfo.' + url, newInfo).then(function(value) {
+				console.log("loaded and stored: " + url + " manually.");
+			});
+		});
+	};
+	
+	this.getFileInfo = function(url) {
+		
+	};
+	
+	this.loadModel = function(url) {
+		
+	}
 
 	this.parseCachedModel = function(url) {
-		/*hamsters.tools.parseJson(this.assets.files[url].text, function(json) {
-			return json;
-		});*/
 		
 		var texturePath = url.substring(0, url.lastIndexOf("/") + 1) + "textures/";
 		var jLoader = new THREE.JSONLoader();
-		var parsed = jLoader.parse(this.assets.files[url].parsed, texturePath);
+		var parsed = jLoader.parse(this.assets.files[url].value, texturePath);
 		return parsed;
-
-		//var jLoader = new THREE.JSONLoader();
-		//var parsed = jLoader.parse(this.assets.models[name].json, this.assets.models[name].texturePath);
-		//return parsed;
 	};
 
 	this.loadAssets = function(assetList) {
@@ -1716,8 +1806,6 @@ function assetHolder() {
 			}
 		}
 	}
-
-
 }
 
 /*
@@ -1744,7 +1832,7 @@ var params = {
 	'array': [0, 1, 2, 3]
 };
 hamsters.run(params, function() {
-	self.importScripts('http://f1v3.net/mmo/js/libs/localforage.js');
+	self.importScripts('http://f1v3.net/mmo/js/libs/localforage/localforage.nopromises.js');
 
 
 	localforage.getItem('test1').then(function(value) {
@@ -1929,7 +2017,7 @@ function character() {
 
 
 
-function playerConstructor(playerData) {
+fn.playerConstructor = function playerConstructor(playerData) {
 	character.call(this);
 	this.mesh.meshOffset = new THREE.Vector3(0, 0, -2);
 	this.phys = createPhysBody("capsule")(1, 3.2);
@@ -1939,9 +2027,19 @@ function playerConstructor(playerData) {
 	this.level = 0;
 	this.health = 100;
 	this.username = "john";
+	
+	
+	this.setClass = function(playerClass) {
+		this.class = playerClass;
+		this.loadModel("assets/models/characters/players/wizard/final/wizard.json", new THREE.Vector3(0.02, 0.02, 0.02));
+	};
 
 	if (playerData) {
-		this.items.userLabel = new makeTextSprite(playerData.username);
+		if(playerData.class) {
+			this.setClass(playerData.class);
+		}
+		
+		/*this.items.userLabel = new makeTextSprite(playerData.username);
 		this.items.userLabel.scale.set(50, 50, 1);
 		this.items.userLabel.position.set(0, 250, 0);
 		this.mesh.add(this.items.userLabel);
@@ -1954,26 +2052,25 @@ function playerConstructor(playerData) {
 		this.items.healthLabel = new createHealthBarSprite(playerData.health);
 		this.items.healthLabel.mesh.scale.set(20, 20, 1);
 		this.items.healthLabel.mesh.position.set(0, 400, 0);
-		this.mesh.add(this.items.healthLabel.mesh);
+		this.mesh.add(this.items.healthLabel.mesh);*/
 	}
-
-
+	return this;
 }
-playerConstructor.prototype = Object.create(character.prototype);
-playerConstructor.prototype.constructor = playerConstructor;
+fn.playerConstructor.prototype = Object.create(character.prototype);
+fn.playerConstructor.prototype.constructor = fn.playerConstructor;
 
 
-function wizard() {
+/*module.exports['wizard'] = function wizard() {
 	playerConstructor.call(this);
 	this.class = "wizard";
 	this.loadModel("assets/models/characters/players/wizard/final/wizard.json", new THREE.Vector3(0.02, 0.02, 0.02));
-}
-wizard.prototype = Object.create(playerConstructor.prototype);
-wizard.prototype.constructor = wizard;
+}*/
+//wizard.prototype = Object.create(playerConstructor.prototype);
+//wizard.prototype.constructor = wizard;
 
 
 
-function rogue() {
+/*function rogue() {
 	playerConstructor.call(this);
 	this.class = "rogue";
 	this.loadModel("assets/models/characters/players/wizard/final/wizard.json", new THREE.Vector3(0.02, 0.02, 0.02));
@@ -1989,7 +2086,7 @@ function paladin() {
 	this.loadModel("assets/models/characters/players/wizard/final/wizard.json", new THREE.Vector3(0.02, 0.02, 0.02));
 }
 paladin.prototype = Object.create(playerConstructor.prototype);
-paladin.prototype.constructor = paladin;
+paladin.prototype.constructor = paladin;*/
 
 
 
@@ -2024,89 +2121,7 @@ function terrain() {
 
 
 
-
-function createPhysicsObject(mesh, phys, world, type) {
-	var testObject = {};
-	testObject.mesh = mesh;
-	testObject.phys = phys;
-	testObject.items = {};
-
-	testObject.warpTime = 0.2;
-	testObject.animTo = "none";
-	testObject.animPlaying = "none";
-
-	if (typeof type == "undefined" || type === true) {
-		testObject.update = function(world) {
-			this.mesh.position.copy(this.phys.position);
-			this.mesh.quaternion.copy(this.phys.quaternion);
-		};
-	} else if (type === false) {
-		testObject.update = function(world) {
-			this.mesh.position.copy(this.phys.position);
-			//this.mesh.quaternion.copy(this.phys.quaternion);
-		};
-
-	} else if (type == "player") {
-		testObject.mesh.isPlayer = true;
-		testObject.meshOffset = new THREE.Vector3(0, 0, -2);
-		testObject.update = function(world) {
-			if (typeof this.mesh != "undefined") {
-
-				var net = new THREE.Vector3().copy(this.phys.position).add(this.meshOffset);
-				if (this.mesh.position.distanceTo(net) > 1) {
-					this.mesh.position.lerp(net, 0.1);
-				}
-
-				if (this.animPlaying == "none") {
-					this.animTo = "idle";
-					this.animPlaying = "idle";
-					this.warpTime = 0.2;
-					this.mesh.play(this.animTo);
-				}
-				if (this.animTo2) {
-					this.mesh.warp(this.animPlaying, this.animTo2, this.warpTime);
-					this.animPlaying = this.animTo2;
-				} else if (this.animTo !== this.animPlaying) {
-					this.mesh.warp(this.animPlaying, this.animTo, this.warpTime);
-					this.animPlaying = this.animTo;
-				}
-				this.mesh.update(0.02);
-			}
-		};
-	} else if (type == "enemy") {
-		testObject.meshOffset = new THREE.Vector3(0, 0, -2);
-		testObject.update = function(world) {
-			if (typeof this.mesh != "undefined") {
-
-				var net = new THREE.Vector3().copy(this.phys.position).add(this.meshOffset);
-				this.mesh.position.copy(net);
-
-				if (this.animPlaying == "none") {
-					this.animPlaying = "walk";
-					this.animTo = "walk";
-					this.mesh.play(this.animTo);
-				}
-
-				if (this.animTo !== this.animPlaying) {
-					this.animPlaying = this.animTo;
-					this.mesh.warp(this.animPlaying, this.animTo, this.warpTime);
-				}
-				this.mesh.update(0.01);
-			}
-		};
-	}
-
-	var length = world.c.objects.length;
-	world.c.objects.push(testObject);
-	world.t.scene.add(world.c.objects[length].mesh);
-	world.c.pw.addBody(world.c.objects[length].phys);
-	return testObject;
-}
-
-
-
-
-function createPhysBody(shape, mass) {
+fn.createPhysBody = function createPhysBody(shape, mass) {
 	var createCollider;
 	switch (shape) {
 		case "capsule":
@@ -2153,7 +2168,7 @@ function createPhysBody(shape, mass) {
 
 
 
-function createEnemy(type) {
+fn.createEnemy = function createEnemy(type) {
 	var pObject;
 	switch (type) {
 		case "abababe":
@@ -2181,33 +2196,6 @@ function creature() {
 }
 
 
-
-
-
-
-
-
-
-/*
-					if(world1.t.AH.loadedModels.indexOf("abababe") > -1) {
-						var enemy = new THREE.BlendCharacter(world1.t.AH);
-						enemy.loadFast("abababe");
-						
-						enemy.scale.set(20, 20, 20);
-						enemy.applyWeight('walk', 1/3);
-						
-						var q = new THREE.Quaternion();
-						q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
-						enemy.quaternion.multiply(q);
-						q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2);
-						enemy.quaternion.multiply(q);
-						
-						var tempBody = createPhysBody("capsule")(1, 3.2);
-						var pObject = new createPhysicsObject(enemy, tempBody, world1, "enemy");
-						
-					}
-					
-	*/
 
 var noSpellTexture = new THREE.TextureLoader().load("img/spells/none/icon/greycross.svg");
 
@@ -2275,9 +2263,6 @@ function spell(spellSlot, spellName) {
 
 	}
 
-
-
-
 	world1.t.HUD.scene.add(spell1.mesh);
 
 	return spell1;
@@ -2337,7 +2322,7 @@ function spellSlot(width, height, pos, spellName) {
 
 
 
-function createSpellBar() {
+fn.createSpellBar = function createSpellBar() {
 
 	//var bW = 50;
 	//var bH = 50;
@@ -2365,10 +2350,6 @@ function createSpellBar() {
 	container.width = bW * container.columns; //500
 	container.height = bW * container.rows; //100
 	container.spellSlots = {};
-
-
-
-
 
 	for (var i = 0; i < container.rows; i++) {
 		for (var j = 0; j < container.columns; j++) {
@@ -2442,8 +2423,7 @@ function createSpellBar() {
 
 
 
-
-function createCooldownTimer(x, y, width) {
+fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 	//console.log(Math.round(x), Math.round(y));
 
 	var bW = ((window.innerWidth / 20) / 2);
@@ -2578,3 +2558,5 @@ loader.load(
 );
 
 */
+
+module.exports = fn;

@@ -1,3 +1,10 @@
+window.$ = window.jQuery = require('jquery');
+require('bootstrap');
+var fn = require('./functions');
+for(var i in fn) {
+	window[i] = fn[i];
+}
+
 $(document).ready(function() {
 	$('#titleScreen').modal({
 		backdrop: "static",
@@ -587,7 +594,7 @@ $(document).ready(function() {
 
 
 //credits http://css-tricks.com/snippets/jquery/move-cursor-to-end-of-textarea-or-input/
-jQuery.fn.putCursorAtEnd = function() {
+$.fn.putCursorAtEnd = function() {
 	return this.each(function() {
 		// If this function exists...
 		if (this.setSelectionRange) {

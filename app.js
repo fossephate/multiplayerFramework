@@ -118,32 +118,11 @@ gameServer.prototype.getRandPos = function() {
 };
 
 gameServer.prototype.createPhysicsObject = function(phys) {
-	var testObject = {};
-	testObject.phys = phys;
-
-	var length = this.c.objects.length;
-	this.c.objects.push(testObject);
-	this.c.pw.addBody(this.c.objects[length].phys);
-};
-
-
-gameServer.prototype.createBall = function() {
-
-	var shape = new CANNON.Sphere(2);
-	var testBody = new CANNON.Body({
-		mass: 1
-	});
-	testBody.addShape(shape);
-	testBody.angularDamping = 999999;
-	testBody.position.set(0, 2, 5);
-
-	var testObject = {};
-	testObject.phys = testBody;
-
-	var length = this.c.objects.length;
-	this.c.objects.push(testObject);
-	this.c.pw.addBody(this.c.objects[length].phys);
-	return this.c.objects[length].phys;
+	var pObject = {};
+	pObject.phys = phys;
+	
+	this.c.objects.push(pObject);
+	this.c.pw.addBody(pObject.phys);
 };
 
 
@@ -162,18 +141,18 @@ gameServer.prototype.createPlayer = function() {
 		mass: 1
 	});
 	tempBody.addShape(cylinderShape);
-	tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, cylinder.height / 2));
-	tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, -cylinder.height / 2));
+	tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, cylinder.height/2));
+	tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, -cylinder.height/2));
 	tempBody.angularDamping = 1;
-	tempBody.position.set(0, 2, 5);
+	tempBody.position.set(0, 0, 100);
 
-	var testObject = {};
-	testObject.phys = tempBody;
+	var pObject = {};
+	pObject.phys = tempBody;
 
 	var length = this.c.objects.length;
-	this.c.objects.push(testObject);
-	this.c.pw.addBody(this.c.objects[length].phys);
-	return this.c.objects[length].phys;
+	this.c.objects.push(pObject);
+	this.c.pw.addBody(pObject.phys);
+	return pObject.phys;
 };
 
 
@@ -226,14 +205,14 @@ gameServer.prototype.createEnemyPhys = function(shape) {
 };
 
 gameServer.prototype.initScene = function() {
-	terrain.physicsFromHeightmap(__dirname + "/public/img/heightmap2.png", function(vertices, geometry, hfBody) {
-		var terrain = gs.createPhysicsObject(hfBody);
+	terrain.physicsFromHeightmap(__dirname + "/public/assets/models/environment/terrain/area1/test.png", function(phys) {
+		var terrain2 = gs.createPhysicsObject(phys);
+		//console.log(hfBody);
 	});
-			var randName = "blob"+Math.floor(Math.random()*5000);
-			var newNode = new abababe(10, 1000, randName);
-			newNode.position.set(0, 0, 0);
-
-			gs.nodes.push(newNode);
+	//var randName = "blob"+Math.floor(Math.random()*5000);
+	//var newNode = new abababe(10, 1000, randName);
+	//newNode.position.set(0, 0, 0);
+	//gs.nodes.push(newNode);
 };
 
 gameServer.prototype.updatePhysics = function() {
@@ -333,8 +312,8 @@ function player(owner, username, classType) {
 	this.temp = {
 		inputVelocity: new THREE.Vector3(),
 		helper: new THREE.Object3D(),
-		isJumping: true,
-		isGrounded: true
+		isJumping: false,
+		isGrounded: false
 	};
 
 	this.phys = gs.createPlayer();
@@ -468,7 +447,7 @@ player.prototype.move = function() {
 		if (rotatedV.x > 0) {
 			this.temp.inputVelocity.x = -rotatedV.x;
 		} else {
-			this.temp.inputVelocity.x = -20; //-0.2;
+			this.temp.inputVelocity.x = -20;
 		}
 	}
 	if (keys.indexOf("moveBackward") > -1 && this.temp.isGrounded == true) {
@@ -477,7 +456,7 @@ player.prototype.move = function() {
 		if (rotatedV.x < 0) {
 			this.temp.inputVelocity.x = -rotatedV.x;
 		} else {
-			this.temp.inputVelocity.x = 20; //0.2;
+			this.temp.inputVelocity.x = 20;
 		}
 	}
 	if (keys.indexOf("moveLeft") > -1 && this.temp.isGrounded == true) {
@@ -486,7 +465,7 @@ player.prototype.move = function() {
 		if (rotatedV.y > 0) {
 			this.temp.inputVelocity.y = -rotatedV.y;
 		} else {
-			this.temp.inputVelocity.y = -20; //-0.2;
+			this.temp.inputVelocity.y = -20;
 		}
 	}
 	if (keys.indexOf("moveRight") > -1 && this.temp.isGrounded == true) {
@@ -495,17 +474,8 @@ player.prototype.move = function() {
 		if (rotatedV.y < 0) {
 			this.temp.inputVelocity.y = -rotatedV.y;
 		} else {
-			this.temp.inputVelocity.y = 20; //0.2;
+			this.temp.inputVelocity.y = 20;
 		}
-	}
-
-	if (keys.indexOf("jump") > -1 && this.temp.isGrounded === true && this.temp.isJumping === false) {
-		this.animTo = "jump";
-		this.gainXP(10);
-		//this.score += 1;
-		this.temp.isJumping = true;
-		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3(0, 0, 0));
-		this.phys.position.z += 0.5;
 	}
 
 	if (keys.indexOf("moveForward") == -1 && keys.indexOf("moveBackward") == -1 && this.temp.isGrounded == true) {
@@ -515,33 +485,6 @@ player.prototype.move = function() {
 	if (keys.indexOf("moveLeft") == -1 && keys.indexOf("moveRight") == -1 && this.temp.isGrounded == true) {
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z).multiplyScalar(0.1);
 		this.temp.inputVelocity.y = -rotatedV.y;
-	}
-
-	if (keys.indexOf("shoot") > -1) {
-		this.takeDamage(5);
-		var pVec0 = new CANNON.Vec3().copy(this.phys.position).vadd(new CANNON.Vec3(0, 0, 1));
-		var tVec1 = new THREE.Vector3(2, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.z);
-		var pVec1 = pVec0.vsub(new CANNON.Vec3(tVec1.x, tVec1.y, tVec1.z));
-		var tVec2 = new THREE.Vector3(1000, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.z);
-		var pVec2 = pVec0.vsub(new CANNON.Vec3(tVec2.x, tVec2.y, tVec2.z));
-		var test = {};
-		test.one = pVec1;
-		test.two = pVec2;
-		io.emit('shot', test);
-		var result = new CANNON.RaycastResult();
-		gs.c.pw.raycastClosest(pVec1, pVec2, {}, result);
-		if (result.hasHit) {
-
-			if (typeof result.body.username != "undefined") {
-				var playerNode = gs.findPlayerByName(result.body.username);
-				if (playerNode != null) {
-					console.log(this.owner.username + " hit: " + result.body.username);
-					playerNode.takeDamage(5, this);
-				}
-				
-			}
-			
-		}
 	}
 	
 	if (data.target) {
@@ -555,7 +498,7 @@ player.prototype.move = function() {
 		}
 	}
 
-	if (keys.indexOf("castFireball") > -1 && this.target != null && this.cooldowns.globalCooldown === 0) {
+	/*if (keys.indexOf("castFireball") > -1 && this.target != null && this.cooldowns.globalCooldown === 0) {
 		this.animTo = "fireball";
 		this.cooldowns.globalCooldown = 60 * 10;
 
@@ -563,7 +506,7 @@ player.prototype.move = function() {
 		if (playerNode != null) {
 			playerNode.takeDamage(5, this);
 		}
-	}
+	}*/
 
 
 
@@ -571,7 +514,8 @@ player.prototype.move = function() {
 	if (this.temp.isGrounded === true) {
 		this.phys.velocity.x = this.temp.inputVelocity.x;
 		this.phys.velocity.y = this.temp.inputVelocity.y;
-		this.phys.velocity.z = 0;
+		//this.phys.velocity.z = 0;
+		this.phys.applyLocalForce(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3(0, 0, 0));
 	}
 	
 
@@ -584,29 +528,33 @@ player.prototype.move = function() {
 	}
 
 	var pVec1 = new CANNON.Vec3().copy(this.phys.position).vadd(new CANNON.Vec3(0, 0, -2.7));
+	
 	var pVec2 = pVec1.vsub(new CANNON.Vec3(0, 0, 800));
 	var result = new CANNON.RaycastResult();
 	gs.c.pw.raycastAny(pVec1, pVec2, {}, result);
-
 	if (result.hasHit) {
 		var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
-		
-		if(result.distance < 1 && result.distance > 0 && this.temp.isJumping === false) {
+		if(result.distance < 1 && this.temp.isJumping === false) {
 			this.phys.position.z += 0.01 - result.distance;
 		}
-		
 		if (result.distance < 0.1) {
 			this.temp.isGrounded = true;
-			
 		} else {
 			this.temp.isGrounded = false;
 		}
-		
-
-		
 	} else {
-		this.temp.isGrounded = true;
+		this.phys.position.z += 0.1;
 	}
+	
+	if (keys.indexOf("jump") > -1 && this.temp.isGrounded === true && this.temp.isJumping === false) {
+		this.animTo = "jump";
+		this.gainXP(10);
+		//this.score += 1;
+		this.temp.isJumping = true;
+		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 50), new CANNON.Vec3(0, 0, 0));
+		//this.phys.position.z += 0.5;
+	}
+	
 	
 	if (keys.indexOf("jump") == -1 && this.temp.isGrounded === true) {
 		this.temp.isJumping = false;
@@ -724,7 +672,6 @@ function playerTracker(id) {
 	this.mouseY = 0;
 }
 
-// CHANGE TO NODE
 node.prototype.update = function() {
 
 	// Get visible nodes
@@ -736,9 +683,7 @@ node.prototype.update = function() {
 };
 
 
-//CHANGE TO NODE
 node.prototype.calcViewBox = function() {
-	//change range later
 	var pos = this.position;
 	
 	this.viewBox.xMin = pos.x - this.sightRange;

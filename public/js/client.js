@@ -1,3 +1,27 @@
+window.lzma = require('../../node_modules/lzma');
+
+window.localforage = require('./libs/localforage/localforage.nopromises.js');
+//var io = require('socket.io');
+window.$ = require('jquery');
+require('./libs/jquery.color')
+window.THREE = require('three');
+require('./libs/projector');
+require('./libs/canvasRenderer');
+require('./libs/blendCharacter');
+var Stats = require('./libs/stats.min');
+require('./libs/cannonDebugRenderer');
+require('./libs/skyShader');
+window.CANNON = require('cannon');
+var SPE = require('shader-particle-engine');
+var hamsters = require('./libs/hamsters');
+require('./libs/sweetalert.min');
+
+
+var fn = require('./functions');
+for(var i in fn) {
+	window[i] = fn[i];
+}
+
 //super global variables (testing)
 var counter;
 var XPBar;
@@ -14,11 +38,12 @@ var helper;
 var emitter;
 var tree1;
 var tree2;
-var world1;
+window.world1;
 var hfBody;
 var socket;
-var debug = true;
+var debug = false;
 var sound1;
+var preferences;
 //var models = {};
 
 //end of super global variables (testing)
@@ -28,8 +53,10 @@ $(function() {
 	//mobileConsole.show();
 	//CANNON.Quaternion.prototype.slerp = THREE.Quaternion.prototype.slerp;
 	
-	var preferences = {};
-	preferences.keyboardLayout = {};
+	preferences = {};
+	preferences.keyboard = {};
+	preferences.sound = {};
+	preferences.video = {};
 	
 	
 	input = {};
@@ -60,40 +87,96 @@ $(function() {
 	input.rotation.z = 0;
 
 	input.data = {};
-
-	input.keys = [];
-	input.key = {};
 	
 	input.options = {};
-	preferences.keyboardLayout = {};
-	preferences.keyboardLayout.moveForward = 87;
-	preferences.keyboardLayout.moveBackward = 83;
-	preferences.keyboardLayout.moveLeft = 65;
-	preferences.keyboardLayout.moveRight = 68;
-	preferences.keyboardLayout.jump = 32;
-	preferences.keyboardLayout.shoot = 69;
-	preferences.keyboardLayout.castFireball = 49;
+	
+	
+	
+	
+	// Set default keyboard layout
+	preferences.keyboard.layout = {};
+	preferences.keyboard.layout.moveForward = 87;
+	preferences.keyboard.layout.moveBackward = 83;
+	preferences.keyboard.layout.moveLeft = 65;
+	preferences.keyboard.layout.moveRight = 68;
+	preferences.keyboard.layout.jump = 32;
+	//preferences.keyboard.layout.castFireball = 49;
+	
+	preferences.keyboard.layout.activateSpellSlot1 = 49;
+	preferences.keyboard.layout.activateSpellSlot2 = 50;
+	preferences.keyboard.layout.activateSpellSlot3 = 51;
+	preferences.keyboard.layout.activateSpellSlot4 = 52;
+	
+	preferences.keyboard.layout.toggleInventory = 73;
+	preferences.keyboard.layout.openSettingsWindow = 79;
 
-	preferences.keyboardLayout.left = 37;
-	preferences.keyboardLayout.right = 39;
-	preferences.keyboardLayout.up = 38;
-	preferences.keyboardLayout.down = 40;
+	/*preferences.keyboard.layout.up = 38;
+	preferences.keyboard.layout.down = 40;
+	preferences.keyboard.layout.left = 37;
+	preferences.keyboard.layout.right = 39;*/
 
 	input.action = {};
-	for (var i in preferences.keyboardLayout) {
+	for (var i in preferences.keyboard.layout) {
 		input.action[i] = false;
 	}
 	
+	
+	// Get stored preferences
 	localforage.getItem('preferences').then(function(value) {
+		// If they exist, write them
 		if(value) {
 			preferences = value;
 		}
+		// Store the preferences (so that the default values get stored)
 		localforage.setItem('preferences', preferences);
+		
+		
+		// Update the keyboard layout settings window to reflect the stored settings, not the default ones
+		for(var i = 0; i < $(".buttonConfig").length; i++) {
+			var div = $(".buttonConfig")[i];
+			var assignedKey = preferences.keyboard.layout[div.id];
+			$("#" + div.id).html(String.fromCharCode(assignedKey).toLowerCase());
+		}
 	});
 	
-
-
-
+	//change document to #keyboardLayoutConfig using <tabindex="0">
+	$(".buttonConfig").on('click', function(e) {
+		$(document).off("keydown");
+		window.addEventListener("keydown", handleKey, false);
+		$(document).on("keydown", function(e2) {
+			console.log(e2.which);
+			var values = [];
+			for (var i in preferences.keyboard.layout) {
+				values.push(preferences.keyboard.layout[i]);
+			}
+			//var values = Object.values(preferences.keyboard.layout);
+			if (values.indexOf(e2.which) == -1) {
+				$("#" + e.target.id).html(String.fromCharCode(e2.which));
+				preferences.keyboard.layout[e.target.id] = e2.which;
+				localforage.setItem('preferences', preferences);
+				
+				$(document).off("keydown");
+				window.addEventListener("keydown", handleKey, false);
+			} else {
+				$("#" + e.target.id).animate({
+					backgroundColor: "#AC3333"
+				}, 'fast');
+				setTimeout(function() {
+					$("#" + e.target.id).animate({
+						backgroundColor: "#888"
+					}, 'slow');
+				}, 100);
+			}
+		});
+	});
+	$("#keyboardLayoutConfig").on('click', function(e) {
+		//console.log(e.target);
+		var isButton = e.target.classList[0] == "buttonConfig";
+		if (!isButton) {
+			$(document).off("keydown");
+			window.addEventListener("keydown", handleKey, false);
+		}
+	});
 
 
 
@@ -255,12 +338,11 @@ $(function() {
 		}
 	});
 
-
-	var keyboardLayout = preferences.keyboardLayout;
-
 	function handleKey(event) {
 		
+		// Set state variable
 		var state;
+		// Switch between keyup and keydown
 		switch(event.type) {
 			case "keydown":
 				state = true;
@@ -270,16 +352,18 @@ $(function() {
 				break;
 		}
 		
-		//event.preventDefault();
-		//var keyCode = event.keyCode;
+		// Check which key was pressed using the current keyboard layout
+		// This is just for short(ish) hand notation
+		var keyboardLayout = preferences.keyboard.layout;
+		
 		switch (event.keyCode) {
-			case keyboardLayout.jump: //space
+			case keyboardLayout.jump:
 				input.action.jump = state;
 				break;
-			case keyboardLayout.moveForward: //w
+			case keyboardLayout.moveForward:
 				input.action.moveForward = state;
 				break;
-			case keyboardLayout.moveBackward: //s
+			case keyboardLayout.moveBackward:
 				input.action.moveBackward = state;
 				break;
 			case keyboardLayout.moveLeft: //a
@@ -300,7 +384,7 @@ $(function() {
 			case keyboardLayout.right: //right
 				input.action.right = state;
 				break;
-			case keyboardLayout.castFireball: //right
+			case keyboardLayout.castFireball:
 				input.action.castFireball = state;
 				break;
 		}
@@ -308,6 +392,7 @@ $(function() {
 	
 	window.addEventListener("keydown", handleKey, false);
 	window.addEventListener("keyup", handleKey, false);
+	//window.addEventListener("keypress", handleKey, false);
 
 
 
@@ -334,13 +419,20 @@ $(function() {
 				character: character
 			});
 		}
-		//world1.game.player.username = character
-		// hide the title screen
+		
+		// Hide the title screen
 		$('#titleScreen').modal('hide');
 		$('#loadScreen').modal({
 			backdrop: "static",
 			keyboard: false,
 		});
+		
+		//$('#loadScreen').modal('show');
+		/*setInterval(function() {
+		var num = parseInt($('#loadScreenText').text());
+		$('#loadScreenText').text(num+1);
+		}, 10);*/
+		
 		$(".progress-bar").animate({
   		width: "0%"
 		}, 10);
@@ -381,20 +473,20 @@ $(function() {
 	});
 	
 	// custom keyboard layout change
-	$("#layoutSetter").on('change', function(event) {
+	/*$("#layoutSetter").on('change', function(event) {
 		var newLayout = $("#layoutSetter").val();
 		if (newLayout == "wasd") {
-			preferences.keyboardLayout.moveForward = 87;
-			preferences.keyboardLayout.moveBackward = 83;
-			preferences.keyboardLayout.moveLeft = 65;
-			preferences.keyboardLayout.moveRight = 68;
+			preferences.keyboard.layout.moveForward = 87;
+			preferences.keyboard.layout.moveBackward = 83;
+			preferences.keyboard.layout.moveLeft = 65;
+			preferences.keyboard.layout.moveRight = 68;
 		} else if (newLayout == "asdf") {
-			preferences.keyboardLayout.moveForward = 65;
-			preferences.keyboardLayout.moveBackward = 83;
-			preferences.keyboardLayout.moveLeft = 68;
-			preferences.keyboardLayout.moveRight = 70;
+			preferences.keyboard.layout.moveForward = 65;
+			preferences.keyboard.layout.moveBackward = 83;
+			preferences.keyboard.layout.moveLeft = 68;
+			preferences.keyboard.layout.moveRight = 70;
 		}
-	});
+	});*/
 
 
 	$("#playBtn").on('click', function(event) {
@@ -419,27 +511,19 @@ $(function() {
 		world1.game.player.id = socket.id;
 		world1.game.player.username = data.username;
 		
-		var loadScreen = new createLoadScreen();
-		/*world1.t.AH.onProgressFuncs.push(function(progress) {
-			$(".progress-bar").animate({
-  			width: progress+"%"
-			}, 10);
-			//loadScreen.update(progress);
-		});*/
+		//var loadScreen = new createLoadScreen();
 		
 		world1.t.AH.onloadFuncs.push(function(progress) {
 			//loadScreen.update(1);
 			world1.game.connected = true;
-			setTimeout(function() {
-				loadScreen.update(1);
-				$("#loadScreen").modal('hide');
-			}, 3000);
+			//loadScreen.done();
+			$("#loadScreen").modal('hide');
 		});
 		
 		var fileList = [
 			"assets/models/characters/players/wizard/final/wizard.json",
-			"assets/models/enviroment/trees/animated-tree/final/treeBark.json",
-			"assets/models/enviroment/trees/animated-tree/final/treeLeaves.json",
+			"assets/models/environment/trees/animated-tree/final/treeBark.json",
+			"assets/models/environment/trees/animated-tree/final/treeLeaves.json",
 		];
 		world1.t.AH.loadAssets(fileList);
 		
@@ -530,7 +614,7 @@ $(function() {
 	//});*/
 
 
-	socket.on('disconnect', function() {
+	/*socket.on('disconnect', function() {
 		swal({
 			title: "Server disconnected/reset!",
 			text: "The page will reload after you close this message.",
@@ -564,7 +648,7 @@ $(function() {
 				window.location.reload();
 			}, 1000);
 		});
-	});
+	});*/
 
 
 
@@ -638,18 +722,7 @@ $(function() {
 				}
 				if (typeof vp[vpd[i].username] == "undefined") {
 					//vp[vpd[i].username] = "placeholder";
-					var newPlayer;
-					switch(vpd[i].class) {
-						case "wizard":
-							newPlayer = new wizard(vpd[i]);
-							break;
-						case "rogue":
-							newPlayer = new rogue(vpd[i]);
-							break;
-						case "paladin":
-							newPlayer = new paladin(vpd[i]);
-							break;
-					}
+					var newPlayer = new playerConstructor(vpd[i]);
 					
 					
 					
@@ -920,85 +993,34 @@ $(function() {
 		//world1.t.sky.effectController.azimuth = 0.00005*n;
 		world1.t.sky.update();
 	}, 50);
-
-
-
-
-	var texLoader = new THREE.TextureLoader();
-	var terrainMaterial;
-	texLoader.load('img/sand1.jpg', function(t1) {
-		t1.wrapS = t1.wrapT = THREE.RepeatWrapping;
-		var sand = new THREE.Mesh(
-			new THREE.PlaneBufferGeometry(16384 + 1024, 16384 + 1024, 64, 64),
-			new THREE.MeshLambertMaterial({
-				map: t1
-			})
-		);
-		sand.position.y = -101;
-		sand.rotation.x = -0.5*Math.PI;
-		//world1.t.scene.add(sand);
-		texLoader.load('img/grass1.jpg', function(t2) {
-			t2.wrapS = t2.wrapT = THREE.RepeatWrapping;
-			texLoader.load('img/stone1.jpg', function(t3) {
-				t3.wrapS = t3.wrapT = THREE.RepeatWrapping;
-				texLoader.load('img/snow1.jpg', function(t4) {
-					t4.wrapS = t4.wrapT = THREE.RepeatWrapping;
-					// t2.repeat.x = t2.repeat.y = 2;
-					terrainMaterial = THREE.Terrain.generateBlendedMaterial([{
-							texture: t1
-						}, {
-							texture: t2,
-							levels: [-80, -35, 20, 50]
-						}, {
-							texture: t3,
-							levels: [20, 50, 60, 85]
-						}, {
-							texture: t4,
-							glsl: '1.0 - smoothstep(65.0 + smoothstep(-256.0, 256.0, vPosition.x)*10.0, 80.0, vPosition.z)'
-						}, {
-							texture: t3,
-							glsl: 'slope > 0.7853981633974483 ? 0.2 : 1.0 - smoothstep(0.47123889803846897, 0.7853981633974483, slope) + 0.2'
-						}, // between 27 and 45 degrees
-					]);
-
-					var heightmap = new Image();
-					heightmap.onload = function() {
-						terrainScene = THREE.Terrain({
-							easing: THREE.Terrain.Linear,
-							frequency: 2.5,
-							heightmap: heightmap,
-							material: terrainMaterial,
-							maxHeight: 100,
-							minHeight: 0,
-							steps: 1,
-							useBufferGeometry: false,
-							xSegments: 128, //63
-							xSize: 1024,
-							ySegments: 128, //63
-							ySize: 1024,
-						});
-						//terrainScene.rotateX(Math.PI/2);
-						//mesh.updateMatrix(); 
-						//mesh.geometry.applyMatrix( mesh.matrix );
-						//mesh.matrix.identity();
-						terrainScene.children[0].position.set(0, 0, -60);
-						//terrainScene.children[0].material.side = THREE.DoubleSide;
-						//terrainScene.children[0].recieveShadow = true;
-						//terrainScene.recieveShadow = true;
-						world1.t.scene.add(terrainScene.children[0]);
-					};
-					heightmap.src = "img/heightmap.png";
-				});
-			});
-		});
+	
+	
+	
+	planeFromHeightmapSrc('assets/models/environment/terrain/area1/test.png', 'assets/models/environment/terrain/area1/textures/texture.bmp', function(mesh) {
+		window.test = mesh;
+		//mesh.position.z -= 70;
+		//mesh.rotation.z -= Math.PI/2;
+		world1.t.scene.add(mesh);
 	});
 	
 	
 	
-	physicsFromHeightmap("img/heightmap2.png", function(planeMesh, hfBody) {
-		var terrain2 = createPhysicsObject(planeMesh, hfBody, world1, false);
-		terrain2.phys.position.set(0, 0, -60);
-		world1.t.scene.remove(planeMesh);
+	
+	
+	physicsFromHeightmap("assets/models/environment/terrain/area1/test.png", function(mesh, phys) {
+		var terrain = {};
+		terrain.phys = phys;
+		terrain.mesh = mesh;
+		terrain.mesh.position.set(0,0,0);
+		
+		terrain.update = function(){};
+		world1.c.pw.addBody(terrain.phys);
+		world1.t.scene.add(terrain.mesh);
+		world1.c.objects.push(terrain);
+		//var terrain2 = createPhysicsObject(planeMesh, hfBody, world1, false);
+		//terrain.phys.position.set(0, 0, -60);
+		//terrain.mesh.position.set(0, 0, -60);
+		
 	});
 
 
@@ -1022,7 +1044,9 @@ $(function() {
 		//var tempBody = createPhysBody("capsule", 1)(1, 3.2); //3.76
 		//world1.game.player.tObject = new createPhysicsObject(player, tempBody, world1, "player");
 		
-		world1.game.player.tObject = new wizard();
+		world1.game.player.tObject = new playerConstructor();
+		world1.game.player.tObject.setClass("wizard");
+		
 		world1.game.player.tObject.username = world1.game.player.username;
 		
 	});
@@ -1575,7 +1599,7 @@ $(function() {
 			//world1.c.pw.raycastClosest(camVec, camVec2);
 			world1.c.pw.raycastAny(pVec1, pVec2, {}, result);
 
-			if (result.hasHit) {
+			/*if (result.hasHit) {
 				var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
 				
 				if(result.distance < 1 && result.distance > 0 && temp.isJumping === false) {
@@ -1593,7 +1617,7 @@ $(function() {
 			
 			if (!input.action.jump && temp.isGrounded === true) {
 				temp.isJumping = false;
-			}
+			}*/
 			
 			
 			
@@ -1733,11 +1757,12 @@ $(function() {
 	$(document).on('wheel', function(event) {
 		var delta = event.originalEvent.deltaY;
 		if (delta < 0) {
-			input.mouse.scrollLevel -= 0.5;
+			input.mouse.scrollLevel -= 0.5*input.mouse.scrollLevel;
 		} else if (delta > 0) {
-			input.mouse.scrollLevel += 0.5;
+			input.mouse.scrollLevel += 0.5*input.mouse.scrollLevel;
 		}
-		input.mouse.scrollLevel = limit(0.1, 15, input.mouse.scrollLevel, false);
+		//input.mouse.scrollLevel = limit(0.1, 15, input.mouse.scrollLevel, false);
+		input.mouse.scrollLevel = limit(0.1, 10000, input.mouse.scrollLevel, false);
 	});
 
 

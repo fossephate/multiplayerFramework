@@ -32,7 +32,6 @@ THREE.BlendCharacter = function(assetHolder) {
 
 
 	this.loadFast = function(url, assetHolder) {
-		
 		switch(url) {
 			case "wizard":
 				url = "assets/models/characters/players/wizard/final/wizard.json";
@@ -45,17 +44,13 @@ THREE.BlendCharacter = function(assetHolder) {
 				break;
 		}
 		
-		
-		
-		
-		
-		
 		var scope = this;
 		
 		var AH = this.AH || assetHolder;
 		
 		var model = AH.parseCachedModel(url);
-		var geometry = model.geometry;
+		console.log("loading: " + url);
+		var geometry = model.geometry ? model.geometry : model;
 		var materials = model.materials;
 		
 		/*var originalMaterial = materials[0];

@@ -13,7 +13,7 @@
  *
  * Three.js integration by zz85 http://twitter.com/blurspline
 */
-
+var THREE = require('three');
 THREE.ShaderLib[ 'sky' ] = {
 
 	uniforms: {

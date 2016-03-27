@@ -12,6 +12,22 @@ var request       = require('request')
 var mime          = require('mime-types')
 var parseDataURI  = require('parse-data-uri')
 
+
+
+/*
+
+    fs.readFile(url, function(err, data) {
+		
+			
+		
+		
+    })
+
+
+
+
+*/
+
 function handlePNG(data, cb) {
   var png = new PNG();
   png.parse(data, function(err, img_data) {
@@ -19,24 +35,10 @@ function handlePNG(data, cb) {
       cb(err)
       return
     }
-		
-		//var a = new PNG(img_data).pack();
-		//console.log(a);
-		//console.log(new Uint8Array(img_data.data));
-		/*for(var i in img_data) {
-			console.log(i);
-		}*/
-		//cb(null, new Uint8Array(img_data.data));
 		for(var i = 0; i < img_data.data.length; i++) {
 			img_data.data[i] = parseInt(img_data.data[i]);
 		}
-		
 		cb(null, new Uint8ClampedArray(img_data.data));
-		
-    /*cb(null, ndarray(new Uint8Array(img_data.data),
-      [img_data.width|0, img_data.height|0, 4],
-      [4, 4*img_data.width|0, 1],
-      0))*/
   })
 }
 

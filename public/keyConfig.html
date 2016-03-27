@@ -1,0 +1,165 @@
+<html>
+
+<head>
+  <style>
+    #keyboardLayoutConfig {
+      margin-top: 5px;
+      margin-left: 5px;
+      border: 1px solid red;
+      width: 40%;
+      height: 50%;
+    }
+    
+    .actionText {
+      width: 50%;
+      margin-top: 5px;
+      margin-bottom: 5px;
+      margin-left: 10px;
+      background-color: #888;
+      text-align: center;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 50px;
+      font-weight: bold;
+      /*font-size: 20px;*/
+      color: #333;
+    }
+    
+    .buttonConfig {
+      float: right;
+      margin-top: 5px;
+      margin-bottom: 5px;
+      margin-right: 10px;
+      height: 50px;
+      width: 50px;
+      background-color: #888;
+      text-align: center;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 50px;
+      font-weight: bold;
+      /*font-size: 20px;*/
+      color: #333;
+    }
+  </style>
+  <script type="text/javascript" src="js/libs/localforage.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+  <script src="js/libs/jquery.color.js"></script>
+  <script>
+    // polyfill
+    /*const reduce = Function.bind.call(Function.call, Array.prototype.reduce);
+    const isEnumerable = Function.bind.call(Function.call, Object.prototype.propertyIsEnumerable);
+    const concat = Function.bind.call(Function.call, Array.prototype.concat);
+    const keys = Reflect.ownKeys;
+    if (!Object.values) {
+      Object.values = function values(O) {
+        return reduce(keys(O), (v, k) => concat(v, typeof k === 'string' && isEnumerable(O, k) ? [O[k]] : []), []);
+      };
+    }*/
+
+    $(function() {
+
+
+
+
+      var lf = localforage;
+
+      localforage.config({
+        driver: localforage.INDEXEDDB, // Force INDEXEDDB; same as using setDriver() // 3-9-16
+        name: 'keyConfig',
+        version: 1.0,
+        size: 4980736, // Size of database, in bytes. WebSQL-only for now.
+        storeName: 'keyvaluepairs', // Should be alphanumeric, with underscores.
+        description: 'some description'
+      });
+
+      var preferences = {};
+      preferences.keyboard = {};
+      preferences.sound = {};
+      preferences.video = {};
+      preferences.keyboard.layout = {};
+
+
+      preferences.keyboard.layout = {};
+      preferences.keyboard.layout.moveForward = 119;
+      preferences.keyboard.layout.moveBackward = 115;
+      preferences.keyboard.layout.moveLeft = 97;
+      preferences.keyboard.layout.moveRight = 100;
+      preferences.keyboard.layout.jump = 32;
+      preferences.keyboard.layout.shoot = 69;
+      preferences.keyboard.layout.castFireball = 49;
+      preferences.keyboard.layout.toggleInventory = 105;
+
+      preferences.keyboard.layout.up = 38;
+      preferences.keyboard.layout.down = 40;
+      preferences.keyboard.layout.left = 37;
+      preferences.keyboard.layout.right = 39;
+
+
+      localforage.getItem('preferences').then(function(value) {
+        if (value) {
+          preferences = value;
+        }
+        localforage.setItem('preferences', preferences);
+      });
+
+
+      $(".buttonConfig").on('click', function(e) {
+        $(document).off("keypress");
+        $(document).on("keypress", function(e2) {
+          console.log(e2.which);
+          var values = [];
+          for (var i in preferences.keyboard.layout) {
+            values.push(preferences.keyboard.layout[i]);
+          }
+          //var values = Object.values(preferences.keyboard.layout);
+          if (values.indexOf(e2.which) == -1) {
+            $("#" + e.target.id).html(e2.which);
+            preferences.keyboard.layout[e.target.id] = e2.which;
+            localforage.setItem('preferences', preferences);
+            $(document).off("keypress");
+          } else {
+            $("#" + e.target.id).animate({
+              backgroundColor: "#AC3333"
+            }, 'fast');
+            setTimeout(function() {
+              $("#" + e.target.id).animate({
+                backgroundColor: "#888"
+              }, 'slow');
+            }, 100);
+          }
+        });
+      });
+      $(document).on('click', function(e) {
+        var isButton = e.target.classList[0] == "buttonConfig";
+        if (!isButton) {
+          $(document).off("keypress");
+        }
+      });
+      
+      
+      
+      
+    });
+  </script>
+</head>
+
+<body>
+  <div id="keyboardLayoutConfig">
+    <div class="actionText">Move Forward</div>
+    <div class="buttonConfig" id="moveForward">w</div><br>
+    <div class="actionText">Move Backward</div>
+    <div class="buttonConfig" id="moveBack">s</div><br>
+    <div class="actionText">Move Left</div>
+    <div class="buttonConfig" id="moveLeft">a</div><br>
+    <div class="actionText">Move Right</div>
+    <div class="buttonConfig" id="moveRight">d</div><br>
+    <div class="actionText">Jump</div>
+    <div class="buttonConfig" id="jump">space</div><br>
+    <div class="actionText">Toggle Inventory</div>
+    <div class="buttonConfig" id="toggleInventory">i</div><br>
+    <input type="button" id="resetControls" value="Reset" />
+  </div>
+</body>
+
+</html>

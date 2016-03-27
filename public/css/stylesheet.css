@@ -48,6 +48,40 @@ body {
     transform: translate(-50%, -50%);
 }
 
+/*.adsbygoogle > ins {
+	z-index: 1060;
+}*/
+
+/*.adslot_1 {
+	width: 320px; height: 100px;
+}
+@media (min-width:500px) {
+	.adslot_1 {
+		width: 468px;
+		height: 60px;
+	}
+}
+@media (min-width:800px) {
+	.adslot_1 {
+		width: 728px;
+		height: 90px;
+	}
+}*/
+
+#adsSection1 {
+	position: absolute;
+	width: 15%;
+	height: 80%;
+	/*background-color: #FFFFFF;*/
+	z-index: 1060;
+	left: 2%;
+	top: 10%;
+}
+
+#adsSection1 * {
+	z-index: 1060;
+}
+
 
 
 #instructions {
