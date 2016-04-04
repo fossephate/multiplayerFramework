@@ -34,8 +34,8 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 })); 
 
-//url: 'mongodb://localhost/character-login:27017'
-//mongoose.connect('mongodb://localhost/character-login');
+//url: 'mongodb://localhost/node-login:27017'
+//mongoose.connect('mongodb://localhost/node-login');
 app.set('port', 8100);
 //app.set('view engine', 'html');
 app.use(express.static(__dirname + '/public'));
@@ -71,7 +71,7 @@ function gameServer() {
 	this.filter = new filter();
 	//this.filter.addWords(['a$$']);
 	this.clients = [];
-	this.characters = [];
+	this.nodes = [];
 	this.locations = {};
 	this.playersOnline = 0;
 	this.map = [];
@@ -90,11 +90,11 @@ function gameServer() {
 };
 
 gameServer.prototype.createPhysicsObject = function(phys) {
-	//var pObject = {};
-	//pObject.phys = phys;
+	var pObject = {};
+	pObject.phys = phys;
 	
-	//this.c.objects.push(pObject);
-	this.c.pw.addBody(phys);
+	this.c.objects.push(pObject);
+	this.c.pw.addBody(pObject.phys);
 };
 
 
@@ -132,7 +132,7 @@ gameServer.prototype.createPhysicsObject = function(phys) {
 
 
 /* CREATE ENEMY */
-/*gameServer.prototype.createEnemyPhys = function(shape) {
+gameServer.prototype.createEnemyPhys = function(shape) {
 	var that = this;
 	var createCollider;
 	switch(shape) {
@@ -174,7 +174,7 @@ gameServer.prototype.createPhysicsObject = function(phys) {
 			
 	}
 	return createCollider;
-};*/
+};
 
 gameServer.prototype.initScene = function() {
 	terrain.physicsFromHeightmap(__dirname + "/public/assets/models/environment/terrain/area1/test.png", function(phys) {
@@ -182,25 +182,25 @@ gameServer.prototype.initScene = function() {
 		//console.log(hfBody);
 	});
 	//var randName = "blob"+Math.floor(Math.random()*5000);
-	//var newCharacter = new abababe(10, 1000, randName);
-	//newCharacter.position.set(0, 0, 0);
-	//gs.characters.push(newCharacter);
+	//var newNode = new abababe(10, 1000, randName);
+	//newNode.position.set(0, 0, 0);
+	//gs.nodes.push(newNode);
 };
 
 gameServer.prototype.updatePhysics = function() {
 	this.c.pw.step(1 / 60);
-	/*for (var i = 0; i < this.c.objects.length; i++) {
+	for (var i = 0; i < this.c.objects.length; i++) {
 		if (typeof this.c.objects[i].update != "undefined") {
 			this.c.objects[i].update();
 		}
-	}*/
+	}
 };
 
 
 gameServer.prototype.findPlayerByName = function(username) {
-	for (var i = 0; i < this.characters.length; i++) {
-		if (this.characters[i].username == username) {
-			return this.characters[i];
+	for (var i = 0; i < this.nodes.length; i++) {
+		if (this.nodes[i].username == username) {
+			return this.nodes[i];
 		}
 	}
 	return null;
@@ -208,7 +208,7 @@ gameServer.prototype.findPlayerByName = function(username) {
 
 
 
-function character() {
+function node() {
 	this.online = false;
 
 	// Viewing box
@@ -222,7 +222,7 @@ function character() {
 		zMax: 0 // Backwards/Forwards
 	};
 }
-character.prototype.collisionCheck = function(xMin, xMax, yMin, yMax, zMin, zMax) {
+node.prototype.collisionCheck = function(xMin, xMax, yMin, yMax, zMin, zMax) {
 	// Coll	jision checking
 	var obj;
 	if (true) {
@@ -261,7 +261,7 @@ function spell(name, castTime) {
 
 
 function player(owner, username, classType) {
-	character.call(this);
+	node.call(this);
 	
 	if(classType) {
 		this.class = classType;
@@ -289,8 +289,6 @@ function player(owner, username, classType) {
 	};
 
 	this.phys = phys.createPhysBody("capsule")(1, 3.2);
-	gs.c.pw.addBody(this.phys);
-	
 	this.phys.username = this.username;
 	this.position = this.phys.position;
 	this.quaternion = this.phys.quaternion;
@@ -311,8 +309,8 @@ function player(owner, username, classType) {
 	this.castStart = 0;
 	this.spells = [];
 
-	this.load = function(savedCharacter) {
-		var sn = savedCharacter;
+	this.load = function(savedNode) {
+		var sn = savedNode;
 		this.class = sn.class;
 		this.username = sn.username;
 		if(typeof sn.position != "undefined") {
@@ -327,7 +325,7 @@ function player(owner, username, classType) {
 		this.experience = sn.experience;
 	}
 }
-player.prototype = Object.create(character.prototype);
+player.prototype = Object.create(node.prototype);
 player.prototype.constructor = player;
 
 
@@ -483,9 +481,9 @@ player.prototype.move = function() {
 		this.animTo = "fireball";
 		this.cooldowns.globalCooldown = 60 * 10;
 
-		var playerCharacter = gs.findPlayerByName(this.target);
-		if (playerCharacter != null) {
-			playerCharacter.takeDamage(5, this);
+		var playerNode = gs.findPlayerByName(this.target);
+		if (playerNode != null) {
+			playerNode.takeDamage(5, this);
 		}
 	}*/
 
@@ -543,8 +541,8 @@ player.prototype.move = function() {
 	
 };
 
-/*function enemy(level, health, name) {
-	character.call(this);
+function enemy(level, health, name) {
+	node.call(this);
 	this.type = "enemy";
 	this.class = "enemy";
 	this.username = "blob"+Math.floor(Math.random()*5000);
@@ -555,7 +553,7 @@ player.prototype.move = function() {
 	this.animTo = "idle";
 	this.warpTime = 0.2;
 }
-enemy.prototype = Object.create(character.prototype); // See note below
+enemy.prototype = Object.create(node.prototype); // See note below
 enemy.prototype.constructor = enemy;
 
 
@@ -567,7 +565,7 @@ enemy.prototype.viewObj = function() {
 		velocity: this.velocity,
 		quaternion: this.quaternion,
 		rotation2: this.rotation2,
-		characterId: this.characterId,
+		nodeId: this.nodeId,
 		username: this.username,
 		health: this.health,
 		level: this.level,
@@ -583,12 +581,27 @@ enemy.prototype.saveObj = function() {
 		velocity: this.velocity,
 		quaternion: this.quaternion,
 		rotation2: this.rotation2,
-		characterId: this.characterId,
+		nodeId: this.nodeId,
 		username: this.username,
 		health: this.health,
 		level: this.level,
 	};
 };
+
+
+function abababe(level, health, name) {
+	enemy.call(this);
+	
+	this.phys = gs.createEnemyPhys("capsule")(1, 3);
+	this.phys.username = this.username;
+	this.position = this.phys.position;
+	this.quaternion = this.phys.quaternion;
+	this.velocity = this.phys.velocity;
+	
+	this.animTo = "walk";
+}
+abababe.prototype = Object.create(enemy.prototype); // See note below
+abababe.prototype.constructor = abababe;
 
 
 
@@ -616,19 +629,18 @@ var rMove = function(num) {
 
 enemy.prototype.move = function() {
 		this.phys.applyLocalImpulse(new CANNON.Vec3(rMove(1), rMove(1), rMove(0.2)), new CANNON.Vec3(0, 0, 0));
-};*/
+};
 
 function client(id) {
 	this.isOnline = false;
 	this.socketId = id;
-	this.visibleCharacters = [];
+	this.visibleNodes = [];
 	this.username = "";
-	this.accountName = "";
 	this.usernames = [];
-	this.characters = [];
+	this.nodes = [];
 
-	this.getCharacter = function(num) {
-		return this.characters[this.usernames[num]];
+	this.getNode = function(num) {
+		return this.nodes[this.usernames[num]];
 	};
 
 	this.keys = [];
@@ -639,18 +651,18 @@ function client(id) {
 	this.mouseY = 0;
 }
 
-character.prototype.update = function() {
+node.prototype.update = function() {
 
-	// Get visible characters
-	this.previouslyVisibleCharacters = this.visibleCharacters;
-	this.visibleCharacters = this.calcViewBox();
-	io.to(this.id).emit('visibleCharacters', {
-		vn: this.visibleCharacters
+	// Get visible nodes
+	this.previouslyVisibleNodes = this.visibleNodes;
+	this.visibleNodes = this.calcViewBox();
+	io.to(this.id).emit('visibleNodes', {
+		vn: this.visibleNodes
 	});
 };
 
 
-character.prototype.calcViewBox = function() {
+node.prototype.calcViewBox = function() {
 	var pos = this.position;
 	
 	this.viewBox.xMin = pos.x - this.sightRange;
@@ -661,11 +673,11 @@ character.prototype.calcViewBox = function() {
 	this.viewBox.zMax = pos.z + this.sightRange;
 
 	var newVisible = [];
-	for (var i = 0; i < gs.characters.length; i++) {
-		var character1 = gs.characters[i];
+	for (var i = 0; i < gs.nodes.length; i++) {
+		var node1 = gs.nodes[i];
 		
-		if (character1.collisionCheck(this.viewBox.xMin, this.viewBox.xMax, this.viewBox.yMin, this.viewBox.yMax, this.viewBox.zMin, this.viewBox.zMax)) {
-			newVisible.push(character1.viewObj());
+		if (node1.collisionCheck(this.viewBox.xMin, this.viewBox.xMax, this.viewBox.yMin, this.viewBox.yMax, this.viewBox.zMin, this.viewBox.zMax)) {
+			newVisible.push(node1.viewObj());
 		}
 	}
 	return newVisible;
@@ -684,66 +696,26 @@ io.on('connection', function(socket) {
 	gs.map.push(socket.id);
 	console.log("connected id: " + socket.id);
 	console.log("gs.map.length: " + gs.map.length);
-	
-	
-	
-	socket.on('autoLogin', function(data) {
-		
-		
-		
-		
-	});
-	
-	socket.on('joinWorld', function(data) {
-		if(gs.clients[socket.id].loggedIn === true) {
-			
-		}
-	});
-	
-	
-	
-	socket.on('addUser', function(data) {
-		
-		
-		
-		
-	});
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 
-	/*socket.on('disconnect', function() {
+	socket.on('disconnect', function() {
 		var i;
 
 		//ADDED
-		var clcharacters = gs.clients[socket.id].characters;
+		var clnodes = gs.clients[socket.id].nodes;
 		var usernames = gs.clients[socket.id].usernames;
 
-		var tcharacters = [];
+		var tnodes = [];
 		for (i = 0; i < usernames.length; i++) {
-			var clcharacter2 = gs.clients[socket.id].getCharacter(i);
-			tcharacters.push(clcharacter2.saveObj());
+			var clnode2 = gs.clients[socket.id].getNode(i);
+			tnodes.push(clnode2.saveObj());
 			
 			io.emit('numOfPlayersOnline', gs.playersOnline);
-			gs.c.pw.removeBody(clcharacter2.phys);
+			gs.c.pw.removeBody(clnode2.phys);
 			
 			if (i == usernames.length && gs.clients[socket.id].username.indexOf("guest") == -1) {
 				var data = {
 					user: gs.clients[socket.id].username,
-					characters: tcharacters
+					nodes: tnodes
 				};
 
 				AM.addData(data, function(e, o) {
@@ -758,12 +730,12 @@ io.on('connection', function(socket) {
 		gs.map.splice(gs.map.indexOf(socket.id), 1);
 
 		console.log("disconnected id: " + socket.id);
-		console.log("gs.characters.length: " + gs.characters.length);
+		console.log("gs.nodes.length: " + gs.nodes.length);
 		console.log("gs.map.length: " + gs.map.length);
 		console.log("gs.clients.length: " + gs.clients.length);
-	});*/
+	});
 	
-	/*socket.on('addUser', function(data) {
+	socket.on('addUser', function(data) {
 		gs.playersOnline += 1;
 		io.emit('numOfPlayersOnline', gs.playersOnline);
 
@@ -784,10 +756,10 @@ io.on('connection', function(socket) {
 			if(data.class == "wizard" || data.class == "paladin" || data.class == "rogue") {
 				
 			
-				var newCharacter = new player(gs.clients[socket.id], charName, data.class);
+				var newNode = new player(gs.clients[socket.id], charName, data.class);
 				
-				gs.clients[socket.id].characters[charName] = newCharacter;
-				gs.characters.push(newCharacter);
+				gs.clients[socket.id].nodes[charName] = newNode;
+				gs.nodes.push(newNode);
 				
 				socket.emit('initData', {
 					username: gs.filter.clean(charName),
@@ -803,7 +775,7 @@ io.on('connection', function(socket) {
 			var character = data.character;
 
 			AM.autoLogin(user, pass, function(o) {
-				if (!o || typeof o.characters[character] == "undefined") {
+				if (!o || typeof o.nodes[character] == "undefined") {
 					socket.emit('notLoggedIn');
 				} else if (typeof o != "undefined") {
 
@@ -816,18 +788,18 @@ io.on('connection', function(socket) {
 					gs.clients[socket.id].username = gs.filter.clean(o.user);
 					gs.clients[socket.id].isOnline = true;
 					
-					var newCharacter = new player(gs.clients[socket.id], character, o.characters[character].class);
-					newCharacter.load(o.characters[character]);
+					var newNode = new player(gs.clients[socket.id], character, o.nodes[character].class);
+					newNode.load(o.nodes[character]);
 					
-					gs.clients[socket.id].characters[character] = newCharacter;
-					gs.characters.push(newCharacter);
+					gs.clients[socket.id].nodes[character] = newNode;
+					gs.nodes.push(newNode);
 					socket.emit('initData', {
 						username: gs.filter.clean(character),
 					});
 				}
 			});
 		}
-	});*/
+	});
 
 
 
@@ -845,20 +817,20 @@ io.on('connection', function(socket) {
 
 
 function loop() {
-	for (var i = 0; i < gs.characters.length; i++) {
-		if(gs.characters[i].type == "player" && typeof gs.clients[gs.characters[i].id] == "undefined") {
-			gs.characters.splice(i, 1);
-			console.log("character deleted");
+	for (var i = 0; i < gs.nodes.length; i++) {
+		if(gs.nodes[i].type == "player" && typeof gs.clients[gs.nodes[i].id] == "undefined") {
+			gs.nodes.splice(i, 1);
+			console.log("node deleted");
 			continue;
 		}
 		
-		var character1 = gs.characters[i];
-		character1.move();
+		var node1 = gs.nodes[i];
+		node1.move();
 	}
 	
-	for (var j = 0; j < gs.characters.length; j++) {
-		if(gs.characters[j].type == "player") {
-			gs.characters[j].update();
+	for (var j = 0; j < gs.nodes.length; j++) {
+		if(gs.nodes[j].type == "player") {
+			gs.nodes[j].update();
 		}
 	}
 

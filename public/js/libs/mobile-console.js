@@ -315,3 +315,4 @@
   };
   //return mobileConsole;
 //});
+module.exports = mobileConsole;

@@ -1,4 +1,4 @@
-
+/*
 var ES = require('./email-settings');
 var EM = {};
 module.exports = EM;
@@ -34,4 +34,4 @@ EM.composeEmail = function(o)
 		html += "<a href='http://twitter.com/braitsch'>braitsch</a><br><br>";
 		html += "</body></html>";
 	return  [{data:html, alternative:true}];
-}
+}*/

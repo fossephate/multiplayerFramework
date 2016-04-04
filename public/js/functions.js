@@ -1727,7 +1727,8 @@ fn.assetHolder = function assetHolder() {
 				var loader = new THREE.XHRLoader(scope.manager);
 				loader.load(url, function(value) {
 					scope.assets.files[url] = {};
-					scope.assets.files[url].value = JSON.parse(value);
+					
+					scope.assets.files[url].value = /*JSON.parse(*/value/*)*/;
 					
 					scope.numberOfLoadedAssets += 1;
 					scope.assetProgress();
@@ -1792,10 +1793,18 @@ fn.assetHolder = function assetHolder() {
 
 	this.parseCachedModel = function(url) {
 		
-		var texturePath = url.substring(0, url.lastIndexOf("/") + 1) + "textures/";
-		var jLoader = new THREE.JSONLoader();
-		var parsed = jLoader.parse(this.assets.files[url].value, texturePath);
-		return parsed;
+		if(typeof this.assets.files[url].parsed != "undefined") {
+			console.log("FROM CACHE");
+			//return this.assets.files[url].parsed;
+		} else {
+			console.log("FROM MANUAL");
+			var texturePath = url.substring(0, url.lastIndexOf("/") + 1) + "textures/";
+			var jLoader = new THREE.JSONLoader();
+			var parsed = jLoader.parse(JSON.parse(this.assets.files[url].value), texturePath);
+			this.assets.files[url].parsed = parsed;
+			//return this.assets.files[url].parsed;
+		}
+		return this.assets.files[url].parsed;
 	};
 
 	this.loadAssets = function(assetList) {
@@ -2019,6 +2028,7 @@ function character() {
 
 fn.playerConstructor = function playerConstructor(playerData) {
 	character.call(this);
+	this.type = "player";
 	this.mesh.meshOffset = new THREE.Vector3(0, 0, -2);
 	this.phys = createPhysBody("capsule")(1, 3.2);
 	this.items = {};
@@ -2026,7 +2036,7 @@ fn.playerConstructor = function playerConstructor(playerData) {
 	this.equipment = {};
 	this.level = 0;
 	this.health = 100;
-	this.username = "john";
+	//this.username = "john";
 	
 	
 	this.setClass = function(playerClass) {
@@ -2054,6 +2064,32 @@ fn.playerConstructor = function playerConstructor(playerData) {
 		this.items.healthLabel.mesh.position.set(0, 400, 0);
 		this.mesh.add(this.items.healthLabel.mesh);*/
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	this.updateData = function(newData) {
+		//if(newData.position) {
+			this.phys.position.lerp(newData.position, 0.6, this.phys.position);
+
+			this.phys.quaternion.copy(newData.quaternion);
+
+			this.phys.velocity.copy(newData.velocity);
+
+			this.mesh.warpTime = newData.warpTime;
+			this.mesh.animTo = newData.animTo;
+		//}
+	}
+	
+	
+	
+	
+	
 	return this;
 }
 fn.playerConstructor.prototype = Object.create(character.prototype);

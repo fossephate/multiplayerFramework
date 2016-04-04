@@ -308,7 +308,7 @@ $(function() {
 		cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true, true);
 		cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
 
-		var pMesh = world1.game.player.mesh;
+		var pMesh = world1.game.player.tObject.mesh;
 		var rclone = cameraOptions.rotateOffset.clone();
 		var diff = (pMesh.rotation.y - (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
 		pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
@@ -514,15 +514,15 @@ $(function() {
 	
 	// On confirmed connection
 	socket.on('initData', function(data) {
-		//world1.game.player.id = socket.id;
+		world1.game.player.id = socket.id;
+		world1.game.player.username = data.username;
 		
+		//var loadScreen = new createLoadScreen();
 		
-		world1.t.AH.onloadFuncs.push(function() {
-			world1.game.player = new playerConstructor();
-			world1.game.player.setClass("wizard");
-			world1.game.player.username = data.username;
-			
+		world1.t.AH.onloadFuncs.push(function(progress) {
+			//loadScreen.update(1);
 			world1.game.connected = true;
+			//loadScreen.done();
 			$("#loadScreen").modal('hide');
 		});
 		
@@ -535,7 +535,7 @@ $(function() {
 		
 	});
 
-	/*$('#jumpButton').on('click touchstart', function() {
+	$('#jumpButton').on('click touchstart', function() {
 		input.action.jump = true;
 
 		setTimeout(function() {
@@ -560,8 +560,8 @@ $(function() {
 	$('#fireballButton').on('click touchstart', function() {
 		input.action.castFireball = true;
 
-		var pos = world1.game.player.mesh.position;
-		var rot = world1.game.player.mesh.rotation;
+		var pos = world1.game.player.tObject.mesh.position;
+		var rot = world1.game.player.tObject.mesh.rotation;
 		var fireEmitter = new createFireball(pos, rot, false);
 		world1.spe.groups.smoke.addEmitter(fireEmitter);
 
@@ -569,10 +569,10 @@ $(function() {
 			input.action.castFireball = false;
 		}, 80);
 		return false;
-	});*/
+	});
 
 
-	/*$('#send').on('click', function() {
+	$('#send').on('click', function() {
 		socket.emit('chat message', $('#msgIn').val());
 		$('#msgIn').val('');
 		return false;
@@ -598,7 +598,7 @@ $(function() {
 
 	socket.on('chat message', function(payload) {
 		$('#messages').append($('<li>').text(payload.name + ': ' + payload.msg));
-	});*/
+	});
 
 	socket.on('notLoggedIn', function() {
 		swal("Not logged in!");
@@ -658,7 +658,7 @@ $(function() {
 
 
 
-	socket.on('visibleCharacters', function(data) {
+	socket.on('visibleNodes', function(data) {
 		var vp = world1.game.visiblePlayers;
 		var vpd = world1.game.visiblePlayersData;
 
@@ -684,166 +684,140 @@ $(function() {
 
 		// THIS IS A MESS (procrastinating cleanup)
 		for (var i = 0; i < vpd.length; i++) {
+			var playerObject = world1.game.player.tObject;
 			if(!world1.game.connected) {
 				continue;
 			}
-			
-			if(vpd[i].type == "player") {
+			if (vpd[i].type == "player") {
 				if (vpd[i].username == world1.game.player.username) {
-					var player = world1.game.player;
-					player.updateData(vpd[i]);
-					continue;	
-				} else if (typeof vp[vpd[i].username] == "undefined") {
-					vp[vpd[i].username] = new playerConstructor(vpd[i]);
+
+					// cannonjs's lerp function is weird
+						playerObject.phys.position.lerp(vpd[i].position, 0.6, playerObject.phys.position);
+						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, playerObject.phys.position);
+						
+						//playerObject.phys.position.copy(vpd[i].position);
+						//var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.6);
+						//playerObject.phys.position.copy(newPos);
+					// cannonjs's lerp function is weird
+					
+					// cannonjs doesn't have a slerp for quaternions but threejs's can be used anyways
+					
+					//THREE.Quaternion.slerp(playerObject.phys.quaternion, vpd[i].quaternion, playerObject.phys.quaternion, 0.6);
+					playerObject.phys.quaternion.copy(vpd[i].quaternion);
+					
+					playerObject.phys.velocity.copy(vpd[i].velocity);
+
+					playerObject.mesh.warpTime = vpd[i].warpTime;
+					playerObject.mesh.animTo = vpd[i].animTo;
+
+					//var half = new THREE.Vector3().copy(vpd[i].position).sub(playerObject.phys.position.clone()).multiplyScalar(0.5);
+					//playerObject.phys.position.vadd(half);
+
+					/*var sound1 = new THREE.Audio(world1.t.audioListener);
+					sound1.load('./sounds/explosion.wav');
+					sound1.volume = 1;
+					sound1.setRefDistance(20);
+					sound1.position.set(0, 0, -28);*/
+
+					//world1.t.HUD.items.healthBar.update(vpd[i].health/100);
+					//var percent = vpd[i].experience/(100*(vpd[i].level+1));
+					//world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
+					//world1.t.HUD.items.XPBar.update(percent);
+					//world1.t.HUD.items.levelText.update(vpd[i].level);
+					continue;
+				}
+				if (typeof vp[vpd[i].username] == "undefined") {
+					//vp[vpd[i].username] = "placeholder";
+					var newPlayer = new playerConstructor(vpd[i]);
+					vp[vpd[i].username] = newPlayer;
+					
+					
+					
+					/*if(world1.t.AH.loadedModels.indexOf("player") > -1) {
+						var player = new THREE.BlendCharacter(world1.t.AH);
+						player.loadFast("player");
+						
+						player.scale.set(0.02, 0.02, 0.02);
+						
+						
+						var tempBody = createPhysBody("capsule")(1, 3.2);
+						var pObject = new createPhysicsObject(player, tempBody, world1, "player");
+						pObject.phys.position.copy(vpd[i].position);
+						pObject.phys.quaternion.copy(vpd[i].quaternion);
+						pObject.phys.velocity.copy(vpd[i].velocity);
+
+						pObject.items.userLabel = new makeTextSprite(vpd[i].username);
+						pObject.items.userLabel.scale.set(50, 50, 1);
+						pObject.items.userLabel.position.set(0, 250, 0);
+						//pObject.items.userLabel.position.copy(vpd[i].position);
+						//pObject.items.userLabel.position.y += 250;
+						pObject.mesh.add(pObject.items.userLabel);
+
+						pObject.items.classLabel = new makeTextSprite(vpd[i].class);
+						pObject.items.classLabel.scale.set(30, 30, 1);
+						pObject.items.classLabel.position.set(0, 350, 0);
+						//pObject.items.classLabel.position.copy(vpd[i].position);
+						//pObject.items.classLabel.position.y += 150;
+						pObject.mesh.add(pObject.items.classLabel);
+						
+						//pObject.items.healthLabel = new createHealthText(vpd[i].health);
+						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
+						pObject.items.healthLabel.mesh.scale.set(20, 20, 1);
+						pObject.items.healthLabel.mesh.position.set(0, 400, 0);
+						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
+						//pObject.items.healthLabel.mesh.position.y += 200;
+						pObject.mesh.add(pObject.items.healthLabel.mesh);
+						
+						
+						//pObject.items.healthLabel.sprite.scale.set(200, 200, 200);
+						
+						//pObject.items.healthLabel.sprite.position.set(0, 200, 0);
+						//pObject.items.healthLabel.scale.set(30, 30, 1);
+						//pObject.mesh.add(pObject.items.healthLabel.sprite);
+						
+						pObject.mesh.username = vpd[i].username;
+						vp[vpd[i].username] = pObject;
+					}*/
+					
+					
 					
 				} else if (typeof vp[vpd[i].username] != "undefined") {
-					vp[vpd[i].username].updateData(vpd[i]);
+					
+					
+					// cannonjs's lerp function is weird
+						vp[vpd[i].username].phys.position.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
+						
+						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
+					
+						//vp[vpd[i].username].phys.position.copy(vpd[i].position);
+						//var newPos = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.6);
+						//vp[vpd[i].username].phys.position.copy(newPos);
+					// cannonjs's lerp function is weird
+					
+					// cannonjs doesn't have a slerp for quaternions but threejs's can be used
+					
+					//THREE.Quaternion.slerp(vp[vpd[i].username].phys.quaternion, vpd[i].quaternion, vp[vpd[i].username].phys.quaternion, 0.6);
+					
+					vp[vpd[i].username].phys.quaternion.copy(vpd[i].quaternion);
+					vp[vpd[i].username].phys.velocity.copy(vpd[i].velocity);
+					//vp[vpd[i].username].quaternion.slerp(vpd[i].quaternion, 0.6);
+					
+					
+
+					
+					
+					vp[vpd[i].username].mesh.warpTime = vpd[i].warpTime;
+					vp[vpd[i].username].mesh.animTo = vpd[i].animTo;
+					
+					
+					//vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
+					
+					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI/2);
+					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
+					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
 				}
-			}
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-// 			if (vpd[i].type == "player") {
-// 				if (vpd[i].username == world1.game.player.username) {
-
-// 					// cannonjs's lerp function is weird
-// 						playerObject.phys.position.lerp(vpd[i].position, 0.6, playerObject.phys.position);
-// 						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, playerObject.phys.position);
-						
-// 						//playerObject.phys.position.copy(vpd[i].position);
-// 						//var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.6);
-// 						//playerObject.phys.position.copy(newPos);
-// 					// cannonjs's lerp function is weird
-					
-// 					// cannonjs doesn't have a slerp for quaternions but threejs's can be used anyways
-					
-// 					//THREE.Quaternion.slerp(playerObject.phys.quaternion, vpd[i].quaternion, playerObject.phys.quaternion, 0.6);
-// 					playerObject.phys.quaternion.copy(vpd[i].quaternion);
-					
-// 					playerObject.phys.velocity.copy(vpd[i].velocity);
-
-// 					playerObject.mesh.warpTime = vpd[i].warpTime;
-// 					playerObject.mesh.animTo = vpd[i].animTo;
-
-// 					//var half = new THREE.Vector3().copy(vpd[i].position).sub(playerObject.phys.position.clone()).multiplyScalar(0.5);
-// 					//playerObject.phys.position.vadd(half);
-
-// 					/*var sound1 = new THREE.Audio(world1.t.audioListener);
-// 					sound1.load('./sounds/explosion.wav');
-// 					sound1.volume = 1;
-// 					sound1.setRefDistance(20);
-// 					sound1.position.set(0, 0, -28);*/
-
-// 					//world1.t.HUD.items.healthBar.update(vpd[i].health/100);
-// 					//var percent = vpd[i].experience/(100*(vpd[i].level+1));
-// 					//world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
-// 					//world1.t.HUD.items.XPBar.update(percent);
-// 					//world1.t.HUD.items.levelText.update(vpd[i].level);
-// 					continue;
-// 				}
-// 				if (typeof vp[vpd[i].username] == "undefined") {
-// 					//vp[vpd[i].username] = "placeholder";
-// 					var newPlayer = new playerConstructor(vpd[i]);
-// 					vp[vpd[i].username] = newPlayer;
-					
-					
-					
-// 					/*if(world1.t.AH.loadedModels.indexOf("player") > -1) {
-// 						var player = new THREE.BlendCharacter(world1.t.AH);
-// 						player.loadFast("player");
-						
-// 						player.scale.set(0.02, 0.02, 0.02);
-						
-						
-// 						var tempBody = createPhysBody("capsule")(1, 3.2);
-// 						var pObject = new createPhysicsObject(player, tempBody, world1, "player");
-// 						pObject.phys.position.copy(vpd[i].position);
-// 						pObject.phys.quaternion.copy(vpd[i].quaternion);
-// 						pObject.phys.velocity.copy(vpd[i].velocity);
-
-// 						pObject.items.userLabel = new makeTextSprite(vpd[i].username);
-// 						pObject.items.userLabel.scale.set(50, 50, 1);
-// 						pObject.items.userLabel.position.set(0, 250, 0);
-// 						//pObject.items.userLabel.position.copy(vpd[i].position);
-// 						//pObject.items.userLabel.position.y += 250;
-// 						pObject.mesh.add(pObject.items.userLabel);
-
-// 						pObject.items.classLabel = new makeTextSprite(vpd[i].class);
-// 						pObject.items.classLabel.scale.set(30, 30, 1);
-// 						pObject.items.classLabel.position.set(0, 350, 0);
-// 						//pObject.items.classLabel.position.copy(vpd[i].position);
-// 						//pObject.items.classLabel.position.y += 150;
-// 						pObject.mesh.add(pObject.items.classLabel);
-						
-// 						//pObject.items.healthLabel = new createHealthText(vpd[i].health);
-// 						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
-// 						pObject.items.healthLabel.mesh.scale.set(20, 20, 1);
-// 						pObject.items.healthLabel.mesh.position.set(0, 400, 0);
-// 						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
-// 						//pObject.items.healthLabel.mesh.position.y += 200;
-// 						pObject.mesh.add(pObject.items.healthLabel.mesh);
-						
-						
-// 						//pObject.items.healthLabel.sprite.scale.set(200, 200, 200);
-						
-// 						//pObject.items.healthLabel.sprite.position.set(0, 200, 0);
-// 						//pObject.items.healthLabel.scale.set(30, 30, 1);
-// 						//pObject.mesh.add(pObject.items.healthLabel.sprite);
-						
-// 						pObject.mesh.username = vpd[i].username;
-// 						vp[vpd[i].username] = pObject;
-// 					}*/
-					
-					
-					
-// 				} else if (typeof vp[vpd[i].username] != "undefined") {
-					
-					
-// 					// cannonjs's lerp function is weird
-// 						vp[vpd[i].username].phys.position.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
-						
-// 						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
-					
-// 						//vp[vpd[i].username].phys.position.copy(vpd[i].position);
-// 						//var newPos = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.6);
-// 						//vp[vpd[i].username].phys.position.copy(newPos);
-// 					// cannonjs's lerp function is weird
-					
-// 					// cannonjs doesn't have a slerp for quaternions but threejs's can be used
-					
-// 					//THREE.Quaternion.slerp(vp[vpd[i].username].phys.quaternion, vpd[i].quaternion, vp[vpd[i].username].phys.quaternion, 0.6);
-					
-// 					vp[vpd[i].username].phys.quaternion.copy(vpd[i].quaternion);
-// 					vp[vpd[i].username].phys.velocity.copy(vpd[i].velocity);
-// 					//vp[vpd[i].username].quaternion.slerp(vpd[i].quaternion, 0.6);
-					
-					
-
-					
-					
-// 					vp[vpd[i].username].mesh.warpTime = vpd[i].warpTime;
-// 					vp[vpd[i].username].mesh.animTo = vpd[i].animTo;
-					
-					
-// 					//vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
-					
-// 					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI/2);
-// 					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
-// 					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
-// 				}
 				
-// 			}
+			}
 		}
 	});
 
@@ -893,14 +867,19 @@ $(function() {
 				this.t.renderer = new THREE.WebGLRenderer();
 			} else {
 				this.t.renderer = new THREE.CanvasRenderer();
+				//this.t.renderer = new THREE.SoftwareRenderer();
+				//this.t.renderer = new THREE.CSS3DRenderer();
+				//this.t.renderer = new THREE.CSS3DStereoRenderer();
+				//this.t.renderer = new THREE.SVGRenderer();
 			}
 			this.t.renderer.setPixelRatio(window.devicePixelRatio);
 			this.t.renderer.setSize(this.width, this.height);
 			this.t.renderer.autoClear = false;
 			//this.t.renderer.shadowMap.enabled = true;
 			//this.t.renderer.shadowMap.type = THREE.PCFShadowMap;
+
 			document.body.appendChild(this.t.renderer.domElement);
-			//$(this.t.renderer.domElement).attr('id', 'gameCanvas');
+			$(this.t.renderer.domElement).attr('id', 'gameCanvas');
 
 			// cannon.js
 			this.c = {};
@@ -930,10 +909,16 @@ $(function() {
 			this.stats.domElement.style.left = '0px';
 			this.stats.domElement.style.top = '0px';
 			document.body.appendChild(this.stats.domElement);
+
 		};
 		this.game = {};
 		this.game.connected = false;
-		this.game.player = {};
+
+		this.game.player = {
+			id: -1,
+			username: "",
+			tObject: 0,
+		};
 		this.game.visiblePlayersData = [];
 		this.game.visiblePlayersNames = [];
 		this.game.visiblePlayers = {};
@@ -1063,12 +1048,12 @@ $(function() {
 		
 		
 		//var tempBody = createPhysBody("capsule", 1)(1, 3.2); //3.76
-		//world1.game.player = new createPhysicsObject(player, tempBody, world1, "player");
+		//world1.game.player.tObject = new createPhysicsObject(player, tempBody, world1, "player");
 		
-		//world1.game.player = new playerConstructor();
-		//world1.game.player.setClass("wizard");
+		world1.game.player.tObject = new playerConstructor();
+		world1.game.player.tObject.setClass("wizard");
 		
-		//world1.game.player.username = world1.game.player.username;
+		world1.game.player.tObject.username = world1.game.player.username;
 		
 	});
 
@@ -1364,8 +1349,8 @@ $(function() {
 				this.remove();
 			}
 
-			/*if(typeof world1.game.player.phys != "undefined") {
-				var pPhys = world1.game.player.phys;
+			/*if(typeof world1.game.player.tObject.phys != "undefined") {
+				var pPhys = world1.game.player.tObject.phys;
 				var pos = pPhys.position;
 				this.position.value = this.position.value.set(pos.x, pos.y, pos.z);
 			}*/
@@ -1406,8 +1391,8 @@ $(function() {
 		};
 		var emitter1 = new SPE.Emitter(rainSettings);
 		emitter1.update = function() {
-			if (typeof world1.game.player.phys != "undefined") {
-				var pPhys = world1.game.player.phys;
+			if (typeof world1.game.player.tObject.phys != "undefined") {
+				var pPhys = world1.game.player.tObject.phys;
 				var pos = pPhys.position;
 				this.position.value = this.position.value.set(pos.x, pos.y, pos.z + 20);
 			}
@@ -1451,7 +1436,7 @@ $(function() {
 	world1.t.scene.add(world1.spe.groups.rain.mesh);
 
 
-	//var pos = world1.game.player.phys.position;
+	//var pos = world1.game.player.tObject.phys.position;
 	//var fireEmitter = new createFireball(pos);
 	//world1.spe.groups.smoke.addEmitter(fireEmitter);
 
@@ -1525,9 +1510,9 @@ $(function() {
 			}*/
 
 
-			var playerObj = world1.game.player;
-			var pMesh = world1.game.player.mesh;
-			var pPhys = world1.game.player.phys;
+			var playerObj = world1.game.player.tObject;
+			var pMesh = world1.game.player.tObject.mesh;
+			var pPhys = world1.game.player.tObject.phys;
 
 
 			var rclone = cameraOptions.rotateOffset.clone();
@@ -1557,8 +1542,8 @@ $(function() {
 			
 			/*if (input.action.castFireball && temp.isCasting === false) {
 				temp.isCasting = true;
-				var pos = world1.game.player.mesh.position;
-				var rot = world1.game.player.mesh.rotation;
+				var pos = world1.game.player.tObject.mesh.position;
+				var rot = world1.game.player.tObject.mesh.rotation;
 				var fireEmitter = new createFireball(pos, rot, false);
 				world1.spe.groups.smoke.addEmitter(fireEmitter);
 
@@ -1684,7 +1669,7 @@ $(function() {
 			}
 
 
-			followObject(world, world1.game.player.mesh, world.t.camera, cameraOptions);
+			followObject(world, world1.game.player.tObject.mesh, world.t.camera, cameraOptions);
 			
 			if(typeof world.t.renderer.clear != "undefined") {
 				world.t.renderer.clear();
@@ -1750,7 +1735,7 @@ $(function() {
 			cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true, true);
 			cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
 
-			var pMesh = world1.game.player.mesh;
+			var pMesh = world1.game.player.tObject.mesh;
 			var rclone = cameraOptions.rotateOffset.clone();
 			var diff = (pMesh.rotation.y + (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
 			pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);

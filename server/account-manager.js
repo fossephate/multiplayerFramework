@@ -1,15 +1,16 @@
-var crypto = require('crypto');
+/*var crypto = require('crypto');
 var MongoDB = require('mongodb').Db;
 var Server = require('mongodb').Server;
-var moment = require('moment');
+var mongoose = require('mongoose');
+//var moment = require('moment');
 
 var dbPort = 27017;
 var dbHost = 'localhost';
-var dbName = 'node-login';
+var dbName = 'node-signIn';
 
 /* establish the database connection */
 
-var db = new MongoDB(dbName, new Server(dbHost, dbPort, {
+/*var db = new MongoDB(dbName, new Server(dbHost, dbPort, {
 	auto_reconnect: true
 }), {
 	w: 1
@@ -23,9 +24,268 @@ db.open(function(e, d) {
 });
 var accounts = db.collection('accounts');
 
-/* login validation methods */
+/* signIn validation methods */
 
-exports.autoLogin = function(user, pass, callback) {
+/*
+var kittySchema = mongoose.Schema({
+    name: String
+});
+var Kitten = mongoose.model('Kitten', kittySchema);
+var silence = new Kitten({ name: 'Silence' });
+// NOTE: methods must be added to the schema before compiling it with mongoose.model()
+kittySchema.methods.speak = function () {
+  var greeting = this.name
+    ? "Meow name is " + this.name
+    : "I don't have a name";
+  console.log(greeting);
+}
+fluffy.save(function (err, fluffy) {
+  if (err) return console.error(err);
+  fluffy.speak();
+});
+
+Kitten.find(function (err, kittens) {
+  if (err) return console.error(err);
+  console.log(kittens);
+})
+
+Kitten.find({ name: /^Fluff/ }, callback);
+*/
+
+
+var bcrypt = require('bcrypt');
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
+mongoose.connect('mongodb://localhost/node-signIn');
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  // we're connected!
+});
+
+var account = require('./models/account.js');
+var accounts = db.collection('accounts');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+exports.addNewAccount = function(accountData, callback) {
+	
+	var errors = [];
+	
+	exports.validateSignUpData(accountData, errors);
+	if (errors.length > 0) {
+		callback(errors);
+	}
+	
+	// count the number of accounts with the same username
+	accounts.count({ 'username': accountData.username }).then(function (count) {
+		if (count > 0) {
+			errors.push({
+				field: "username",
+				msg: "username is already in use."
+			});
+			console.log(accountData.username);
+			//if(errors.length > 0){callback(errors)};
+			return false;
+		}// check for the same email
+	}).then(accounts.count({ 'email': accountData.email })).then(function(count) {
+		if(count > 0) {
+			errors.push({
+				field: "username",
+				msg: "email is already in use."
+			});
+		}
+	}).then(function() {
+		if(errors.length > 0) {
+			callback(errors, null);
+		} else {
+			
+			// hash and store password
+			bcrypt.hash(accountData.password, 8, function(err, hash) {
+				// Store hash in your password DB. 
+				var newAccount = new account({
+					username: accountData.username,
+					password: hash,
+					email: accountData.email,
+				});
+				newAccount.save(function (error, ok) {
+					if(error) {
+						callback(error, null);
+					} else {
+						callback(null, ok);
+					}
+				});
+			});
+		}
+	});
+};
+*/
+
+
+
+
+
+
+
+
+
+
+exports.addNewAccount = function(accountData, callback) {
+	
+	var errors = [];
+	
+	exports.validateSignUpData(accountData, errors);
+	if (errors.length > 0) {
+		callback(errors);
+	}
+	
+	// count the number of accounts with the same username
+	accounts.count({ 'username': accountData.username }).then(function (count) {
+		if (count > 0) {
+			errors.push({
+				field: "username",
+				msg: "username is already in use."
+			});
+			console.log(accountData.username);
+			//if(errors.length > 0){callback(errors)};
+			return false;
+		}// check for the same email
+	}).then(accounts.count({ 'email': accountData.email })).then(function(count) {
+		if(count > 0) {
+			errors.push({
+				field: "username",
+				msg: "email is already in use."
+			});
+			return true;
+		}
+	}).then(function() {
+		if(errors.length > 0) {
+			console.log(errors);
+			callback(errors, null);
+		} else {
+			
+			// hash and store password
+			bcrypt.hash(accountData.password, 8, function(err, hash) {
+				// Store hash in your password DB. 
+				var newAccount = new account({
+					username: accountData.username,
+					password: hash,
+					email: accountData.email,
+				});
+				newAccount.save(function (error, ok) {
+					if(error) {
+						callback(error, null);
+					} else {
+						callback(null, ok);
+					}
+				});
+			});
+		}
+	});
+};
+
+
+
+
+
+exports.manualSignIn = function(username, password, callback) {
+	
+	accounts.findOne({ 'username': username }).then(function (tempAccount) {
+		if(tempAccount) {
+			bcrypt.compare(password, tempAccount.password, function(err, res) {
+				//console.log(err);
+				//console.log(res);
+				if(res === true) {
+					callback(null, tempAccount);
+				} else {
+					callback(err);
+				}
+			});
+		} else {
+			callback(null);
+		}
+			
+	});
+}
+
+
+exports.autoSignIn = function(username, password, callback) {
+	accounts.findOne({ 'username': username }, 'username password').then(function (tempAccount) {
+		if(password == tempAccount.password) {
+			callback(null, tempAccount);
+		} else {
+			callback(null);
+		}
+	});
+}
+
+
+
+
+
+
+
+
+
+exports.getAccountByUsername = function(username, password, callback) {
+	accounts.findOne({ 'username': username }).then(function (tempAccount) {
+		if(tempAccount) {
+			callback(tempAccount);
+		} else {
+			callback(null);
+		}
+	});
+}
+
+
+
+
+
+
+
+exports.updateAccount = function(newData) {
+	accounts.findOne({ username: newData.username }, function(tempAccount) {
+		if(tempAccount) {
+			for(var key in newData) {
+				if(key != 'password') {
+					tempAccount[key] = newData[key];
+				}
+			}
+
+			accounts.save(tempAccount, { safe: true }, function(err) {
+				if (err) {
+					callback(err);
+				} else {
+					callback(null, tempAccount);
+				}
+			});
+		} else {
+			callback(null);
+		}
+			
+	});
+};
+
+
+
+
+
+
+
+
+/*exports.autoSignIn = function(user, pass, callback) {
 	accounts.findOne({
 		user: user
 	}, function(e, o) {
@@ -43,7 +303,7 @@ exports.autoLogin = function(user, pass, callback) {
 	});
 }
 
-exports.manualLogin = function(user, pass, callback) {
+exports.manualSignIn = function(user, pass, callback) {
 	var errors = [];
 	accounts.findOne({
 		user: user
@@ -51,7 +311,7 @@ exports.manualLogin = function(user, pass, callback) {
 		if (o == null) {
 			errors.push({
 				field: "username",
-				msg: "Incorrect login / password / user not found"
+				msg: "Incorrect signIn / password / user not found"
 			});
 			callback(errors);
 		} else {
@@ -61,16 +321,16 @@ exports.manualLogin = function(user, pass, callback) {
 				} else {
 					errors.push({
 						field: "username",
-						msg: "Incorrect login / password"
+						msg: "Incorrect signIn / password"
 					});
 					callback(errors);
 				}
 			});
 		}
 	});
-}
+}*/
 
-/*exports.manualLogin = function(user, pass, callback) {
+/*exports.manualSignIn = function(user, pass, callback) {
 	var errors = [];
 	accounts.findOne({
 		user: user
@@ -78,7 +338,7 @@ exports.manualLogin = function(user, pass, callback) {
 		if (o == null) {
 			errors.push({
 				field: "username",
-				msg: "Incorrect login / password / user not found"
+				msg: "Incorrect signIn / password / user not found"
 			});
 		}
 	});
@@ -89,7 +349,7 @@ exports.manualLogin = function(user, pass, callback) {
 		} else {
 			errors.push({
 				field: "username",
-				msg: "Incorrect login / password"
+				msg: "Incorrect signIn / password"
 			});
 		}
 	});
@@ -136,7 +396,7 @@ exports.manualLogin = function(user, pass, callback) {
 
 
 
-exports.addNewAccount = function(newData, callback) {
+/*exports.addNewAccount = function(newData, callback) {
 	var errors = [];
 	accounts.findOne({
 		user: newData.user
@@ -177,14 +437,20 @@ exports.addNewAccount = function(newData, callback) {
 		});
 
 	});
-};
+};*/
 
 
 
 
-exports.addData = function(newData, callback) {
+//exports.addData = function(newData, callback) {
 	
-	accounts.findOne({
+	/*accounts.findOneAndUpdate({username: newData.username}, req.newData, {upsert:true}, function(err, doc){
+			if (err) return res.send(500, { error: err });
+			return res.send("succesfully saved");
+	});*/
+	
+	
+	/*accounts.findOne({
 		user: newData.user
 	}, function(e, o) {
 		//o.name = newData.name;
@@ -195,7 +461,6 @@ exports.addData = function(newData, callback) {
 				o[key] = newData[key];
 			}
 		}
-		
 		accounts.save(o, {
 			safe: true
 		}, function(err) {
@@ -206,11 +471,11 @@ exports.addData = function(newData, callback) {
 			}
 		});
 		
-	});
+	});*/
 
 
 
-};
+//};
 
 
 /*exports.addNewAccount = function(newData, callback) {
@@ -255,7 +520,7 @@ exports.addData = function(newData, callback) {
 	}
 };*/
 
-exports.updateAccount = function(newData, callback) {
+/*exports.updateAccount = function(newData, callback) {
 	accounts.findOne({
 		user: newData.user
 	}, function(e, o) {
@@ -281,9 +546,9 @@ exports.updateAccount = function(newData, callback) {
 			});
 		}
 	});
-}
+}*/
 
-exports.updatePassword = function(email, newPass, callback) {
+/*exports.updatePassword = function(email, newPass, callback) {
 	accounts.findOne({
 		email: email
 	}, function(e, o) {
@@ -302,7 +567,7 @@ exports.updatePassword = function(email, newPass, callback) {
 
 /* account lookup methods */
 
-exports.deleteAccount = function(id, callback) {
+/*exports.deleteAccount = function(id, callback) {
 	accounts.remove({
 		_id: getObjectId(id)
 	}, callback);
@@ -333,14 +598,17 @@ exports.validateResetLink = function(email, passHash, callback) {
 	}, function(e, o) {
 		callback(o ? 'ok' : null);
 	});
-}
+}*/
 
 exports.getAllRecords = function(callback) {
 	accounts.find().toArray(
 		function(e, res) {
-			if (e) callback(e)
-			else callback(null, res)
-		});
+			if (e) {
+				callback(e);
+			} else {
+				callback(null, res);
+			}
+	});
 };
 
 exports.delAllRecords = function(callback) {
@@ -348,24 +616,15 @@ exports.delAllRecords = function(callback) {
 }
 
 
-exports.validateLoginData = function(reqBody, errors) {
-	/*var regx = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-	if (!regx.test(reqBody.user)) {
+exports.validateSignInData = function(reqBody, errors) {
+	if (reqBody.username.length < 5) {
 		errors.push({
 			field: "username",
-			msg: "error with username"
-		});
-	}*/
-
-	if (reqBody.user.length < 5) {
-		errors.push({
-			field: "username",
-			msg: "Incorrect login / password"
+			msg: "Incorrect username / password"
 		});
 	}
-
 	regx = /[^a-z0-9\-\_\.]+/i;
-	if (regx.test(reqBody.pass)) {
+	if (regx.test(reqBody.password)) {
 		errors.push({
 			field: "password",
 			msg: "Illegal character(s)!"
@@ -383,7 +642,7 @@ exports.validateSignUpData = function(reqBody, errors) {
 		});
 	}
 
-	if (reqBody.user.length < 3 || reqBody.user.length > 32) {
+	if (reqBody.username.length < 3 || reqBody.username.length > 32) {
 		errors.push({
 			field: "username",
 			msg: "Username must be between 3 and 32 characters"
@@ -391,7 +650,7 @@ exports.validateSignUpData = function(reqBody, errors) {
 	}
 
 	regx = /[^a-z0-9\-\_\.]+/i;
-	if (regx.test(reqBody.user)) {
+	if (regx.test(reqBody.username)) {
 		errors.push({
 			field: "username",
 			msg: "Illegal character(s)!"
@@ -399,7 +658,7 @@ exports.validateSignUpData = function(reqBody, errors) {
 	}
 
 
-	if (reqBody.pass.length < 5 || reqBody.pass.length > 32) {
+	if (reqBody.password.length < 5 || reqBody.password.length > 32) {
 		errors.push({
 			field: "password",
 			msg: "Password must be between 5 and 32 characters"
@@ -407,7 +666,7 @@ exports.validateSignUpData = function(reqBody, errors) {
 	}
 
 	regx = /[^a-z0-9\-\_\.]+/i;
-	if (regx.test(reqBody.pass)) {
+	if (regx.test(reqBody.password)) {
 		errors.push({
 			field: "password",
 			msg: "Illegal character(s)!"
@@ -418,7 +677,7 @@ exports.validateSignUpData = function(reqBody, errors) {
 
 /* private encryption & validation methods */
 
-var generateSalt = function() {
+/*var generateSalt = function() {
 	var set = '0123456789abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQURSTUVWXYZ';
 	var salt = '';
 	for (var i = 0; i < 10; i++) {
@@ -445,7 +704,7 @@ var validatePassword = function(plainPass, hashedPass, callback) {
 
 /* auxiliary methods */
 
-var getObjectId = function(id) {
+/*var getObjectId = function(id) {
 	return new require('mongodb').ObjectID(id);
 }
 
@@ -469,4 +728,4 @@ var findByMultipleFields = function(a, callback) {
 			if (e) callback(e)
 			else callback(null, results)
 		});
-}
+}*/

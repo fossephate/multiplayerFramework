@@ -1,4 +1,4 @@
-
+/*
 module.exports = {
 	
 	host		: 'smtp.gmail.com',
@@ -7,3 +7,4 @@ module.exports = {
 	sender		: 'f1v3mail@gmail.com>'
 	
 }
+*/

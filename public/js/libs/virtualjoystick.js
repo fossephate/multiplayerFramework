@@ -417,3 +417,4 @@ VirtualJoystick.prototype._check3D = function()
 	var exports = null != val && val.length && 'none' != val;
 	return exports;
 }
+module.exports = VirtualJoystick;

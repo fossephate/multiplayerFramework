@@ -2,98 +2,84 @@ var AM = require('./account-manager');
 var EM = require('./email-dispatcher');
 
 module.exports = function(app) {
-	// main login page //
+	// main signIn page //
 
 	/*app.get('/', function(req, res){
 		res.render('/index.html');
 	});*/
 
-	app.get('/', function(req, res) {
-		// check if the user's credentials are saved in a cookie //
-		if (req.cookies.user == undefined || req.cookies.pass == undefined) {
-			res.render('login', {
-				title: 'Hello - Please Login To Your Account'
-			});
-		} else {
-			// attempt automatic login //
-			AM.autoLogin(req.cookies.user, req.cookies.pass, function(o) {
-				if (o != null) {
-					req.session.user = o;
-					res.redirect('/home');
-				} else {
-					res.render('login', {
-						title: 'Hello - Please Login To Your Account'
-					});
-				}
-			});
-		}
-	});
+// 	app.get('/', function(req, res) {
+// 		// check if the user's credentials are saved in a cookie //
+// 		if (req.cookies.user == undefined || req.cookies.pass == undefined) {
+// 			res.render('signIn', {
+// 				title: 'Hello - Please SignIn To Your Account'
+// 			});
+// 		} else {
+// 			// attempt automatic signIn //
+// 			AM.autoSignIn(req.cookies.user, req.cookies.pass, function(o) {
+// 				if (o != null) {
+// 					req.session.user = o;
+// 					res.redirect('/home');
+// 				} else {
+// 					res.render('signIn', {
+// 						title: 'Hello - Please SignIn To Your Account'
+// 					});
+// 				}
+// 			});
+// 		}
+// 	});
 
-	app.post('/autoLogin', function(req, res) {
+	app.post('/autoSignIn', function(req, res) {
 		if (req.session.user != null) {
-			AM.getAccountByUser(req.session.user.user, function(o) {
-				if (o) {
-					console.log(o);
-					res.status(200).json(o);
+			AM.getAccountByUser(req.session.user.username, function(tempAccount) {
+				if (tempAccount) {
+					//console.log(tempAccount);
+					res.status(200).json(tempAccount);
 				}
 			});
 		}
 	});
 
 	//LOGIN POST
-	app.post('/', function(req, res) {
-		var errors = [];
-		AM.validateLoginData(req.body, errors);
-		if (errors.length > 0) {
-			res.status(400).send(errors);
-		} else {
-			AM.manualLogin(req.body.user, req.body.pass, function(e, o) {
-				if (!o) {
-					res.status(400).send(e);
-				} else {
-					req.session.user = o;
-					// FIX THIS
-					//if (req.body['rememberMe'] == 'true') {// FIX THIS
-					res.cookie('user', o.user, {
-						path: '/',
-						maxAge: 900000
-					});
-					res.cookie('pass', o.pass, {
-						path: '/',
-						maxAge: 900000
-					});
-					/*if(o.usernames) {
-						res.cookie('usernames', o.usernames, {
-							path: '/',
-							maxAge: 900000
-						});
-					}
-					if(o.nodes) {
-						res.cookie('nodes', o.nodes, {
-							path: '/',
-							maxAge: 900000
-						});
-					}*/
-					//}// FIX THIS
-					res.status(200).json('ok');
-				}
-			});
-		}
-	});
-
-
-
-
-	//req.session.user = o;
-
-	/*if (req.session.user != null) {
-		AM.getAccountByUser(req.session.user, function(o) {
-			if(o) {
-				console.log(o);
-				res.status(200).send(o);
-			}
-		});
-	}*/
+// 	app.post('/', function(req, res) {
+// 		var errors = [];
+// 		AM.validateSignInData(req.body, errors);
+// 		if (errors.length > 0) {
+// 			res.status(400).send(errors);
+// 		} else {
+// 			AM.manualSignIn(req.body.user, req.body.pass, function(e, o) {
+// 				if (!o) {
+// 					res.status(400).send(e);
+// 				} else {
+// 					req.session.user = o;
+// 					// FIX THIS
+// 					//if (req.body['rememberMe'] == 'true') {// FIX THIS
+// 					res.cookie('user', o.user, {
+// 						path: '/',
+// 						maxAge: 900000
+// 					});
+// 					res.cookie('pass', o.pass, {
+// 						path: '/',
+// 						maxAge: 900000
+// 					});
+// 					/*if(o.usernames) {
+// 						res.cookie('usernames', o.usernames, {
+// 							path: '/',
+// 							maxAge: 900000
+// 						});
+// 					}
+// 					if(o.nodes) {
+// 						res.cookie('nodes', o.nodes, {
+// 							path: '/',
+// 							maxAge: 900000
+// 						});
+// 					}*/
+// 					//}// FIX THIS
+// 					res.status(200).json('ok');
+// 				}
+// 			});
+// 		}
+// 	});
 
 	// CREATE CHARACTER
 	app.post('/createCharacter', function(req, res) {
@@ -146,7 +132,7 @@ module.exports = function(app) {
 						res.status(400).json('error');
 					} else if(o) {
 						//req.session.user = o;
-						// update the user's login cookies if they exists //
+						// update the user's signIn cookies if they exists //
 						/*if (req.cookies.user != undefined && req.cookies.pass != undefined) {
 							res.cookie('user', o.user, {
 								maxAge: 900000
@@ -202,105 +188,67 @@ module.exports = function(app) {
 	
 	
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	// logged-in user homepage //
-
-	app.get('/home', function(req, res) {
-		if (req.session.user == null) {
-			// if user is not logged-in redirect back to login page //
-			res.redirect('/');
-		} else {
-			res.render('home', {
-				title: 'Control Panel',
-				countries: CT,
-				udata: req.session.user
-			});
-		}
-	});
-
-	app.post('/home', function(req, res) {
-		if (req.body.user != undefined) {
-			AM.updateAccount({
-				user: req.body['user'],
-				name: req.body['name'],
-				email: req.body['email'],
-				pass: req.body['pass'],
-				country: req.body['country']
-			}, function(e, o) {
-				if (e) {
-					res.status(400).send('error-updating-account');
-				} else {
-					req.session.user = o;
-					// update the user's login cookies if they exists //
-					if (req.cookies.user != undefined && req.cookies.pass != undefined) {
-						res.cookie('user', o.user, {
-							maxAge: 900000
-						});
-						res.cookie('pass', o.pass, {
-							maxAge: 900000
-						});
-					}
-					res.status(200).send('ok');
-				}
-			});
-		} else if (req.body['logout'] == 'true') {
-			res.clearCookie('user');
-			res.clearCookie('pass');
-			req.session.destroy(function(e) {
-				res.status(200).send('ok');
-			});
-		}
-	});
-
-	app.post('/logout', function(req, res) {
-		res.clearCookie('user');
-		res.clearCookie('pass');
+	app.post('/signOut', function(req, res) {
+		res.clearCookie('username');
+		res.clearCookie('password');
 		req.session.destroy(function(e) {
 			res.status(200).send('ok');
 		});
 	});
-
-	// creating new accounts //
-
-	/*app.get('/signup.html', function(req, res) {
-		res.render('signup.html', {  title: 'Signup', countries : CT });
-	});*/
-
-	app.post('/signup', function(req, res) {
+	
+	
+	
+	
+	
+	app.post('/signUp', function(req, res) {
+		AM.addNewAccount(req.body, function(errors, newAccount) {
+			if(errors) {
+				res.status(400).send(errors);
+			} else {
+				res.status(200).send('ok');
+			}
+		});
+	});
+	
+	
+	app.post('/signIn', function(req, res) {
 		var errors = [];
-		AM.validateSignUpData(req.body, errors);
+		AM.validateSignInData(req.body, errors);
+		
 		if (errors.length > 0) {
 			res.status(400).send(errors);
 		} else {
-			//console.log(req.body);
-			AM.addNewAccount({
-				email: req.body.email,
-				user: req.body.user,
-				pass: req.body.pass,
-			}, function(e) {
-				if (e) {
-					res.status(400).send(e);
+			AM.manualSignIn(req.body.username, req.body.password, function(err, tempAccount) {
+				if (!tempAccount) {
+					res.status(400).send(err);
 				} else {
-					res.status(200).send('ok');
+					//req.session.username = tempAccount;
+					
+					//if (req.body['rememberMe'] == 'true') {
+						res.cookie('username', tempAccount.username, {
+							path: '/',
+							maxAge: 900000
+						});
+						res.cookie('password', tempAccount.password, {
+							path: '/',
+							maxAge: 900000
+						});
+					//}
+					res.status(200).json('ok');
 				}
 			});
 		}
 	});
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 
 
@@ -333,7 +281,7 @@ module.exports = function(app) {
 
 	// password reset //
 
-	app.post('/lost-password', function(req, res) {
+	/*app.post('/lost-password', function(req, res) {
 		// look up the user's account via their email //
 		AM.getAccountByEmail(req.body['email'], function(o) {
 			if (o) {
@@ -389,7 +337,7 @@ module.exports = function(app) {
 				res.status(400).send('unable to update password');
 			}
 		})
-	});
+	});*/
 
 	// view & delete accounts //
 
@@ -410,7 +358,7 @@ module.exports = function(app) {
 
 
 
-	app.post('/delete', function(req, res) {
+	/*app.post('/delete', function(req, res) {
 		AM.deleteAccount(req.body.id, function(e, obj) {
 			if (!e) {
 				res.clearCookie('user');
@@ -422,7 +370,7 @@ module.exports = function(app) {
 				res.status(400).send('record not found');
 			}
 		});
-	});
+	});*/
 
 	app.get('/reset', function(req, res) {
 		AM.delAllRecords(function() {

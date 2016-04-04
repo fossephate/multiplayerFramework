@@ -26736,21 +26736,24 @@ return jQuery;
 
 var lzma;
 
-function load_lzma() {
-  //return require(require("path").join(__dirname, "src" ,"lzma_worker.js")).LZMA_WORKER;
-  return require("./src/lzma_worker").LZMA_WORKER;
+function load_lzma()
+{
+    return require("./src/lzma_worker.js").LZMA_WORKER;
+    //return require(require("path").join(__dirname, "src" ,"lzma_worker.js")).LZMA_WORKER;
 }
 
 lzma = load_lzma();
 
 ///NOTE: This function is for backwards compatibility's sake.
-module.exports.LZMA = function LZMA() {
-  return lzma;
+module.exports.LZMA = function LZMA()
+{
+    return lzma;
 }
 
-module.exports.compress = lzma.compress;
+module.exports.compress   = lzma.compress;
 module.exports.decompress = lzma.decompress;
-},{"./src/lzma_worker":73}],73:[function(require,module,exports){
+
+},{"./src/lzma_worker.js":73}],73:[function(require,module,exports){
 /// © 2015 Nathan Rugg <nmrugg@gmail.com> | MIT
 /// See LICENSE for more details.
 
@@ -70167,6 +70170,9 @@ window.CANNON = require('cannon');
 var SPE = require('shader-particle-engine');
 var hamsters = require('./libs/hamsters');
 require('./libs/sweetalert.min');
+var mobileConsole = require('./libs/mobile-console');
+var VirtualJoystick = require('./libs/virtualjoystick');
+var randomColor = require('./libs/randomColor');
 
 
 var fn = require('./functions');
@@ -70202,7 +70208,7 @@ var preferences;
 $(function() {
 	//(function(){var script=document.createElement('script');script.type='text/javascript';script.src='https://cdn.rawgit.com/zz85/zz85-bookmarklets/master/js/ThreeInspector.js';document.body.appendChild(script);})()
 	THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
-	//mobileConsole.show();
+	mobileConsole.show();
 	//CANNON.Quaternion.prototype.slerp = THREE.Quaternion.prototype.slerp;
 	
 	preferences = {};
@@ -70383,12 +70389,12 @@ $(function() {
 
 
 	function ongoingTouchIndexById(idToFind) {
-		for (var i = 0; i < input.touches.length; i++) {
+		/*for (var i = 0; i < input.touches.length; i++) {
 			var id = input.touches[i].identifier;
 			if (id == idToFind) {
 				return i;
 			}
-		}
+		}*/
 		return -1;
 	}
 
@@ -70415,6 +70421,9 @@ $(function() {
 		var evt = event.originalEvent;
 		//evt.preventDefault();
 		var touches = evt.touches;
+		if(typeof touches[1] == "undefined") {
+			return;
+		}
 
 		var id2 = ongoingTouchIndexById(touches[1].identifier);
 
@@ -70454,7 +70463,7 @@ $(function() {
 		cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true, true);
 		cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
 
-		var pMesh = world1.game.player.tObject.mesh;
+		var pMesh = world1.game.player.mesh;
 		var rclone = cameraOptions.rotateOffset.clone();
 		var diff = (pMesh.rotation.y - (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
 		pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
@@ -70597,12 +70606,12 @@ $(function() {
 			//world1.t.camera.updateProjectionMatrix();
 			//world1.t.renderer.setSize(window.innerWidth/2, window.innerHeight/2);
 			//world1.t.renderer.setSize(1024, 1024);
-			input.joystick = new VirtualJoystick({
+			/*input.joystick = new VirtualJoystick({
 				mouseSupport: true,
 				limitStickTravel: true,
 				stickRadius: 50,
 				strokeStyle: randomColor()
-			});
+			});*/
 		}
 	}
 	
@@ -70660,15 +70669,15 @@ $(function() {
 	
 	// On confirmed connection
 	socket.on('initData', function(data) {
-		world1.game.player.id = socket.id;
-		world1.game.player.username = data.username;
+		//world1.game.player.id = socket.id;
 		
-		//var loadScreen = new createLoadScreen();
 		
-		world1.t.AH.onloadFuncs.push(function(progress) {
-			//loadScreen.update(1);
+		world1.t.AH.onloadFuncs.push(function() {
+			world1.game.player = new playerConstructor();
+			world1.game.player.setClass("wizard");
+			world1.game.player.username = data.username;
+			
 			world1.game.connected = true;
-			//loadScreen.done();
 			$("#loadScreen").modal('hide');
 		});
 		
@@ -70681,7 +70690,7 @@ $(function() {
 		
 	});
 
-	$('#jumpButton').on('click touchstart', function() {
+	/*$('#jumpButton').on('click touchstart', function() {
 		input.action.jump = true;
 
 		setTimeout(function() {
@@ -70706,8 +70715,8 @@ $(function() {
 	$('#fireballButton').on('click touchstart', function() {
 		input.action.castFireball = true;
 
-		var pos = world1.game.player.tObject.mesh.position;
-		var rot = world1.game.player.tObject.mesh.rotation;
+		var pos = world1.game.player.mesh.position;
+		var rot = world1.game.player.mesh.rotation;
 		var fireEmitter = new createFireball(pos, rot, false);
 		world1.spe.groups.smoke.addEmitter(fireEmitter);
 
@@ -70715,10 +70724,10 @@ $(function() {
 			input.action.castFireball = false;
 		}, 80);
 		return false;
-	});
+	});*/
 
 
-	$('#send').on('click', function() {
+	/*$('#send').on('click', function() {
 		socket.emit('chat message', $('#msgIn').val());
 		$('#msgIn').val('');
 		return false;
@@ -70744,7 +70753,7 @@ $(function() {
 
 	socket.on('chat message', function(payload) {
 		$('#messages').append($('<li>').text(payload.name + ': ' + payload.msg));
-	});
+	});*/
 
 	socket.on('notLoggedIn', function() {
 		swal("Not logged in!");
@@ -70804,7 +70813,7 @@ $(function() {
 
 
 
-	socket.on('visibleNodes', function(data) {
+	socket.on('visibleCharacters', function(data) {
 		var vp = world1.game.visiblePlayers;
 		var vpd = world1.game.visiblePlayersData;
 
@@ -70830,140 +70839,166 @@ $(function() {
 
 		// THIS IS A MESS (procrastinating cleanup)
 		for (var i = 0; i < vpd.length; i++) {
-			var playerObject = world1.game.player.tObject;
 			if(!world1.game.connected) {
 				continue;
 			}
-			if (vpd[i].type == "player") {
+			
+			if(vpd[i].type == "player") {
 				if (vpd[i].username == world1.game.player.username) {
-
-					// cannonjs's lerp function is weird
-						playerObject.phys.position.lerp(vpd[i].position, 0.6, playerObject.phys.position);
-						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, playerObject.phys.position);
-						
-						//playerObject.phys.position.copy(vpd[i].position);
-						//var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.6);
-						//playerObject.phys.position.copy(newPos);
-					// cannonjs's lerp function is weird
-					
-					// cannonjs doesn't have a slerp for quaternions but threejs's can be used anyways
-					
-					//THREE.Quaternion.slerp(playerObject.phys.quaternion, vpd[i].quaternion, playerObject.phys.quaternion, 0.6);
-					playerObject.phys.quaternion.copy(vpd[i].quaternion);
-					
-					playerObject.phys.velocity.copy(vpd[i].velocity);
-
-					playerObject.mesh.warpTime = vpd[i].warpTime;
-					playerObject.mesh.animTo = vpd[i].animTo;
-
-					//var half = new THREE.Vector3().copy(vpd[i].position).sub(playerObject.phys.position.clone()).multiplyScalar(0.5);
-					//playerObject.phys.position.vadd(half);
-
-					/*var sound1 = new THREE.Audio(world1.t.audioListener);
-					sound1.load('./sounds/explosion.wav');
-					sound1.volume = 1;
-					sound1.setRefDistance(20);
-					sound1.position.set(0, 0, -28);*/
-
-					//world1.t.HUD.items.healthBar.update(vpd[i].health/100);
-					//var percent = vpd[i].experience/(100*(vpd[i].level+1));
-					//world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
-					//world1.t.HUD.items.XPBar.update(percent);
-					//world1.t.HUD.items.levelText.update(vpd[i].level);
-					continue;
-				}
-				if (typeof vp[vpd[i].username] == "undefined") {
-					//vp[vpd[i].username] = "placeholder";
-					var newPlayer = new playerConstructor(vpd[i]);
-					
-					
-					
-					
-					/*if(world1.t.AH.loadedModels.indexOf("player") > -1) {
-						var player = new THREE.BlendCharacter(world1.t.AH);
-						player.loadFast("player");
-						
-						player.scale.set(0.02, 0.02, 0.02);
-						
-						
-						var tempBody = createPhysBody("capsule")(1, 3.2);
-						var pObject = new createPhysicsObject(player, tempBody, world1, "player");
-						pObject.phys.position.copy(vpd[i].position);
-						pObject.phys.quaternion.copy(vpd[i].quaternion);
-						pObject.phys.velocity.copy(vpd[i].velocity);
-
-						pObject.items.userLabel = new makeTextSprite(vpd[i].username);
-						pObject.items.userLabel.scale.set(50, 50, 1);
-						pObject.items.userLabel.position.set(0, 250, 0);
-						//pObject.items.userLabel.position.copy(vpd[i].position);
-						//pObject.items.userLabel.position.y += 250;
-						pObject.mesh.add(pObject.items.userLabel);
-
-						pObject.items.classLabel = new makeTextSprite(vpd[i].class);
-						pObject.items.classLabel.scale.set(30, 30, 1);
-						pObject.items.classLabel.position.set(0, 350, 0);
-						//pObject.items.classLabel.position.copy(vpd[i].position);
-						//pObject.items.classLabel.position.y += 150;
-						pObject.mesh.add(pObject.items.classLabel);
-						
-						//pObject.items.healthLabel = new createHealthText(vpd[i].health);
-						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
-						pObject.items.healthLabel.mesh.scale.set(20, 20, 1);
-						pObject.items.healthLabel.mesh.position.set(0, 400, 0);
-						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
-						//pObject.items.healthLabel.mesh.position.y += 200;
-						pObject.mesh.add(pObject.items.healthLabel.mesh);
-						
-						
-						//pObject.items.healthLabel.sprite.scale.set(200, 200, 200);
-						
-						//pObject.items.healthLabel.sprite.position.set(0, 200, 0);
-						//pObject.items.healthLabel.scale.set(30, 30, 1);
-						//pObject.mesh.add(pObject.items.healthLabel.sprite);
-						
-						pObject.mesh.username = vpd[i].username;
-						vp[vpd[i].username] = pObject;
-					}*/
-					
-					
+					var player = world1.game.player;
+					player.updateData(vpd[i]);
+					continue;	
+				} else if (typeof vp[vpd[i].username] == "undefined") {
+					vp[vpd[i].username] = new playerConstructor(vpd[i]);
 					
 				} else if (typeof vp[vpd[i].username] != "undefined") {
-					
-					
-					// cannonjs's lerp function is weird
-						vp[vpd[i].username].phys.position.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
+					vp[vpd[i].username].updateData(vpd[i]);
+				}
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+// 			if (vpd[i].type == "player") {
+// 				if (vpd[i].username == world1.game.player.username) {
+
+// 					// cannonjs's lerp function is weird
+// 						playerObject.phys.position.lerp(vpd[i].position, 0.6, playerObject.phys.position);
+// 						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, playerObject.phys.position);
 						
-						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
+// 						//playerObject.phys.position.copy(vpd[i].position);
+// 						//var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.6);
+// 						//playerObject.phys.position.copy(newPos);
+// 					// cannonjs's lerp function is weird
 					
-						//vp[vpd[i].username].phys.position.copy(vpd[i].position);
-						//var newPos = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.6);
-						//vp[vpd[i].username].phys.position.copy(newPos);
-					// cannonjs's lerp function is weird
+// 					// cannonjs doesn't have a slerp for quaternions but threejs's can be used anyways
 					
-					// cannonjs doesn't have a slerp for quaternions but threejs's can be used
+// 					//THREE.Quaternion.slerp(playerObject.phys.quaternion, vpd[i].quaternion, playerObject.phys.quaternion, 0.6);
+// 					playerObject.phys.quaternion.copy(vpd[i].quaternion);
 					
-					//THREE.Quaternion.slerp(vp[vpd[i].username].phys.quaternion, vpd[i].quaternion, vp[vpd[i].username].phys.quaternion, 0.6);
+// 					playerObject.phys.velocity.copy(vpd[i].velocity);
+
+// 					playerObject.mesh.warpTime = vpd[i].warpTime;
+// 					playerObject.mesh.animTo = vpd[i].animTo;
+
+// 					//var half = new THREE.Vector3().copy(vpd[i].position).sub(playerObject.phys.position.clone()).multiplyScalar(0.5);
+// 					//playerObject.phys.position.vadd(half);
+
+// 					/*var sound1 = new THREE.Audio(world1.t.audioListener);
+// 					sound1.load('./sounds/explosion.wav');
+// 					sound1.volume = 1;
+// 					sound1.setRefDistance(20);
+// 					sound1.position.set(0, 0, -28);*/
+
+// 					//world1.t.HUD.items.healthBar.update(vpd[i].health/100);
+// 					//var percent = vpd[i].experience/(100*(vpd[i].level+1));
+// 					//world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
+// 					//world1.t.HUD.items.XPBar.update(percent);
+// 					//world1.t.HUD.items.levelText.update(vpd[i].level);
+// 					continue;
+// 				}
+// 				if (typeof vp[vpd[i].username] == "undefined") {
+// 					//vp[vpd[i].username] = "placeholder";
+// 					var newPlayer = new playerConstructor(vpd[i]);
+// 					vp[vpd[i].username] = newPlayer;
 					
-					vp[vpd[i].username].phys.quaternion.copy(vpd[i].quaternion);
-					vp[vpd[i].username].phys.velocity.copy(vpd[i].velocity);
-					//vp[vpd[i].username].quaternion.slerp(vpd[i].quaternion, 0.6);
+					
+					
+// 					/*if(world1.t.AH.loadedModels.indexOf("player") > -1) {
+// 						var player = new THREE.BlendCharacter(world1.t.AH);
+// 						player.loadFast("player");
+						
+// 						player.scale.set(0.02, 0.02, 0.02);
+						
+						
+// 						var tempBody = createPhysBody("capsule")(1, 3.2);
+// 						var pObject = new createPhysicsObject(player, tempBody, world1, "player");
+// 						pObject.phys.position.copy(vpd[i].position);
+// 						pObject.phys.quaternion.copy(vpd[i].quaternion);
+// 						pObject.phys.velocity.copy(vpd[i].velocity);
+
+// 						pObject.items.userLabel = new makeTextSprite(vpd[i].username);
+// 						pObject.items.userLabel.scale.set(50, 50, 1);
+// 						pObject.items.userLabel.position.set(0, 250, 0);
+// 						//pObject.items.userLabel.position.copy(vpd[i].position);
+// 						//pObject.items.userLabel.position.y += 250;
+// 						pObject.mesh.add(pObject.items.userLabel);
+
+// 						pObject.items.classLabel = new makeTextSprite(vpd[i].class);
+// 						pObject.items.classLabel.scale.set(30, 30, 1);
+// 						pObject.items.classLabel.position.set(0, 350, 0);
+// 						//pObject.items.classLabel.position.copy(vpd[i].position);
+// 						//pObject.items.classLabel.position.y += 150;
+// 						pObject.mesh.add(pObject.items.classLabel);
+						
+// 						//pObject.items.healthLabel = new createHealthText(vpd[i].health);
+// 						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
+// 						pObject.items.healthLabel.mesh.scale.set(20, 20, 1);
+// 						pObject.items.healthLabel.mesh.position.set(0, 400, 0);
+// 						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
+// 						//pObject.items.healthLabel.mesh.position.y += 200;
+// 						pObject.mesh.add(pObject.items.healthLabel.mesh);
+						
+						
+// 						//pObject.items.healthLabel.sprite.scale.set(200, 200, 200);
+						
+// 						//pObject.items.healthLabel.sprite.position.set(0, 200, 0);
+// 						//pObject.items.healthLabel.scale.set(30, 30, 1);
+// 						//pObject.mesh.add(pObject.items.healthLabel.sprite);
+						
+// 						pObject.mesh.username = vpd[i].username;
+// 						vp[vpd[i].username] = pObject;
+// 					}*/
+					
+					
+					
+// 				} else if (typeof vp[vpd[i].username] != "undefined") {
+					
+					
+// 					// cannonjs's lerp function is weird
+// 						vp[vpd[i].username].phys.position.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
+						
+// 						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
+					
+// 						//vp[vpd[i].username].phys.position.copy(vpd[i].position);
+// 						//var newPos = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.6);
+// 						//vp[vpd[i].username].phys.position.copy(newPos);
+// 					// cannonjs's lerp function is weird
+					
+// 					// cannonjs doesn't have a slerp for quaternions but threejs's can be used
+					
+// 					//THREE.Quaternion.slerp(vp[vpd[i].username].phys.quaternion, vpd[i].quaternion, vp[vpd[i].username].phys.quaternion, 0.6);
+					
+// 					vp[vpd[i].username].phys.quaternion.copy(vpd[i].quaternion);
+// 					vp[vpd[i].username].phys.velocity.copy(vpd[i].velocity);
+// 					//vp[vpd[i].username].quaternion.slerp(vpd[i].quaternion, 0.6);
 					
 					
 
 					
 					
-					vp[vpd[i].username].mesh.warpTime = vpd[i].warpTime;
-					vp[vpd[i].username].mesh.animTo = vpd[i].animTo;
+// 					vp[vpd[i].username].mesh.warpTime = vpd[i].warpTime;
+// 					vp[vpd[i].username].mesh.animTo = vpd[i].animTo;
 					
 					
-					vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
+// 					//vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
 					
-					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI/2);
-					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
-					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
-				}
+// 					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI/2);
+// 					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
+// 					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
+// 				}
 				
-			}
+// 			}
 		}
 	});
 
@@ -71013,19 +71048,14 @@ $(function() {
 				this.t.renderer = new THREE.WebGLRenderer();
 			} else {
 				this.t.renderer = new THREE.CanvasRenderer();
-				//this.t.renderer = new THREE.SoftwareRenderer();
-				//this.t.renderer = new THREE.CSS3DRenderer();
-				//this.t.renderer = new THREE.CSS3DStereoRenderer();
-				//this.t.renderer = new THREE.SVGRenderer();
 			}
 			this.t.renderer.setPixelRatio(window.devicePixelRatio);
 			this.t.renderer.setSize(this.width, this.height);
 			this.t.renderer.autoClear = false;
 			//this.t.renderer.shadowMap.enabled = true;
 			//this.t.renderer.shadowMap.type = THREE.PCFShadowMap;
-
 			document.body.appendChild(this.t.renderer.domElement);
-			$(this.t.renderer.domElement).attr('id', 'gameCanvas');
+			//$(this.t.renderer.domElement).attr('id', 'gameCanvas');
 
 			// cannon.js
 			this.c = {};
@@ -71055,16 +71085,10 @@ $(function() {
 			this.stats.domElement.style.left = '0px';
 			this.stats.domElement.style.top = '0px';
 			document.body.appendChild(this.stats.domElement);
-
 		};
 		this.game = {};
 		this.game.connected = false;
-
-		this.game.player = {
-			id: -1,
-			username: "",
-			tObject: 0,
-		};
+		this.game.player = {};
 		this.game.visiblePlayersData = [];
 		this.game.visiblePlayersNames = [];
 		this.game.visiblePlayers = {};
@@ -71194,12 +71218,12 @@ $(function() {
 		
 		
 		//var tempBody = createPhysBody("capsule", 1)(1, 3.2); //3.76
-		//world1.game.player.tObject = new createPhysicsObject(player, tempBody, world1, "player");
+		//world1.game.player = new createPhysicsObject(player, tempBody, world1, "player");
 		
-		world1.game.player.tObject = new playerConstructor();
-		world1.game.player.tObject.setClass("wizard");
+		//world1.game.player = new playerConstructor();
+		//world1.game.player.setClass("wizard");
 		
-		world1.game.player.tObject.username = world1.game.player.username;
+		//world1.game.player.username = world1.game.player.username;
 		
 	});
 
@@ -71495,8 +71519,8 @@ $(function() {
 				this.remove();
 			}
 
-			/*if(typeof world1.game.player.tObject.phys != "undefined") {
-				var pPhys = world1.game.player.tObject.phys;
+			/*if(typeof world1.game.player.phys != "undefined") {
+				var pPhys = world1.game.player.phys;
 				var pos = pPhys.position;
 				this.position.value = this.position.value.set(pos.x, pos.y, pos.z);
 			}*/
@@ -71537,8 +71561,8 @@ $(function() {
 		};
 		var emitter1 = new SPE.Emitter(rainSettings);
 		emitter1.update = function() {
-			if (typeof world1.game.player.tObject.phys != "undefined") {
-				var pPhys = world1.game.player.tObject.phys;
+			if (typeof world1.game.player.phys != "undefined") {
+				var pPhys = world1.game.player.phys;
 				var pos = pPhys.position;
 				this.position.value = this.position.value.set(pos.x, pos.y, pos.z + 20);
 			}
@@ -71582,7 +71606,7 @@ $(function() {
 	world1.t.scene.add(world1.spe.groups.rain.mesh);
 
 
-	//var pos = world1.game.player.tObject.phys.position;
+	//var pos = world1.game.player.phys.position;
 	//var fireEmitter = new createFireball(pos);
 	//world1.spe.groups.smoke.addEmitter(fireEmitter);
 
@@ -71627,7 +71651,7 @@ $(function() {
 				rotation: cameraOptions.rotateOffset
 			});
 
-			if (typeof input.joystick !== "undefined") {
+			/*if (typeof input.joystick !== "undefined") {
 				if (input.joystick.up()) {
 					input.action.moveForward = true;
 				} else if (input.action.moveForward && !input.joystick.up()) {
@@ -71653,12 +71677,12 @@ $(function() {
 				} else if (input.action.moveRight && !input.joystick.right()) {
 					input.action.moveRight = false;
 				}
-			}
+			}*/
 
 
-			var playerObj = world1.game.player.tObject;
-			var pMesh = world1.game.player.tObject.mesh;
-			var pPhys = world1.game.player.tObject.phys;
+			var playerObj = world1.game.player;
+			var pMesh = world1.game.player.mesh;
+			var pPhys = world1.game.player.phys;
 
 
 			var rclone = cameraOptions.rotateOffset.clone();
@@ -71666,7 +71690,7 @@ $(function() {
 			var wasKeyPressed = false;
 			var dirOffset = 0;
 
-			temp.inputVelocity.set(0, 0, 0);
+			/*temp.inputVelocity.set(0, 0, 0);
 			if (input.action.moveForward) {
 				temp.inputVelocity.x -= 0.2;
 			}
@@ -71683,13 +71707,13 @@ $(function() {
 				temp.isJumping = true;
 				pPhys.applyLocalImpulse(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3());
 				pPhys.position.z += 0.5;
-			}
+			}*/
 			
 			
-			if (input.action.castFireball && temp.isCasting === false) {
+			/*if (input.action.castFireball && temp.isCasting === false) {
 				temp.isCasting = true;
-				var pos = world1.game.player.tObject.mesh.position;
-				var rot = world1.game.player.tObject.mesh.rotation;
+				var pos = world1.game.player.mesh.position;
+				var rot = world1.game.player.mesh.rotation;
 				var fireEmitter = new createFireball(pos, rot, false);
 				world1.spe.groups.smoke.addEmitter(fireEmitter);
 
@@ -71697,10 +71721,10 @@ $(function() {
 					temp.isCasting = false;
 					input.action.castFireball = false;
 				}, 80);
-			}
+			}*/
 			
 			
-			if (!input.action.moveForward && !input.action.moveBackward) {
+			/*if (!input.action.moveForward && !input.action.moveBackward) {
 				var rotatedV = new THREE.Vector3().copy(pPhys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -cameraOptions.rotateOffset.z).multiplyScalar(0.1);
 				temp.inputVelocity.x = -rotatedV.x;
 			}
@@ -71710,11 +71734,11 @@ $(function() {
 			}
 			temp.inputVelocity.applyAxisAngle(new THREE.Vector3(0, 0, 1), cameraOptions.rotateOffset.z); /*this.temp.rotateOffset.z);*/
 			//pPhys.applyLocalImpulse(temp.inputVelocity.multiplyScalar(1), new CANNON.Vec3());
-			if (temp.isGrounded === true) {
+			/*if (temp.isGrounded === true) {
 				pPhys.velocity.x = temp.inputVelocity.x;
 				pPhys.velocity.y = temp.inputVelocity.y;
 				pPhys.velocity.z = 0;
-			}
+			}*/
 			
 			
 			
@@ -71771,6 +71795,8 @@ $(function() {
 				temp.isJumping = false;
 			}*/
 			
+			//function lerp_dir( cur_dir:Number , tar_dir:Number , inc:Number){		if ( Math.abs( tar_dir - cur_dir) <= inc or Math.abs( tar_dir - cur_dir) >= (360 - inc))	{		cur_dir = tar_dir;	}	else	{		if ( Math.abs( tar_dir - cur_dir) > 180)		{			if (tar_dir < cur_dir)			{				tar_dir += 360;			}			else			{				tar_dir -= 360;			}		}		if ( tar_dir > cur_dir)		{			cur_dir += inc;		}		else		{			if ( tar_dir < cur_dir)			{				cur_dir -= inc;			}		}	}	return cur_dir;}
+			
 			
 			
 			
@@ -71813,7 +71839,7 @@ $(function() {
 			}
 
 
-			followObject(world, world1.game.player.tObject.mesh, world.t.camera, cameraOptions);
+			followObject(world, world1.game.player.mesh, world.t.camera, cameraOptions);
 			
 			if(typeof world.t.renderer.clear != "undefined") {
 				world.t.renderer.clear();
@@ -71879,7 +71905,7 @@ $(function() {
 			cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true, true);
 			cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
 
-			var pMesh = world1.game.player.tObject.mesh;
+			var pMesh = world1.game.player.mesh;
 			var rclone = cameraOptions.rotateOffset.clone();
 			var diff = (pMesh.rotation.y + (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
 			pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
@@ -71927,7 +71953,7 @@ $(function() {
 		document.webkitExitPointerLock;
 
 });
-},{"../../node_modules/lzma":72,"./functions":77,"./libs/blendCharacter":78,"./libs/cannonDebugRenderer":79,"./libs/canvasRenderer":80,"./libs/hamsters":81,"./libs/jquery.color":82,"./libs/localforage/localforage.nopromises.js":83,"./libs/projector":84,"./libs/skyShader":85,"./libs/stats.min":86,"./libs/sweetalert.min":87,"cannon":15,"jquery":71,"shader-particle-engine":74,"three":75}],77:[function(require,module,exports){
+},{"../../node_modules/lzma":72,"./functions":77,"./libs/blendCharacter":78,"./libs/cannonDebugRenderer":79,"./libs/canvasRenderer":80,"./libs/hamsters":81,"./libs/jquery.color":82,"./libs/localforage/localforage.nopromises.js":83,"./libs/mobile-console":84,"./libs/projector":85,"./libs/randomColor":86,"./libs/skyShader":87,"./libs/stats.min":88,"./libs/sweetalert.min":89,"./libs/virtualjoystick":90,"cannon":15,"jquery":71,"shader-particle-engine":74,"three":75}],77:[function(require,module,exports){
 var login = require('./login');
 
 
@@ -73657,7 +73683,8 @@ fn.assetHolder = function assetHolder() {
 				var loader = new THREE.XHRLoader(scope.manager);
 				loader.load(url, function(value) {
 					scope.assets.files[url] = {};
-					scope.assets.files[url].value = JSON.parse(value);
+					
+					scope.assets.files[url].value = /*JSON.parse(*/value/*)*/;
 					
 					scope.numberOfLoadedAssets += 1;
 					scope.assetProgress();
@@ -73722,10 +73749,18 @@ fn.assetHolder = function assetHolder() {
 
 	this.parseCachedModel = function(url) {
 		
-		var texturePath = url.substring(0, url.lastIndexOf("/") + 1) + "textures/";
-		var jLoader = new THREE.JSONLoader();
-		var parsed = jLoader.parse(this.assets.files[url].value, texturePath);
-		return parsed;
+		if(typeof this.assets.files[url].parsed != "undefined") {
+			console.log("FROM CACHE");
+			//return this.assets.files[url].parsed;
+		} else {
+			console.log("FROM MANUAL");
+			var texturePath = url.substring(0, url.lastIndexOf("/") + 1) + "textures/";
+			var jLoader = new THREE.JSONLoader();
+			var parsed = jLoader.parse(JSON.parse(this.assets.files[url].value), texturePath);
+			this.assets.files[url].parsed = parsed;
+			//return this.assets.files[url].parsed;
+		}
+		return this.assets.files[url].parsed;
 	};
 
 	this.loadAssets = function(assetList) {
@@ -73949,6 +73984,7 @@ function character() {
 
 fn.playerConstructor = function playerConstructor(playerData) {
 	character.call(this);
+	this.type = "player";
 	this.mesh.meshOffset = new THREE.Vector3(0, 0, -2);
 	this.phys = createPhysBody("capsule")(1, 3.2);
 	this.items = {};
@@ -73956,7 +73992,7 @@ fn.playerConstructor = function playerConstructor(playerData) {
 	this.equipment = {};
 	this.level = 0;
 	this.health = 100;
-	this.username = "john";
+	//this.username = "john";
 	
 	
 	this.setClass = function(playerClass) {
@@ -73984,6 +74020,32 @@ fn.playerConstructor = function playerConstructor(playerData) {
 		this.items.healthLabel.mesh.position.set(0, 400, 0);
 		this.mesh.add(this.items.healthLabel.mesh);*/
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	this.updateData = function(newData) {
+		//if(newData.position) {
+			this.phys.position.lerp(newData.position, 0.6, this.phys.position);
+
+			this.phys.quaternion.copy(newData.quaternion);
+
+			this.phys.velocity.copy(newData.velocity);
+
+			this.mesh.warpTime = newData.warpTime;
+			this.mesh.animTo = newData.animTo;
+		//}
+	}
+	
+	
+	
+	
+	
 	return this;
 }
 fn.playerConstructor.prototype = Object.create(character.prototype);
@@ -74490,8 +74552,10 @@ loader.load(
 */
 
 module.exports = fn;
-},{"./login":88}],78:[function(require,module,exports){
+},{"./login":91}],78:[function(require,module,exports){
 THREE.BlendCharacter = function(assetHolder) {
+	
+	this.isLoading = false;
 
 	this.animations = {};
 	this.weightSchedule = [];
@@ -74525,6 +74589,12 @@ THREE.BlendCharacter = function(assetHolder) {
 
 
 	this.loadFast = function(url, assetHolder) {
+		if(this.isLoading) {
+			return;
+		} else {
+			this.isLoading = true;
+		}
+		
 		switch(url) {
 			case "wizard":
 				url = "assets/models/characters/players/wizard/final/wizard.json";
@@ -77060,7 +77130,7 @@ self.hamsters = {
   });
 })();
 }).call(this,require('_process'))
-},{"_process":89}],82:[function(require,module,exports){
+},{"_process":92}],82:[function(require,module,exports){
 /*!
  * jQuery Color Animations v@VERSION
  * https://github.com/jquery/jquery-color
@@ -79924,6 +79994,325 @@ return /******/ (function(modules) { // webpackBootstrap
 });
 ;
 },{}],84:[function(require,module,exports){
+/*(function(root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof exports === 'object') {
+    module.exports = factory();
+  } else {
+    root.mobileConsole = factory();
+  }*/
+//})(this, function() {
+  var containerHtml = '' + '<div id="jsmc-collapse"></div>' + '<div id="jsmc-clear">&#xd7</div>' + '<div id="jsmc-commands">&#x2261</div>' + '<div id="jsmc-commands-container"></div>' + '<div id="jsmc-content">' + '	<input id="jsmc-button" type="button" value="Run"/>' + '	<div id="jsmc-log">' + '	</div>' + '	<div id="jsmc-input-container">' + '	<input id="jsmc-input" type="text" placeholder="type your js here"/>' + '	</div>' + '</div>' + '';
+  var logElementHtml = '' + '	<div class="jsmc-log-text"></div>' + '	<div class="jsmc-log-target"></div>' + '';
+  var mobileConsole = {
+    props: {
+      showOnError: false,
+      proxyConsole: true,
+      isCollapsed: false,
+      catchErrors: true
+    },
+    init: function() {
+      this.commandsHash = [];
+      if (!this.initialized) {
+        if (this.props.catchErrors) {
+          this.bindErrorListener();
+        }
+        this.initializeContainers();
+        this.bindListeners();
+        this.initialized = true;
+        if (this.props.proxyConsole) {
+          this.decorateConsole();
+        } else {
+          this.undecorateConsole();
+        }
+      }
+    },
+    options: function(options) {
+      for (var i in options) {
+        if (typeof this.props[i] !== 'undefined') {
+          this.props[i] = options[i];
+        }
+      }
+      this.init();
+    },
+    show: function(options) {
+      var el = document.getElementById('js-mobile-console');
+      if (!el) {
+        this.init();
+      }
+      this.$el.container.style.display = 'block';
+      if (options && options.expand) {
+        this.toggleCollapsed(false);
+      }
+    },
+    hide: function() {
+      if (this.$el && this.$el.container) {
+        this.$el.container.style.display = 'none';
+      }
+    },
+    commands: function(commands) {
+      if (typeof commands !== 'object') {
+        throw new Error('mobileConsole: commands method accepts object, not ' + typeof commands);
+      }
+      this.commandsHash = commands;
+      this.commandsHashLength = 0;
+      for (var i in commands) {
+        if (commands.hasOwnProperty(i)) {
+          this.commandsHashLength++;
+        }
+      }
+      if (this.commandsHashLength) {
+        this.populateCommandsContainer_();
+      }
+    },
+    populateCommandsContainer_: function() {
+      var self = this;
+      for (var i in this.commandsHash) {
+        if (this.commandsHash.hasOwnProperty(i)) {
+          var commandEl = document.createElement('div');
+          commandEl.className = 'jsmc-command';
+          commandEl.innerHTML = i;
+          commandEl.command = this.commandsHash[i];
+          var commandElContainer = document.createElement('div');
+          commandElContainer.className = 'jsmc-command-wrapper';
+          commandElContainer.appendChild(commandEl);
+          this.$el.commandsContainer.appendChild(commandElContainer);
+        }
+      }
+      if (!this.commandsPopulated) {
+        this.$el.commandsContainer.addEventListener('click', function(event) {
+          if (event.target.className === 'jsmc-command') {
+            var command = event.target.command;
+            var res = self.eval(command);
+            self.logValue(command, false, true);
+            self.logValue(res.text, res.error);
+          }
+        });
+      }
+      this.commandsPopulated = true;
+    },
+    destroy: function() {
+      var el = document.getElementById('js-mobile-console');
+      el.parentNode.removeChild(el);
+    },
+    initializeContainers: function(options) {
+      this.$el = {};
+      el = this.$el.container = document.createElement('div');
+      el.id = 'js-mobile-console';
+      el.innerHTML = containerHtml;
+      el.style.display = 'none';
+      document.body.appendChild(el);
+      this.$el.input = document.getElementById('jsmc-input');
+      this.$el.button = document.getElementById('jsmc-button');
+      this.$el.log = document.getElementById('jsmc-log');
+      this.$el.content = document.getElementById('jsmc-content');
+      this.$el.collapseControl = document.getElementById('jsmc-collapse');
+      this.$el.clearControl = document.getElementById('jsmc-clear');
+      this.$el.commandsControl = document.getElementById('jsmc-commands');
+      this.$el.commandsContainer = document.getElementById('jsmc-commands-container');
+      if (this.props.isCollapsed) {
+        this.$el.content.style.display = 'none';
+        this.$el.clearControl.style.display = 'none';
+        this.$el.commandsControl.style.display = 'none';
+        this.isCollapsed = true;
+        this.$el.collapseControl.innerHTML = '&#9650;';
+      } else {
+        this.$el.collapseControl.innerHTML = '&#9660;';
+      }
+    },
+    toggleCollapsed: function(toBeCollapsed) {
+      this.isCollapsed = typeof toBeCollapsed === 'boolean' ? toBeCollapsed : !this.isCollapsed;
+      var display = this.isCollapsed ? 'none' : 'block';
+      this.$el.content.style.display = display;
+      this.$el.collapseControl.innerHTML = this.isCollapsed ? '&#9650;' : '&#9660;';
+      if (this.isCollapsed) {
+        this.$el.clearControl.style.display = 'none';
+        this.$el.commandsControl.style.display = 'none';
+      } else {
+        this.$el.clearControl.style.display = 'inline-block';
+        if (this.commandsHashLength) {
+          this.$el.commandsControl.style.display = 'inline-block';
+        }
+      }
+    },
+    bindListeners: function() {
+      var self = this;
+      this.$el.collapseControl.addEventListener('click', function() {
+        self.toggleCollapsed();
+      });
+      this.$el.clearControl.addEventListener('click', function() {
+        self.clearLogs();
+      });
+      this.$el.button.addEventListener('click', function() {
+        logValue();
+      });
+      this.$el.input.addEventListener('keyup', function(e) {
+        if (e.which === 13) {
+          logValue();
+        }
+      });
+      this.$el.commandsControl.addEventListener('click', function() {
+        self.toggleCommands();
+      });
+
+      function logValue() {
+        var val = self.$el.input.value;
+        var res = self.eval(val);
+        self.logValue(res.text, res.error);
+      }
+    },
+    toggleCommands: function() {
+      this.commandsShown = !this.commandsShown;
+      this.$el.commandsContainer.style.display = this.commandsShown ? 'inline-block' : 'none';
+    },
+    eval: function(command) {
+      var text;
+      var error;
+      try {
+        text = window.eval(command);
+      } catch (e) {
+        text = e.message;
+        error = true;
+      }
+      if (JSON && JSON.stringify) {
+        try {
+          text = JSON.stringify(text);
+        } catch (e) {
+          text = e.message;
+          error = true;
+        }
+      }
+      return {
+        text: text,
+        error: error
+      };
+    },
+    clearLogs: function() {
+      this.$el.log.innerHTML = '';
+    },
+    bindErrorListener: function() {
+      var self = this;
+      window.onerror = function(errorMessage, file, lineNumber, columnNumber) {
+        if (self.props.showOnError) {
+          self.show({
+            expand: true
+          });
+        }
+        var error = file + ':' + lineNumber + (columnNumber ? (':' + columnNumber) : '');
+        self.logValue(errorMessage, error);
+      };
+    },
+    appendLogEl: function(el) {
+      this.$el.log.appendChild(el);
+      this.$el.log.scrollTop = this.$el.log.scrollHeight;
+    },
+    decorateConsole: function() {
+      var self = this;
+      if (this.consoleDecorated) {
+        return;
+      }
+      this.consoleDecorated = true;
+      if (window.console) {
+        if (window.console.log) {
+          this.oldLog = window.console.log;
+          window.console.log = function() {
+            var args = [].slice.call(arguments);
+            self.oldLog.apply(window.console, args);
+            var res = stringifyComponents(args);
+            self.logValue(res.text, res.error);
+          };
+        }
+        if (window.console.info) {
+          this.oldinfo = window.console.info;
+          window.console.info = function() {
+            var args = [].slice.call(arguments);
+            self.oldinfo.apply(window.console, args);
+            var res = stringifyComponents(args);
+            self.logValue(res.text, res.error);
+          };
+        }
+        if (window.console.warn) {
+          this.oldwarn = window.console.warn;
+          window.console.warn = function() {
+            var args = [].slice.call(arguments);
+            self.oldwarn.apply(window.console, args);
+            var res = stringifyComponents(args);
+            self.logValue(res.text, res.error);
+          };
+        }
+        if (window.console.error) {
+          this.olderror = window.console.error;
+          window.console.error = function() {
+            var args = [].slice.call(arguments);
+            self.olderror.apply(window.console, args);
+            var res = stringifyComponents(args);
+            self.logValue(res.text, res.error);
+          };
+        }
+      }
+
+      function stringifyComponents(args) {
+        if (JSON && JSON.stringify) {
+          try {
+            for (var i = 0; i < args.length; i++) {
+              args[i] = JSON.stringify(args[i]);
+            }
+          } catch (e) {
+            args = [e.message];
+            var error = true;
+          }
+        }
+        return {
+          text: args.join(' '),
+          error: error
+        };
+      }
+    },
+    undecorateConsole: function() {
+      var self = this;
+      if (this.consoleDecorated) {
+        window.console.log = function() {
+          var args = [].slice.call(arguments);
+          self.oldLog.apply(window.console, args);
+        };
+        window.console.info = function() {
+          var args = [].slice.call(arguments);
+          self.oldinfo.apply(window.console, args);
+        };
+        window.console.warn = function() {
+          var args = [].slice.call(arguments);
+          self.oldwarn.apply(window.console, args);
+        };
+        window.console.error = function() {
+          var args = [].slice.call(arguments);
+          self.olderror.apply(window.console, args);
+        };
+      }
+    },
+    logValue: function(value, error, command) {
+      var logEl = document.createElement('div');
+      logEl.className = 'jsmc-log-el';
+      logEl.innerHTML = logElementHtml;
+      if (error) {
+        logEl.className += ' jsmc-log-error';
+      }
+      if (command) {
+        logEl.className += ' jsmc-log-command';
+      }
+      var logTextEl = logEl.getElementsByClassName('jsmc-log-text')[0];
+      logTextEl.innerHTML = value;
+      if (typeof error === 'string') {
+        var logTargetEl = logEl.getElementsByClassName('jsmc-log-target')[0];
+        logTargetEl.innerHTML = error;
+      }
+      this.appendLogEl(logEl);
+    }
+  };
+  //return mobileConsole;
+//});
+module.exports = mobileConsole;
+},{}],85:[function(require,module,exports){
 /**
  * @author mrdoob / http://mrdoob.com/
  * @author supereggbert / http://www.paulbrunt.co.uk/
@@ -80845,7 +81234,381 @@ THREE.Projector = function () {
 	}
 
 };
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
+;(function(root, factory) {
+
+  // Support AMD
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+
+  // Support CommonJS
+  } else if (typeof exports === 'object') {
+    var randomColor = factory();
+    
+    // Support NodeJS & Component, which allow module.exports to be a function
+    if (typeof module === 'object' && module && module.exports) {
+      exports = module.exports = randomColor;
+    }
+    
+    // Support CommonJS 1.1.1 spec
+    exports.randomColor = randomColor;
+  
+  // Support vanilla script loading
+  } else {
+    root.randomColor = factory();
+  };
+
+}(this, function() {
+
+  // Shared color dictionary
+  var colorDictionary = {};
+
+  // Populate the color dictionary
+  loadColorBounds();
+
+  var randomColor = function(options) {
+    options = options || {};
+
+    var H,S,B;
+
+    // Check if we need to generate multiple colors
+    if (options.count != null) {
+
+      var totalColors = options.count,
+          colors = [];
+
+      options.count = null;
+
+      while (totalColors > colors.length) {
+        colors.push(randomColor(options));
+      }
+
+      options.count = totalColors;
+
+      return colors;
+    }
+
+    // First we pick a hue (H)
+    H = pickHue(options);
+
+    // Then use H to determine saturation (S)
+    S = pickSaturation(H, options);
+
+    // Then use S and H to determine brightness (B).
+    B = pickBrightness(H, S, options);
+
+    // Then we return the HSB color in the desired format
+    return setFormat([H,S,B], options);
+  };
+
+  function pickHue (options) {
+
+    var hueRange = getHueRange(options.hue),
+        hue = randomWithin(hueRange);
+
+    // Instead of storing red as two seperate ranges,
+    // we group them, using negative numbers
+    if (hue < 0) {hue = 360 + hue}
+
+    return hue;
+
+  }
+
+  function pickSaturation (hue, options) {
+
+    if (options.luminosity === 'random') {
+      return randomWithin([0,100]);
+    }
+
+    if (options.hue === 'monochrome') {
+      return 0;
+    }
+
+    var saturationRange = getSaturationRange(hue);
+
+    var sMin = saturationRange[0],
+        sMax = saturationRange[1];
+
+    switch (options.luminosity) {
+
+      case 'bright':
+        sMin = 55;
+        break;
+
+      case 'dark':
+        sMin = sMax - 10;
+        break;
+
+      case 'light':
+        sMax = 55;
+        break;
+   }
+
+    return randomWithin([sMin, sMax]);
+
+  }
+
+  function pickBrightness (H, S, options) {
+
+    var brightness,
+        bMin = getMinimumBrightness(H, S),
+        bMax = 100;
+
+    switch (options.luminosity) {
+
+      case 'dark':
+        bMax = bMin + 20;
+        break;
+
+      case 'light':
+        bMin = (bMax + bMin)/2;
+        break;
+
+      case 'random':
+        bMin = 0;
+        bMax = 100;
+        break;
+    }
+
+    return randomWithin([bMin, bMax]);
+
+  }
+
+  function setFormat (hsv, options) {
+
+    switch (options.format) {
+
+      case 'hsvArray':
+        return hsv;
+
+      case 'hslArray':
+        return HSVtoHSL(hsv);
+
+      case 'hsl':
+        var hsl = HSVtoHSL(hsv);
+        return 'hsl('+hsl[0]+', '+hsl[1]+'%, '+hsl[2]+'%)';
+
+      case 'rgbArray':
+        return HSVtoRGB(hsv);
+
+      case 'rgb':
+        var rgb = HSVtoRGB(hsv);
+        return 'rgb(' + rgb.join(', ') + ')';
+
+      default:
+        return HSVtoHex(hsv);
+    }
+
+  }
+
+  function getMinimumBrightness(H, S) {
+
+    var lowerBounds = getColorInfo(H).lowerBounds;
+
+    for (var i = 0; i < lowerBounds.length - 1; i++) {
+
+      var s1 = lowerBounds[i][0],
+          v1 = lowerBounds[i][1];
+
+      var s2 = lowerBounds[i+1][0],
+          v2 = lowerBounds[i+1][1];
+
+      if (S >= s1 && S <= s2) {
+
+         var m = (v2 - v1)/(s2 - s1),
+             b = v1 - m*s1;
+
+         return m*S + b;
+      }
+
+    }
+
+    return 0;
+  }
+
+  function getHueRange (colorInput) {
+
+    if (typeof parseInt(colorInput) === 'number') {
+
+      var number = parseInt(colorInput);
+
+      if (number < 360 && number > 0) {
+        return [number, number];
+      }
+
+    }
+
+    if (typeof colorInput === 'string') {
+
+      if (colorDictionary[colorInput]) {
+        var color = colorDictionary[colorInput];
+        if (color.hueRange) {return color.hueRange}
+      }
+    }
+
+    return [0,360];
+
+  }
+
+  function getSaturationRange (hue) {
+    return getColorInfo(hue).saturationRange;
+  }
+
+  function getColorInfo (hue) {
+
+    // Maps red colors to make picking hue easier
+    if (hue >= 334 && hue <= 360) {
+      hue-= 360;
+    }
+
+    for (var colorName in colorDictionary) {
+       var color = colorDictionary[colorName];
+       if (color.hueRange &&
+           hue >= color.hueRange[0] &&
+           hue <= color.hueRange[1]) {
+          return colorDictionary[colorName];
+       }
+    } return 'Color not found';
+  }
+
+  function randomWithin (range) {
+    return Math.floor(range[0] + Math.random()*(range[1] + 1 - range[0]));
+  }
+
+  function HSVtoHex (hsv){
+
+    var rgb = HSVtoRGB(hsv);
+
+    function componentToHex(c) {
+        var hex = c.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
+    }
+
+    var hex = "#" + componentToHex(rgb[0]) + componentToHex(rgb[1]) + componentToHex(rgb[2]);
+
+    return hex;
+
+  }
+
+  function defineColor (name, hueRange, lowerBounds) {
+
+    var sMin = lowerBounds[0][0],
+        sMax = lowerBounds[lowerBounds.length - 1][0],
+
+        bMin = lowerBounds[lowerBounds.length - 1][1],
+        bMax = lowerBounds[0][1];
+
+    colorDictionary[name] = {
+      hueRange: hueRange,
+      lowerBounds: lowerBounds,
+      saturationRange: [sMin, sMax],
+      brightnessRange: [bMin, bMax]
+    };
+
+  }
+
+  function loadColorBounds () {
+
+    defineColor(
+      'monochrome',
+      null,
+      [[0,0],[100,0]]
+    );
+
+    defineColor(
+      'red',
+      [-26,18],
+      [[20,100],[30,92],[40,89],[50,85],[60,78],[70,70],[80,60],[90,55],[100,50]]
+    );
+
+    defineColor(
+      'orange',
+      [19,46],
+      [[20,100],[30,93],[40,88],[50,86],[60,85],[70,70],[100,70]]
+    );
+
+    defineColor(
+      'yellow',
+      [47,62],
+      [[25,100],[40,94],[50,89],[60,86],[70,84],[80,82],[90,80],[100,75]]
+    );
+
+    defineColor(
+      'green',
+      [63,178],
+      [[30,100],[40,90],[50,85],[60,81],[70,74],[80,64],[90,50],[100,40]]
+    );
+
+    defineColor(
+      'blue',
+      [179, 257],
+      [[20,100],[30,86],[40,80],[50,74],[60,60],[70,52],[80,44],[90,39],[100,35]]
+    );
+
+    defineColor(
+      'purple',
+      [258, 282],
+      [[20,100],[30,87],[40,79],[50,70],[60,65],[70,59],[80,52],[90,45],[100,42]]
+    );
+
+    defineColor(
+      'pink',
+      [283, 334],
+      [[20,100],[30,90],[40,86],[60,84],[80,80],[90,75],[100,73]]
+    );
+
+  }
+
+  function HSVtoRGB (hsv) {
+
+    // this doesn't work for the values of 0 and 360
+    // here's the hacky fix
+    var h = hsv[0];
+    if (h === 0) {h = 1}
+    if (h === 360) {h = 359}
+
+    // Rebase the h,s,v values
+    h = h/360;
+    var s = hsv[1]/100,
+        v = hsv[2]/100;
+
+    var h_i = Math.floor(h*6),
+      f = h * 6 - h_i,
+      p = v * (1 - s),
+      q = v * (1 - f*s),
+      t = v * (1 - (1 - f)*s),
+      r = 256,
+      g = 256,
+      b = 256;
+
+    switch(h_i) {
+      case 0: r = v, g = t, b = p;  break;
+      case 1: r = q, g = v, b = p;  break;
+      case 2: r = p, g = v, b = t;  break;
+      case 3: r = p, g = q, b = v;  break;
+      case 4: r = t, g = p, b = v;  break;
+      case 5: r = v, g = p, b = q;  break;
+    }
+    var result = [Math.floor(r*255), Math.floor(g*255), Math.floor(b*255)];
+    return result;
+  }
+
+  function HSVtoHSL (hsv) {
+    var h = hsv[0],
+      s = hsv[1]/100,
+      v = hsv[2]/100,
+      k = (2-s)*v;
+
+    return [
+      h,
+      Math.round(s*v / (k<1 ? k : 2-k) * 10000) / 100,
+      k/2 * 100
+    ];
+  }
+
+  return randomColor;
+}));
+},{}],87:[function(require,module,exports){
 /**
  * @author zz85 / https://github.com/zz85
  *
@@ -81107,19 +81870,440 @@ THREE.Sky = function () {
 	this.uniforms = skyUniforms;
 
 };
-},{"three":75}],86:[function(require,module,exports){
+},{"three":75}],88:[function(require,module,exports){
 // stats.js - http://github.com/mrdoob/stats.js
 var Stats=function(){function f(a,e,b){a=document.createElement(a);a.id=e;a.style.cssText=b;return a}function l(a,e,b){var c=f("div",a,"padding:0 0 3px 3px;text-align:left;background:"+b),d=f("div",a+"Text","font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px;color:"+e);d.innerHTML=a.toUpperCase();c.appendChild(d);a=f("div",a+"Graph","width:74px;height:30px;background:"+e);c.appendChild(a);for(e=0;74>e;e++)a.appendChild(f("span","","width:1px;height:30px;float:left;opacity:0.9;background:"+
 b));return c}function m(a){for(var b=c.children,d=0;d<b.length;d++)b[d].style.display=d===a?"block":"none";n=a}function p(a,b){a.appendChild(a.firstChild).style.height=Math.min(30,30-30*b)+"px"}var q=self.performance&&self.performance.now?self.performance.now.bind(performance):Date.now,k=q(),r=k,t=0,n=0,c=f("div","stats","width:80px;opacity:0.9;cursor:pointer");c.addEventListener("mousedown",function(a){a.preventDefault();m(++n%c.children.length)},!1);var d=0,u=Infinity,v=0,b=l("fps","#0ff","#002"),
 A=b.children[0],B=b.children[1];c.appendChild(b);var g=0,w=Infinity,x=0,b=l("ms","#0f0","#020"),C=b.children[0],D=b.children[1];c.appendChild(b);if(self.performance&&self.performance.memory){var h=0,y=Infinity,z=0,b=l("mb","#f08","#201"),E=b.children[0],F=b.children[1];c.appendChild(b)}m(n);return{REVISION:14,domElement:c,setMode:m,begin:function(){k=q()},end:function(){var a=q();g=a-k;w=Math.min(w,g);x=Math.max(x,g);C.textContent=(g|0)+" MS ("+(w|0)+"-"+(x|0)+")";p(D,g/200);t++;if(a>r+1E3&&(d=Math.round(1E3*
 t/(a-r)),u=Math.min(u,d),v=Math.max(v,d),A.textContent=d+" FPS ("+u+"-"+v+")",p(B,d/100),r=a,t=0,void 0!==h)){var b=performance.memory.usedJSHeapSize,c=performance.memory.jsHeapSizeLimit;h=Math.round(9.54E-7*b);y=Math.min(y,h);z=Math.max(z,h);E.textContent=h+" MB ("+y+"-"+z+")";p(F,b/c)}return a},update:function(){k=this.end()}}};"object"===typeof module&&(module.exports=Stats);
-},{}],87:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 !function(e,t,n){"use strict";!function o(e,t,n){function a(s,l){if(!t[s]){if(!e[s]){var i="function"==typeof require&&require;if(!l&&i)return i(s,!0);if(r)return r(s,!0);var u=new Error("Cannot find module '"+s+"'");throw u.code="MODULE_NOT_FOUND",u}var c=t[s]={exports:{}};e[s][0].call(c.exports,function(t){var n=e[s][1][t];return a(n?n:t)},c,c.exports,o,e,t,n)}return t[s].exports}for(var r="function"==typeof require&&require,s=0;s<n.length;s++)a(n[s]);return a}({1:[function(o,a,r){var s=function(e){return e&&e.__esModule?e:{"default":e}};Object.defineProperty(r,"__esModule",{value:!0});var l,i,u,c,d=o("./modules/handle-dom"),f=o("./modules/utils"),p=o("./modules/handle-swal-dom"),m=o("./modules/handle-click"),v=o("./modules/handle-key"),y=s(v),h=o("./modules/default-params"),b=s(h),g=o("./modules/set-params"),w=s(g);r["default"]=u=c=function(){function o(e){var t=a;return t[e]===n?b["default"][e]:t[e]}var a=arguments[0];if(d.addClass(t.body,"stop-scrolling"),p.resetInput(),a===n)return f.logStr("SweetAlert expects at least 1 attribute!"),!1;var r=f.extend({},b["default"]);switch(typeof a){case"string":r.title=a,r.text=arguments[1]||"",r.type=arguments[2]||"";break;case"object":if(a.title===n)return f.logStr('Missing "title" argument!'),!1;r.title=a.title;for(var s in b["default"])r[s]=o(s);r.confirmButtonText=r.showCancelButton?"Confirm":b["default"].confirmButtonText,r.confirmButtonText=o("confirmButtonText"),r.doneFunction=arguments[1]||null;break;default:return f.logStr('Unexpected type of argument! Expected "string" or "object", got '+typeof a),!1}w["default"](r),p.fixVerticalPosition(),p.openModal(arguments[1]);for(var u=p.getModal(),v=u.querySelectorAll("button"),h=["onclick","onmouseover","onmouseout","onmousedown","onmouseup","onfocus"],g=function(e){return m.handleButton(e,r,u)},C=0;C<v.length;C++)for(var S=0;S<h.length;S++){var x=h[S];v[C][x]=g}p.getOverlay().onclick=g,l=e.onkeydown;var k=function(e){return y["default"](e,r,u)};e.onkeydown=k,e.onfocus=function(){setTimeout(function(){i!==n&&(i.focus(),i=n)},0)},c.enableButtons()},u.setDefaults=c.setDefaults=function(e){if(!e)throw new Error("userParams is required");if("object"!=typeof e)throw new Error("userParams has to be a object");f.extend(b["default"],e)},u.close=c.close=function(){var o=p.getModal();d.fadeOut(p.getOverlay(),5),d.fadeOut(o,5),d.removeClass(o,"showSweetAlert"),d.addClass(o,"hideSweetAlert"),d.removeClass(o,"visible");var a=o.querySelector(".sa-icon.sa-success");d.removeClass(a,"animate"),d.removeClass(a.querySelector(".sa-tip"),"animateSuccessTip"),d.removeClass(a.querySelector(".sa-long"),"animateSuccessLong");var r=o.querySelector(".sa-icon.sa-error");d.removeClass(r,"animateErrorIcon"),d.removeClass(r.querySelector(".sa-x-mark"),"animateXMark");var s=o.querySelector(".sa-icon.sa-warning");return d.removeClass(s,"pulseWarning"),d.removeClass(s.querySelector(".sa-body"),"pulseWarningIns"),d.removeClass(s.querySelector(".sa-dot"),"pulseWarningIns"),setTimeout(function(){var e=o.getAttribute("data-custom-class");d.removeClass(o,e)},300),d.removeClass(t.body,"stop-scrolling"),e.onkeydown=l,e.previousActiveElement&&e.previousActiveElement.focus(),i=n,clearTimeout(o.timeout),!0},u.showInputError=c.showInputError=function(e){var t=p.getModal(),n=t.querySelector(".sa-input-error");d.addClass(n,"show");var o=t.querySelector(".sa-error-container");d.addClass(o,"show"),o.querySelector("p").innerHTML=e,setTimeout(function(){u.enableButtons()},1),t.querySelector("input").focus()},u.resetInputError=c.resetInputError=function(e){if(e&&13===e.keyCode)return!1;var t=p.getModal(),n=t.querySelector(".sa-input-error");d.removeClass(n,"show");var o=t.querySelector(".sa-error-container");d.removeClass(o,"show")},u.disableButtons=c.disableButtons=function(){var e=p.getModal(),t=e.querySelector("button.confirm"),n=e.querySelector("button.cancel");t.disabled=!0,n.disabled=!0},u.enableButtons=c.enableButtons=function(){var e=p.getModal(),t=e.querySelector("button.confirm"),n=e.querySelector("button.cancel");t.disabled=!1,n.disabled=!1},"undefined"!=typeof e?e.sweetAlert=e.swal=u:f.logStr("SweetAlert is a frontend module!"),a.exports=r["default"]},{"./modules/default-params":2,"./modules/handle-click":3,"./modules/handle-dom":4,"./modules/handle-key":5,"./modules/handle-swal-dom":6,"./modules/set-params":8,"./modules/utils":9}],2:[function(e,t,n){Object.defineProperty(n,"__esModule",{value:!0});var o={title:"",text:"",type:null,allowOutsideClick:!1,showConfirmButton:!0,showCancelButton:!1,closeOnConfirm:!0,closeOnCancel:!0,confirmButtonText:"OK",confirmButtonColor:"#8CD4F5",cancelButtonText:"Cancel",imageUrl:null,imageSize:null,timer:null,customClass:"",html:!1,animation:!0,allowEscapeKey:!0,inputType:"text",inputPlaceholder:"",inputValue:"",showLoaderOnConfirm:!1};n["default"]=o,t.exports=n["default"]},{}],3:[function(t,n,o){Object.defineProperty(o,"__esModule",{value:!0});var a=t("./utils"),r=(t("./handle-swal-dom"),t("./handle-dom")),s=function(t,n,o){function s(e){m&&n.confirmButtonColor&&(p.style.backgroundColor=e)}var u,c,d,f=t||e.event,p=f.target||f.srcElement,m=-1!==p.className.indexOf("confirm"),v=-1!==p.className.indexOf("sweet-overlay"),y=r.hasClass(o,"visible"),h=n.doneFunction&&"true"===o.getAttribute("data-has-done-function");switch(m&&n.confirmButtonColor&&(u=n.confirmButtonColor,c=a.colorLuminance(u,-.04),d=a.colorLuminance(u,-.14)),f.type){case"mouseover":s(c);break;case"mouseout":s(u);break;case"mousedown":s(d);break;case"mouseup":s(c);break;case"focus":var b=o.querySelector("button.confirm"),g=o.querySelector("button.cancel");m?g.style.boxShadow="none":b.style.boxShadow="none";break;case"click":var w=o===p,C=r.isDescendant(o,p);if(!w&&!C&&y&&!n.allowOutsideClick)break;m&&h&&y?l(o,n):h&&y||v?i(o,n):r.isDescendant(o,p)&&"BUTTON"===p.tagName&&sweetAlert.close()}},l=function(e,t){var n=!0;r.hasClass(e,"show-input")&&(n=e.querySelector("input").value,n||(n="")),t.doneFunction(n),t.closeOnConfirm&&sweetAlert.close(),t.showLoaderOnConfirm&&sweetAlert.disableButtons()},i=function(e,t){var n=String(t.doneFunction).replace(/\s/g,""),o="function("===n.substring(0,9)&&")"!==n.substring(9,10);o&&t.doneFunction(!1),t.closeOnCancel&&sweetAlert.close()};o["default"]={handleButton:s,handleConfirm:l,handleCancel:i},n.exports=o["default"]},{"./handle-dom":4,"./handle-swal-dom":6,"./utils":9}],4:[function(n,o,a){Object.defineProperty(a,"__esModule",{value:!0});var r=function(e,t){return new RegExp(" "+t+" ").test(" "+e.className+" ")},s=function(e,t){r(e,t)||(e.className+=" "+t)},l=function(e,t){var n=" "+e.className.replace(/[\t\r\n]/g," ")+" ";if(r(e,t)){for(;n.indexOf(" "+t+" ")>=0;)n=n.replace(" "+t+" "," ");e.className=n.replace(/^\s+|\s+$/g,"")}},i=function(e){var n=t.createElement("div");return n.appendChild(t.createTextNode(e)),n.innerHTML},u=function(e){e.style.opacity="",e.style.display="block"},c=function(e){if(e&&!e.length)return u(e);for(var t=0;t<e.length;++t)u(e[t])},d=function(e){e.style.opacity="",e.style.display="none"},f=function(e){if(e&&!e.length)return d(e);for(var t=0;t<e.length;++t)d(e[t])},p=function(e,t){for(var n=t.parentNode;null!==n;){if(n===e)return!0;n=n.parentNode}return!1},m=function(e){e.style.left="-9999px",e.style.display="block";var t,n=e.clientHeight;return t="undefined"!=typeof getComputedStyle?parseInt(getComputedStyle(e).getPropertyValue("padding-top"),10):parseInt(e.currentStyle.padding),e.style.left="",e.style.display="none","-"+parseInt((n+t)/2)+"px"},v=function(e,t){if(+e.style.opacity<1){t=t||16,e.style.opacity=0,e.style.display="block";var n=+new Date,o=function(e){function t(){return e.apply(this,arguments)}return t.toString=function(){return e.toString()},t}(function(){e.style.opacity=+e.style.opacity+(new Date-n)/100,n=+new Date,+e.style.opacity<1&&setTimeout(o,t)});o()}e.style.display="block"},y=function(e,t){t=t||16,e.style.opacity=1;var n=+new Date,o=function(e){function t(){return e.apply(this,arguments)}return t.toString=function(){return e.toString()},t}(function(){e.style.opacity=+e.style.opacity-(new Date-n)/100,n=+new Date,+e.style.opacity>0?setTimeout(o,t):e.style.display="none"});o()},h=function(n){if("function"==typeof MouseEvent){var o=new MouseEvent("click",{view:e,bubbles:!1,cancelable:!0});n.dispatchEvent(o)}else if(t.createEvent){var a=t.createEvent("MouseEvents");a.initEvent("click",!1,!1),n.dispatchEvent(a)}else t.createEventObject?n.fireEvent("onclick"):"function"==typeof n.onclick&&n.onclick()},b=function(t){"function"==typeof t.stopPropagation?(t.stopPropagation(),t.preventDefault()):e.event&&e.event.hasOwnProperty("cancelBubble")&&(e.event.cancelBubble=!0)};a.hasClass=r,a.addClass=s,a.removeClass=l,a.escapeHtml=i,a._show=u,a.show=c,a._hide=d,a.hide=f,a.isDescendant=p,a.getTopMargin=m,a.fadeIn=v,a.fadeOut=y,a.fireClick=h,a.stopEventPropagation=b},{}],5:[function(t,o,a){Object.defineProperty(a,"__esModule",{value:!0});var r=t("./handle-dom"),s=t("./handle-swal-dom"),l=function(t,o,a){var l=t||e.event,i=l.keyCode||l.which,u=a.querySelector("button.confirm"),c=a.querySelector("button.cancel"),d=a.querySelectorAll("button[tabindex]");if(-1!==[9,13,32,27].indexOf(i)){for(var f=l.target||l.srcElement,p=-1,m=0;m<d.length;m++)if(f===d[m]){p=m;break}9===i?(f=-1===p?u:p===d.length-1?d[0]:d[p+1],r.stopEventPropagation(l),f.focus(),o.confirmButtonColor&&s.setFocusStyle(f,o.confirmButtonColor)):13===i?("INPUT"===f.tagName&&(f=u,u.focus()),f=-1===p?u:n):27===i&&o.allowEscapeKey===!0?(f=c,r.fireClick(f,l)):f=n}};a["default"]=l,o.exports=a["default"]},{"./handle-dom":4,"./handle-swal-dom":6}],6:[function(n,o,a){var r=function(e){return e&&e.__esModule?e:{"default":e}};Object.defineProperty(a,"__esModule",{value:!0});var s=n("./utils"),l=n("./handle-dom"),i=n("./default-params"),u=r(i),c=n("./injected-html"),d=r(c),f=".sweet-alert",p=".sweet-overlay",m=function(){var e=t.createElement("div");for(e.innerHTML=d["default"];e.firstChild;)t.body.appendChild(e.firstChild)},v=function(e){function t(){return e.apply(this,arguments)}return t.toString=function(){return e.toString()},t}(function(){var e=t.querySelector(f);return e||(m(),e=v()),e}),y=function(){var e=v();return e?e.querySelector("input"):void 0},h=function(){return t.querySelector(p)},b=function(e,t){var n=s.hexToRgb(t);e.style.boxShadow="0 0 2px rgba("+n+", 0.8), inset 0 0 0 1px rgba(0, 0, 0, 0.05)"},g=function(n){var o=v();l.fadeIn(h(),10),l.show(o),l.addClass(o,"showSweetAlert"),l.removeClass(o,"hideSweetAlert"),e.previousActiveElement=t.activeElement;var a=o.querySelector("button.confirm");a.focus(),setTimeout(function(){l.addClass(o,"visible")},500);var r=o.getAttribute("data-timer");if("null"!==r&&""!==r){var s=n;o.timeout=setTimeout(function(){var e=(s||null)&&"true"===o.getAttribute("data-has-done-function");e?s(null):sweetAlert.close()},r)}},w=function(){var e=v(),t=y();l.removeClass(e,"show-input"),t.value=u["default"].inputValue,t.setAttribute("type",u["default"].inputType),t.setAttribute("placeholder",u["default"].inputPlaceholder),C()},C=function(e){if(e&&13===e.keyCode)return!1;var t=v(),n=t.querySelector(".sa-input-error");l.removeClass(n,"show");var o=t.querySelector(".sa-error-container");l.removeClass(o,"show")},S=function(){var e=v();e.style.marginTop=l.getTopMargin(v())};a.sweetAlertInitialize=m,a.getModal=v,a.getOverlay=h,a.getInput=y,a.setFocusStyle=b,a.openModal=g,a.resetInput=w,a.resetInputError=C,a.fixVerticalPosition=S},{"./default-params":2,"./handle-dom":4,"./injected-html":7,"./utils":9}],7:[function(e,t,n){Object.defineProperty(n,"__esModule",{value:!0});var o='<div class="sweet-overlay" tabIndex="-1"></div><div class="sweet-alert"><div class="sa-icon sa-error">\n      <span class="sa-x-mark">\n        <span class="sa-line sa-left"></span>\n        <span class="sa-line sa-right"></span>\n      </span>\n    </div><div class="sa-icon sa-warning">\n      <span class="sa-body"></span>\n      <span class="sa-dot"></span>\n    </div><div class="sa-icon sa-info"></div><div class="sa-icon sa-success">\n      <span class="sa-line sa-tip"></span>\n      <span class="sa-line sa-long"></span>\n\n      <div class="sa-placeholder"></div>\n      <div class="sa-fix"></div>\n    </div><div class="sa-icon sa-custom"></div><h2>Title</h2>\n    <p>Text</p>\n    <fieldset>\n      <input type="text" tabIndex="3" />\n      <div class="sa-input-error"></div>\n    </fieldset><div class="sa-error-container">\n      <div class="icon">!</div>\n      <p>Not valid!</p>\n    </div><div class="sa-button-container">\n      <button class="cancel" tabIndex="2">Cancel</button>\n      <div class="sa-confirm-button-container">\n        <button class="confirm" tabIndex="1">OK</button><div class="la-ball-fall">\n          <div></div>\n          <div></div>\n          <div></div>\n        </div>\n      </div>\n    </div></div>';n["default"]=o,t.exports=n["default"]},{}],8:[function(e,t,o){Object.defineProperty(o,"__esModule",{value:!0});var a=e("./utils"),r=e("./handle-swal-dom"),s=e("./handle-dom"),l=["error","warning","info","success","input","prompt"],i=function(e){var t=r.getModal(),o=t.querySelector("h2"),i=t.querySelector("p"),u=t.querySelector("button.cancel"),c=t.querySelector("button.confirm");if(o.innerHTML=e.html?e.title:s.escapeHtml(e.title).split("\n").join("<br>"),i.innerHTML=e.html?e.text:s.escapeHtml(e.text||"").split("\n").join("<br>"),e.text&&s.show(i),e.customClass)s.addClass(t,e.customClass),t.setAttribute("data-custom-class",e.customClass);else{var d=t.getAttribute("data-custom-class");s.removeClass(t,d),t.setAttribute("data-custom-class","")}if(s.hide(t.querySelectorAll(".sa-icon")),e.type&&!a.isIE8()){var f=function(){for(var o=!1,a=0;a<l.length;a++)if(e.type===l[a]){o=!0;break}if(!o)return logStr("Unknown alert type: "+e.type),{v:!1};var i=["success","error","warning","info"],u=n;-1!==i.indexOf(e.type)&&(u=t.querySelector(".sa-icon.sa-"+e.type),s.show(u));var c=r.getInput();switch(e.type){case"success":s.addClass(u,"animate"),s.addClass(u.querySelector(".sa-tip"),"animateSuccessTip"),s.addClass(u.querySelector(".sa-long"),"animateSuccessLong");break;case"error":s.addClass(u,"animateErrorIcon"),s.addClass(u.querySelector(".sa-x-mark"),"animateXMark");break;case"warning":s.addClass(u,"pulseWarning"),s.addClass(u.querySelector(".sa-body"),"pulseWarningIns"),s.addClass(u.querySelector(".sa-dot"),"pulseWarningIns");break;case"input":case"prompt":c.setAttribute("type",e.inputType),c.value=e.inputValue,c.setAttribute("placeholder",e.inputPlaceholder),s.addClass(t,"show-input"),setTimeout(function(){c.focus(),c.addEventListener("keyup",swal.resetInputError)},400)}}();if("object"==typeof f)return f.v}if(e.imageUrl){var p=t.querySelector(".sa-icon.sa-custom");p.style.backgroundImage="url("+e.imageUrl+")",s.show(p);var m=80,v=80;if(e.imageSize){var y=e.imageSize.toString().split("x"),h=y[0],b=y[1];h&&b?(m=h,v=b):logStr("Parameter imageSize expects value with format WIDTHxHEIGHT, got "+e.imageSize)}p.setAttribute("style",p.getAttribute("style")+"width:"+m+"px; height:"+v+"px")}t.setAttribute("data-has-cancel-button",e.showCancelButton),e.showCancelButton?u.style.display="inline-block":s.hide(u),t.setAttribute("data-has-confirm-button",e.showConfirmButton),e.showConfirmButton?c.style.display="inline-block":s.hide(c),e.cancelButtonText&&(u.innerHTML=s.escapeHtml(e.cancelButtonText)),e.confirmButtonText&&(c.innerHTML=s.escapeHtml(e.confirmButtonText)),e.confirmButtonColor&&(c.style.backgroundColor=e.confirmButtonColor,c.style.borderLeftColor=e.confirmLoadingButtonColor,c.style.borderRightColor=e.confirmLoadingButtonColor,r.setFocusStyle(c,e.confirmButtonColor)),t.setAttribute("data-allow-outside-click",e.allowOutsideClick);var g=e.doneFunction?!0:!1;t.setAttribute("data-has-done-function",g),e.animation?"string"==typeof e.animation?t.setAttribute("data-animation",e.animation):t.setAttribute("data-animation","pop"):t.setAttribute("data-animation","none"),t.setAttribute("data-timer",e.timer)};o["default"]=i,t.exports=o["default"]},{"./handle-dom":4,"./handle-swal-dom":6,"./utils":9}],9:[function(t,n,o){Object.defineProperty(o,"__esModule",{value:!0});var a=function(e,t){for(var n in t)t.hasOwnProperty(n)&&(e[n]=t[n]);return e},r=function(e){var t=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(e);return t?parseInt(t[1],16)+", "+parseInt(t[2],16)+", "+parseInt(t[3],16):null},s=function(){return e.attachEvent&&!e.addEventListener},l=function(t){e.console&&e.console.log("SweetAlert: "+t)},i=function(e,t){e=String(e).replace(/[^0-9a-f]/gi,""),e.length<6&&(e=e[0]+e[0]+e[1]+e[1]+e[2]+e[2]),t=t||0;var n,o,a="#";for(o=0;3>o;o++)n=parseInt(e.substr(2*o,2),16),n=Math.round(Math.min(Math.max(0,n+n*t),255)).toString(16),a+=("00"+n).substr(n.length);return a};o.extend=a,o.hexToRgb=r,o.isIE8=s,o.logStr=l,o.colorLuminance=i},{}]},{},[1]),"function"==typeof define&&define.amd?define(function(){return sweetAlert}):"undefined"!=typeof module&&module.exports&&(module.exports=sweetAlert)}(window,document);
-},{}],88:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
+var VirtualJoystick	= function(opts)
+{
+	opts			= opts			|| {};
+	this._container		= opts.container	|| document.body;
+	this._strokeStyle	= opts.strokeStyle	|| 'cyan';
+	this._stickEl		= opts.stickElement	|| this._buildJoystickStick();
+	this._baseEl		= opts.baseElement	|| this._buildJoystickBase();
+	this._mouseSupport	= opts.mouseSupport !== undefined ? opts.mouseSupport : false;
+	this._stationaryBase	= opts.stationaryBase || false;
+	this._baseX		= this._stickX = opts.baseX || 0
+	this._baseY		= this._stickY = opts.baseY || 0
+	this._limitStickTravel	= opts.limitStickTravel || false
+	this._stickRadius	= opts.stickRadius !== undefined ? opts.stickRadius : 100
+	this._useCssTransform	= opts.useCssTransform !== undefined ? opts.useCssTransform : false
+
+	this._container.style.position	= "relative"
+
+	this._container.appendChild(this._baseEl)
+	this._baseEl.style.position	= "absolute"
+	this._baseEl.style.display	= "none"
+	this._container.appendChild(this._stickEl)
+	this._stickEl.style.position	= "absolute"
+	this._stickEl.style.display	= "none"
+
+	this._pressed	= false;
+	this._touchIdx	= null;
+	
+	if(this._stationaryBase === true){
+		this._baseEl.style.display	= "";
+		this._baseEl.style.left		= (this._baseX - this._baseEl.width /2)+"px";
+		this._baseEl.style.top		= (this._baseY - this._baseEl.height/2)+"px";
+	}
+    
+	this._transform	= this._useCssTransform ? this._getTransformProperty() : false;
+	this._has3d	= this._check3D();
+	
+	var __bind	= function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+	this._$onTouchStart	= __bind(this._onTouchStart	, this);
+	this._$onTouchEnd	= __bind(this._onTouchEnd	, this);
+	this._$onTouchMove	= __bind(this._onTouchMove	, this);
+	this._container.addEventListener( 'touchstart'	, this._$onTouchStart	, false );
+	this._container.addEventListener( 'touchend'	, this._$onTouchEnd	, false );
+	this._container.addEventListener( 'touchmove'	, this._$onTouchMove	, false );
+	if( this._mouseSupport ){
+		this._$onMouseDown	= __bind(this._onMouseDown	, this);
+		this._$onMouseUp	= __bind(this._onMouseUp	, this);
+		this._$onMouseMove	= __bind(this._onMouseMove	, this);
+		this._container.addEventListener( 'mousedown'	, this._$onMouseDown	, false );
+		this._container.addEventListener( 'mouseup'	, this._$onMouseUp	, false );
+		this._container.addEventListener( 'mousemove'	, this._$onMouseMove	, false );
+	}
+}
+
+VirtualJoystick.prototype.destroy	= function()
+{
+	this._container.removeChild(this._baseEl);
+	this._container.removeChild(this._stickEl);
+
+	this._container.removeEventListener( 'touchstart'	, this._$onTouchStart	, false );
+	this._container.removeEventListener( 'touchend'		, this._$onTouchEnd	, false );
+	this._container.removeEventListener( 'touchmove'	, this._$onTouchMove	, false );
+	if( this._mouseSupport ){
+		this._container.removeEventListener( 'mouseup'		, this._$onMouseUp	, false );
+		this._container.removeEventListener( 'mousedown'	, this._$onMouseDown	, false );
+		this._container.removeEventListener( 'mousemove'	, this._$onMouseMove	, false );
+	}
+}
+
+/**
+ * @returns {Boolean} true if touchscreen is currently available, false otherwise
+*/
+VirtualJoystick.touchScreenAvailable	= function()
+{
+	return 'createTouch' in document ? true : false;
+}
+
+/**
+ * microevents.js - https://github.com/jeromeetienne/microevent.js
+*/
+;(function(destObj){
+	destObj.addEventListener	= function(event, fct){
+		if(this._events === undefined) 	this._events	= {};
+		this._events[event] = this._events[event]	|| [];
+		this._events[event].push(fct);
+		return fct;
+	};
+	destObj.removeEventListener	= function(event, fct){
+		if(this._events === undefined) 	this._events	= {};
+		if( event in this._events === false  )	return;
+		this._events[event].splice(this._events[event].indexOf(fct), 1);
+	};
+	destObj.dispatchEvent		= function(event /* , args... */){
+		if(this._events === undefined) 	this._events	= {};
+		if( this._events[event] === undefined )	return;
+		var tmpArray	= this._events[event].slice(); 
+		for(var i = 0; i < tmpArray.length; i++){
+			var result	= tmpArray[i].apply(this, Array.prototype.slice.call(arguments, 1))
+			if( result !== undefined )	return result;
+		}
+		return undefined
+	};
+})(VirtualJoystick.prototype);
+
+//////////////////////////////////////////////////////////////////////////////////
+//										//
+//////////////////////////////////////////////////////////////////////////////////
+
+VirtualJoystick.prototype.deltaX	= function(){ return this._stickX - this._baseX;	}
+VirtualJoystick.prototype.deltaY	= function(){ return this._stickY - this._baseY;	}
+
+VirtualJoystick.prototype.up	= function(){
+	if( this._pressed === false )	return false;
+	var deltaX	= this.deltaX();
+	var deltaY	= this.deltaY();
+	if( deltaY >= 0 )				return false;
+	if( Math.abs(deltaX) > 2*Math.abs(deltaY) )	return false;
+	return true;
+}
+VirtualJoystick.prototype.down	= function(){
+	if( this._pressed === false )	return false;
+	var deltaX	= this.deltaX();
+	var deltaY	= this.deltaY();
+	if( deltaY <= 0 )				return false;
+	if( Math.abs(deltaX) > 2*Math.abs(deltaY) )	return false;
+	return true;	
+}
+VirtualJoystick.prototype.right	= function(){
+	if( this._pressed === false )	return false;
+	var deltaX	= this.deltaX();
+	var deltaY	= this.deltaY();
+	if( deltaX <= 0 )				return false;
+	if( Math.abs(deltaY) > 2*Math.abs(deltaX) )	return false;
+	return true;	
+}
+VirtualJoystick.prototype.left	= function(){
+	if( this._pressed === false )	return false;
+	var deltaX	= this.deltaX();
+	var deltaY	= this.deltaY();
+	if( deltaX >= 0 )				return false;
+	if( Math.abs(deltaY) > 2*Math.abs(deltaX) )	return false;
+	return true;	
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//										//
+//////////////////////////////////////////////////////////////////////////////////
+
+VirtualJoystick.prototype._onUp	= function()
+{
+	this._pressed	= false; 
+	this._stickEl.style.display	= "none";
+	
+	if(this._stationaryBase == false){	
+		this._baseEl.style.display	= "none";
+	
+		this._baseX	= this._baseY	= 0;
+		this._stickX	= this._stickY	= 0;
+	}
+}
+
+VirtualJoystick.prototype._onDown	= function(x, y)
+{
+	this._pressed	= true; 
+	if(this._stationaryBase == false){
+		this._baseX	= x;
+		this._baseY	= y;
+		this._baseEl.style.display	= "";
+		this._move(this._baseEl.style, (this._baseX - this._baseEl.width /2), (this._baseY - this._baseEl.height/2));
+	}
+	
+	this._stickX	= x;
+	this._stickY	= y;
+	
+	if(this._limitStickTravel === true){
+		var deltaX	= this.deltaX();
+		var deltaY	= this.deltaY();
+		var stickDistance = Math.sqrt( (deltaX * deltaX) + (deltaY * deltaY) );
+		if(stickDistance > this._stickRadius){
+			var stickNormalizedX = deltaX / stickDistance;
+			var stickNormalizedY = deltaY / stickDistance;
+			
+			this._stickX = stickNormalizedX * this._stickRadius + this._baseX;
+			this._stickY = stickNormalizedY * this._stickRadius + this._baseY;
+		} 	
+	}
+	
+	this._stickEl.style.display	= "";
+	this._move(this._stickEl.style, (this._stickX - this._stickEl.width /2), (this._stickY - this._stickEl.height/2));	
+}
+
+VirtualJoystick.prototype._onMove	= function(x, y)
+{
+	if( this._pressed === true ){
+		this._stickX	= x;
+		this._stickY	= y;
+		
+		if(this._limitStickTravel === true){
+			var deltaX	= this.deltaX();
+			var deltaY	= this.deltaY();
+			var stickDistance = Math.sqrt( (deltaX * deltaX) + (deltaY * deltaY) );
+			if(stickDistance > this._stickRadius){
+				var stickNormalizedX = deltaX / stickDistance;
+				var stickNormalizedY = deltaY / stickDistance;
+			
+				this._stickX = stickNormalizedX * this._stickRadius + this._baseX;
+				this._stickY = stickNormalizedY * this._stickRadius + this._baseY;
+			} 		
+		}
+		
+        	this._move(this._stickEl.style, (this._stickX - this._stickEl.width /2), (this._stickY - this._stickEl.height/2));	
+	}	
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//		bind touch events (and mouse events for debug)			//
+//////////////////////////////////////////////////////////////////////////////////
+
+VirtualJoystick.prototype._onMouseUp	= function(event)
+{
+	return this._onUp();
+}
+
+VirtualJoystick.prototype._onMouseDown	= function(event)
+{
+	event.preventDefault();
+	var x	= event.clientX;
+	var y	= event.clientY;
+	return this._onDown(x, y);
+}
+
+VirtualJoystick.prototype._onMouseMove	= function(event)
+{
+	var x	= event.clientX;
+	var y	= event.clientY;
+	return this._onMove(x, y);
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//		comment								//
+//////////////////////////////////////////////////////////////////////////////////
+
+VirtualJoystick.prototype._onTouchStart	= function(event)
+{
+	// if there is already a touch inprogress do nothing
+	if( this._touchIdx !== null )	return;
+
+	// notify event for validation
+	var isValid	= this.dispatchEvent('touchStartValidation', event);
+	if( isValid === false )	return;
+	
+	// dispatch touchStart
+	this.dispatchEvent('touchStart', event);
+
+	event.preventDefault();
+	// get the first who changed
+	var touch	= event.changedTouches[0];
+	// set the touchIdx of this joystick
+	this._touchIdx	= touch.identifier;
+
+	// forward the action
+	var x		= touch.pageX;
+	var y		= touch.pageY;
+	return this._onDown(x, y)
+}
+
+VirtualJoystick.prototype._onTouchEnd	= function(event)
+{
+	// if there is no touch in progress, do nothing
+	if( this._touchIdx === null )	return;
+
+	// dispatch touchEnd
+	this.dispatchEvent('touchEnd', event);
+
+	// try to find our touch event
+	var touchList	= event.changedTouches;
+	for(var i = 0; i < touchList.length && touchList[i].identifier !== this._touchIdx; i++);
+	// if touch event isnt found, 
+	if( i === touchList.length)	return;
+
+	// reset touchIdx - mark it as no-touch-in-progress
+	this._touchIdx	= null;
+
+//??????
+// no preventDefault to get click event on ios
+event.preventDefault();
+
+	return this._onUp()
+}
+
+VirtualJoystick.prototype._onTouchMove	= function(event)
+{
+	// if there is no touch in progress, do nothing
+	if( this._touchIdx === null )	return;
+
+	// try to find our touch event
+	var touchList	= event.changedTouches;
+	for(var i = 0; i < touchList.length && touchList[i].identifier !== this._touchIdx; i++ );
+	// if touch event with the proper identifier isnt found, do nothing
+	if( i === touchList.length)	return;
+	var touch	= touchList[i];
+
+	event.preventDefault();
+
+	var x		= touch.pageX;
+	var y		= touch.pageY;
+	return this._onMove(x, y)
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//		build default stickEl and baseEl				//
+//////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * build the canvas for joystick base
+ */
+VirtualJoystick.prototype._buildJoystickBase	= function()
+{
+	var canvas	= document.createElement( 'canvas' );
+	canvas.width	= 126;
+	canvas.height	= 126;
+	
+	var ctx		= canvas.getContext('2d');
+	ctx.beginPath(); 
+	ctx.strokeStyle = this._strokeStyle; 
+	ctx.lineWidth	= 6; 
+	ctx.arc( canvas.width/2, canvas.width/2, 40, 0, Math.PI*2, true); 
+	ctx.stroke();	
+
+	ctx.beginPath(); 
+	ctx.strokeStyle	= this._strokeStyle; 
+	ctx.lineWidth	= 2; 
+	ctx.arc( canvas.width/2, canvas.width/2, 60, 0, Math.PI*2, true); 
+	ctx.stroke();
+	
+	return canvas;
+}
+
+/**
+ * build the canvas for joystick stick
+ */
+VirtualJoystick.prototype._buildJoystickStick	= function()
+{
+	var canvas	= document.createElement( 'canvas' );
+	canvas.width	= 86;
+	canvas.height	= 86;
+	var ctx		= canvas.getContext('2d');
+	ctx.beginPath(); 
+	ctx.strokeStyle	= this._strokeStyle; 
+	ctx.lineWidth	= 6; 
+	ctx.arc( canvas.width/2, canvas.width/2, 40, 0, Math.PI*2, true); 
+	ctx.stroke();
+	return canvas;
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+//		move using translate3d method with fallback to translate > 'top' and 'left'		
+//      modified from https://github.com/component/translate and dependents
+//////////////////////////////////////////////////////////////////////////////////
+
+VirtualJoystick.prototype._move = function(style, x, y)
+{
+	if (this._transform) {
+		if (this._has3d) {
+			style[this._transform] = 'translate3d(' + x + 'px,' + y + 'px, 0)';
+		} else {
+			style[this._transform] = 'translate(' + x + 'px,' + y + 'px)';
+		}
+	} else {
+		style.left = x + 'px';
+		style.top = y + 'px';
+	}
+}
+
+VirtualJoystick.prototype._getTransformProperty = function() 
+{
+	var styles = [
+		'webkitTransform',
+		'MozTransform',
+		'msTransform',
+		'OTransform',
+		'transform'
+	];
+
+	var el = document.createElement('p');
+	var style;
+
+	for (var i = 0; i < styles.length; i++) {
+		style = styles[i];
+		if (null != el.style[style]) {
+			return style;
+		}
+	}         
+}
+  
+VirtualJoystick.prototype._check3D = function() 
+{        
+	var prop = this._getTransformProperty();
+	// IE8<= doesn't have `getComputedStyle`
+	if (!prop || !window.getComputedStyle) return module.exports = false;
+
+	var map = {
+		webkitTransform: '-webkit-transform',
+		OTransform: '-o-transform',
+		msTransform: '-ms-transform',
+		MozTransform: '-moz-transform',
+		transform: 'transform'
+	};
+
+	// from: https://gist.github.com/lorenzopolidori/3794226
+	var el = document.createElement('div');
+	el.style[prop] = 'translate3d(1px,1px,1px)';
+	document.body.insertBefore(el, null);
+	var val = getComputedStyle(el).getPropertyValue(map[prop]);
+	document.body.removeChild(el);
+	var exports = null != val && val.length && 'none' != val;
+	return exports;
+}
+module.exports = VirtualJoystick;
+},{}],91:[function(require,module,exports){
 window.$ = window.jQuery = require('jquery');
 require('bootstrap');
 var fn = require('./functions');
-for(var i in fn) {
+for (var i in fn) {
 	window[i] = fn[i];
 }
 
@@ -81128,7 +82312,7 @@ $(document).ready(function() {
 		backdrop: "static",
 		keyboard: false,
 	});
-	
+
 	/*$('#characterCreatorScreen').modal({
 		//backdrop: "static",
 		keyboard: false,
@@ -81138,144 +82322,94 @@ $(document).ready(function() {
 
 	// main login form //
 
-	$('#login-form').submit(function() {
+	$('#signInForm').submit(function() {
 		$.ajax({
-			url: "/8100/",
+			url: "/8100/signIn",
 			type: "POST",
 			dataType: 'json',
 			data: {
-				user: $('#lmail').val(),
-				pass: $('#lpass').val(),
-				rememberMe: $('#lremember').is(':checked')
+				username: $('#signInUsername').val(),
+				password: $('#signInPassword').val(),
+				rememberMe: $('#signInRememberMe').is(':checked')
 			},
-			success: function(responseText, status, xhr, $form) {
-				error("login", "username", false);
-				error("login", "password", false);
+			success: function(responseText) {
 				alert("success");
 				// TODO: CLEAR FORM
-				$('#loginSignUpWindow').modal("hide");
-				checkifLoggedIn();
+				$('#signInSignUpWindow').modal("hide");
+				checkifSignedIn();
 			},
 			error: function(e) {
-				/*if(e.responseText == "ok") {
-					error("login", "username", false);
-					error("login", "password", false);
-					alert("success");
-					// TODO: CLEAR FORM
-					$('#loginSignUpWindow').modal("hide");
-					checkifLoggedIn();
-					//$('.cd-user-modal').removeClass('is-visible');
-					return;
-				}*/
-				
-				var errors = e.responseText.replace(/[\[\]']+/g,'').match(/[^,]+,[^,]+/g);
-				for(var i = 0; i < errors.length; i++){
-					errors[i] = JSON.parse(errors[i]);
-				}
-				
-				var errorTypes = "";
-				for(var i = 0; i < errors.length; i++) {
-					error("login", errors[i].field, true, errors[i].msg);
-					errorTypes += errors[i].field;
-				}
-				if(errorTypes.indexOf("username") == -1) {
-					error("login", "username", false);
-				}
-				if(errorTypes.indexOf("password") == -1) {
-					error("login", "password", false);
-				}
+				console.log(e);
+				alert(e);
 			}
 		});
 		return false;
 	});
-	$('#lmail').focus();
-	
-	
-	
-	
-	$('#signup-form').submit(function() {
+	$('#signInUsername').focus();
+
+
+
+
+	$('#signUpForm').submit(function() {
 		$.ajax({
-			url: "/8100/signup",
+			url: "/8100/signUp",
 			type: "POST",
 			dataType: 'json',
 			data: {
-				email: $('#smail').val(),
-				user: $('#suser').val(),
-				pass: $('#spass').val()
+				email: $('#signUpEmail').val(),
+				username: $('#signUpUsername').val(),
+				password: $('#signUpPassword').val()
 			},
-			success: function(responseText, status, xhr, $form) {
-				error("signup", "email", false);
-				error("signup", "username", false);
-				error("signup", "password", false);
-				// TODO: CLEAR FORM
-				$('#loginSignUpWindow').modal("hide");
+			success: function(responseText) {
 				alert("success");
-				checkifLoggedIn();
+				// TODO: CLEAR FORM
+				$('#signInSignUpWindow').modal("hide");
+				checkifSignedIn();
 			},
 			error: function(e) {
-				var errors = e.responseText.replace(/[\[\]']+/g,'').match(/[^,]+,[^,]+/g);
-				/*if(errors == null) {
-					error("signup", "email", false);
-					error("signup", "username", false);
-					error("signup", "password", false);
-					alert("success");
+				var errors = e.responseText.replace(/[\[\]']+/g, '').match(/[^,]+,[^,]+/g);
+				if (errors == null) {
+					this.success();
 					return;
-				}*/
-				
-				for(var i = 0; i < errors.length; i++){
-					errors[i] = JSON.parse(errors[i]);
 				}
-				var errorTypes = "";
-				for(var i = 0; i < errors.length; i++) {
-					error("signup", errors[i].field, true, errors[i].msg);
-					errorTypes += errors[i].field;
-				}
-				if(errorTypes.indexOf("email") == -1) {
-					error("signup", "email", false);
-				}
-				if(errorTypes.indexOf("username") == -1) {
-					error("signup", "username", false);
-				}
-				if(errorTypes.indexOf("password") == -1) {
-					error("signup", "password", false);
-				}
+				alert(e);
 			}
 		});
 		return false;
 	});
 
-	$('#smail').focus();
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	function checkifLoggedIn() {
-		if(typeof getCookie('user') !== "undefined" && typeof getCookie('pass') != "undefined") {
-			console.log("logged in as: " + getCookie('user'));
+	$('#signInEmail').focus();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	function checkifSignedIn() {
+		if (typeof getCookie('username') !== "undefined" && typeof getCookie('password') != "undefined") {
+			console.log("signed in as: " + getCookie('username'));
 			$("#ls").css('display', 'none');
 			$("#playGuest").css('display', 'none');
 			$("#playGuest").css('text-align', 'center');
-			
-			$("#guest-ls").html("logged in as: " + getCookie('user'));
+
+			$("#guest-ls").html("Signed in as: " + getCookie('username'));
 			//$("#playBtn")[0].disabled = false;
-			
-			
-			var logout = $('<input id="logout" type="button" style="float: right; margin-bottom: 4px;" value="logout" class="btn btn-info"/>');
-			$("#guest-ls").append(logout);
-			$("#logout").on('click', function(event) {
+
+
+			var signOut = $('<input id="signOut" type="button" style="float: right; margin-bottom: 4px;" value="signOut" class="btn btn-info"/>');
+			$("#guest-ls").append(signOut);
+			$("#signOut").on('click', function(event) {
 				$.ajax({
-					url: "/8100/logout",
+					url: "/8100/signOut",
 					type: "POST",
 					dataType: 'json',
 					complete: function() {
@@ -81283,75 +82417,74 @@ $(document).ready(function() {
 					}
 				});
 			});
-			
+
 			$("#characterSelector").html('');
-			
-			
-			
-			
+
+
+
+
 			$.ajax({
 				url: "/8100/getCharacters",
 				type: "POST",
 				dataType: 'json',
-				data: {
-				},
+				data: {},
 				success: function(responseText, status, xhr, $form) {
 					//console.log(responseText);
 					var characters = responseText;
-					
+
 					var charInfo = '';
-					
-					
-					for(var i in characters) {
-						
+
+
+					for (var i in characters) {
+
 						var char = characters[i];
-						
-						
+
+
 						charInfo += '\
 									<div class="col-xs-6 col-md-4">\
 										<label class="radio-thumbnail text-center">\
-											<input class="whichChar" value="'+char.username+'" type="radio" name="radios">\
+											<input class="whichChar" value="' + char.username + '" type="radio" name="radios">\
 											<div class="thumbnail">\
 												<img src="./img/snow1.jpg" alt="...">\
 												<div class="caption">\
-													<h5>'+char.username+'</h5>\
-													<h5>Lvl '+char.level+' '+char.class+'</h5>\
+													<h5>' + char.username + '</h5>\
+													<h5>Lvl ' + char.level + ' ' + char.class + '</h5>\
 												</div>\
 											</div>\
 										</label>\
 									</div>\
 						';
 						//$("#guest-ls").after(charInfo);
-						
-						
-						
+
+
+
 					}
-					
+
 					var characterSel = $(charInfo);
 					//$("#guest-ls").after(characterSel);
 					$("#characterSelector").html(characterSel);
-					
-					$('.whichChar').on('click', function(){
+
+					$('.whichChar').on('click', function() {
 						$("#playBtn")[0].disabled = false;
 					});
-					
-					
-					
+
+
+
 				},
 				error: function(error) {
 					//console.log(error);
 				}
 			});
-			
+
 			/*$('.whichChar').on('click', function(){
 				$("#playBtn")[0].disabled = false;
 			});*/
 
-			
-			
-			
-			
-			if(typeof $('#char') != "undefined"){
+
+
+
+
+			if (typeof $('#char') != "undefined") {
 				//onclick="$('#settings, #instructions').toggle();return false;" class="btn btn-info btn-settings">
 				var addButton = $('\
 					<div id="char" class="form-group">\
@@ -81363,57 +82496,49 @@ $(document).ready(function() {
 				//$("#guest-ls").after(addButton);
 				$("#characterSelector").append(addButton);
 
-				$("#addCharacter").on('click', function(){
+				$("#addCharacter").on('click', function() {
 					//$("#addCharacter").remove();
 					$('#characterCreatorScreen').modal({
 						//backdrop: "static",
 						keyboard: false,
 					});
 				});
-				
+
 			}
-			
-			
-		// NOT LOGGED IN
+
+
+			// NOT Signed IN
 		} else {
-			console.log('not logged in');
+			console.log('not signed in');
 			$("#playBtn")[0].disabled = true;
-			
+
 			/*var character = $("#characterSelector").find(':input:checked')[0];
 			if(typeof character == "undefined") {
 				$("#playBtn")[0].disabled = true;
 				console.log("test");
 			}*/
-			
+
 		}
 	}
-	checkifLoggedIn();
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	$('.whichChar').on('click', function(){
+	checkifSignedIn();
+
+
+
+
+
+
+
+
+
+	$('.whichChar').on('click', function() {
 		$("#playBtn")[0].disabled = false;
 	});
-	
-	
-	
-	
-	
-	
-	//$(".btn-group").find(':input:checked')[0].value
-	//$("#CCName")[0].value
-	
-	
+
+
 	$('#characterCreatorForm').submit(function() {
 		var CCClass = $("#classSelector").find(':input:checked')[0].value;
 		var CCName = $("#CCName")[0].value;
-		
+
 		$.ajax({
 			url: "/8100/createCharacter",
 			type: "POST",
@@ -81425,322 +82550,18 @@ $(document).ready(function() {
 			success: function(responseText, status, xhr, $form) {
 				alert("success");
 				$('#characterCreatorScreen').modal("hide");
-				checkifLoggedIn();
+				checkifSignedIn();
 			},
 			error: function(e) {
-				//if(e.responseText == "success") {
-					//error("login", "username", false);
-					//error("login", "password", false);
-					/*alert("success");
-					// TODO: CLEAR FORM
-					$('#characterCreatorScreen').modal("hide");
-					checkifLoggedIn();
-					//$('.cd-user-modal').removeClass('is-visible');
-					return;*/
-				//}
+				
 			}
 		});
-		
-		
+
+
 		return false;
-		
-		
 	});
-	
-	
-	
-	
-	
-	
-	
-	
-
-	// login retrieval form via email //
-
-	//var ev = new EmailValidator();
-
-	/*$('#get-credentials-form').ajaxForm({
-		url: '/lost-password',
-		beforeSubmit : function(formData, jqForm, options){
-			if (ev.validateEmail($('#email-tf').val())){
-				ev.hideEmailAlert();
-				return true;
-			}	else{
-				ev.showEmailAlert("<b> Error!</b> Please enter a valid email address");
-				return false;
-			}
-		},
-		success	: function(responseText, status, xhr, $form){
-			ev.showEmailSuccess("Check your email on how to reset your password.");
-		},
-		error : function(){
-			ev.showEmailAlert("Sorry. There was a problem, please try again later.");
-		}
-	});*/
-
-	/*var $form_modal = $('.cd-user-modal'),
-		$form_login = $('.cd-user-modal').find('#cd-login'),//$form_modal.find('#cd-login')
-		$form_signup = $('.cd-user-modal').find('#cd-signup'),//$form_modal.find('#cd-signup')
-		$form_csubd = $('.cd-user-modal').find('#cd-csubd'),//$form_modal
-		$form_forgot_password = $('.cd-user-modal').find('#cd-reset-password'),//$form_modal
-		$form_modal_tab = $('.cd-switcher'),
-		$tab_login = $form_modal_tab.children('li').eq(0).children('a'),
-		$tab_signup = $form_modal_tab.children('li').eq(1).children('a'),
-		$forgot_password_link = $form_login.find('.cd-form-bottom-message a'),
-		$back_to_login_link = $form_forgot_password.find('.cd-form-bottom-message a'),
-		$main_nav = $('.main-nav'); // $('.main-nav');*/
-
-
-	var $form_modal = $('.cd-user-modal'),
-		$form_login = $form_modal.find('#cd-login'),
-		$form_signup = $form_modal.find('#cd-signup'),
-		$form_csubd = $form_modal.find('#cd-csubd'),
-		$form_forgot_password = $form_modal.find('#cd-reset-password'),
-		$form_modal_tab = $('.cd-switcher'),
-		$tab_login = $form_modal_tab.children('li').eq(0).children('a'),
-		$tab_signup = $form_modal_tab.children('li').eq(1).children('a'),
-		$forgot_password_link = $form_login.find('.cd-form-bottom-message a'),
-		$back_to_login_link = $form_forgot_password.find('.cd-form-bottom-message a'),
-		$main_nav = $('.main-nav'); // $('.main-nav');
-
-	//open modal
-	/*$('.main-nav').on('click', function(event) { //$main_nav
-
-		if ($(event.target).is($('.cd-signin')) || $(event.target).is($('.cd-signup')) || $(event.target).is($main_nav)) {
-			if ($(event.target).is($main_nav)) {
-				// on mobile open the submenu
-				$('.main-nav').children('ul').toggleClass('is-visible'); //this
-			} else {
-				// on mobile close submenu
-				$('.main-nav').children('ul').removeClass('is-visible'); //$main_nav
-				//show modal layer
-				$('.cd-user-modal').addClass('is-visible'); //$form_modal
-				//show the selected form
-				($(event.target).is('.cd-signup')) ? signup_selected(): login_selected();
-			}
-		}
-	});*/
-	
-	/*function popup() {
-		$('.main-nav').children('ul').removeClass('is-visible'); //$main_nav
-		$('.cd-user-modal').addClass('is-visible'); //$form_modal
-		
-		$('.cd-user-modal').find('#cd-login').addClass('is-selected'); //$form_login
-		$('.cd-user-modal').find('#cd-signup').removeClass('is-selected'); //$form_signup
-		$('#cd-reset-password').removeClass('is-selected');
-		$('#cd-new-password').removeClass('is-selected');
-		
-		$('.cd-switcher').children('li').eq(0).children('a').addClass('selected'); //$tab_login
-		$('.cd-switcher').children('li').eq(1).children('a').removeClass('selected'); //$tab_signup
-	}*/
-	
-
-	/*$('.main-nav').children('ul').removeClass('is-visible'); //$main_nav
-	$('.cd-user-modal').addClass('is-visible'); //$form_modal
-	$('.cd-user-modal').find('#cd-login').addClass('is-selected'); //$form_login
-	$('.cd-user-modal').find('#cd-signup').removeClass('is-selected'); //$form_signup
-	$('.cd-user-modal').find('#cd-login').find('.cd-form-bottom-message a').removeClass('is-selected'); //$form_forgot_password
-	$('.cd-switcher').children('li').eq(0).children('a').addClass('selected'); //$tab_login
-	$('.cd-switcher').children('li').eq(1).children('a').removeClass('selected'); //$tab_signup*/
-	
-	$('#ls').on('click', function() {
-		$('.main-nav').children('ul').removeClass('is-visible'); //$main_nav
-		$('.cd-user-modal').addClass('is-visible'); //$form_modal
-
-		$('.cd-user-modal').find('#cd-login').addClass('is-selected'); //$form_login
-		$('.cd-user-modal').find('#cd-signup').removeClass('is-selected'); //$form_signup
-		$('#cd-reset-password').removeClass('is-selected');
-		$('#cd-new-password').removeClass('is-selected');
-
-		$('.cd-switcher').children('li').eq(0).children('a').addClass('selected'); //$tab_login
-		$('.cd-switcher').children('li').eq(1).children('a').removeClass('selected'); //$tab_signup
-	});
-
-
-
-	// PREVENT FOLLOWING LINK
-	$('.cd-signin, .cd-signup').click(function(event) {
-		event.preventDefault();
-	});
-
-	//close modal
-	$('.cd-user-modal').on('click', function(event) {
-		if ($(event.target).is($form_modal) || $(event.target).is('.cd-close-form')) {
-			$form_modal.removeClass('is-visible');
-		}
-	});
-	//close modal when clicking the esc keyboard button
-	$(document).keyup(function(event) {
-		if (event.which == '27') {
-			$form_modal.removeClass('is-visible');
-		}
-	});
-
-	//switch from a tab to another
-	$form_modal_tab.on('click', function(event) {
-		event.preventDefault();
-		($(event.target).is($tab_login)) ? login_selected(): signup_selected();
-	});
-
-	//hide or show password
-	$('.hide-password').on('click', function(event) {
-		event.preventDefault();
-		var $this = $(this),
-			$password_field = $this.prev('input');
-
-		('password' == $password_field.attr('type')) ? $password_field.attr('type', 'text'): $password_field.attr('type', 'password');
-		('Hide' == $this.text()) ? $this.text('Show'): $this.text('Hide');
-		//focus and move cursor to the end of input field
-		$password_field.putCursorAtEnd();
-	});
-
-	//show forgot-password form 
-	$forgot_password_link.on('click', function(event) {
-		event.preventDefault();
-		forgot_password_selected();
-	});
-
-	//back to login from the forgot-password form
-	$back_to_login_link.on('click', function(event) {
-		event.preventDefault();
-		login_selected();
-	});
-
-	function login_selected() {
-		$('.cd-user-modal').find('#cd-login').addClass('is-selected'); //$form_login
-		$('.cd-user-modal').find('#cd-signup').removeClass('is-selected'); //$form_signup
-		$('#cd-reset-password').removeClass('is-selected');
-		$('#cd-new-password').removeClass('is-selected');
-		
-		$('.cd-switcher').children('li').eq(0).children('a').addClass('selected'); //$tab_login
-		$('.cd-switcher').children('li').eq(1).children('a').removeClass('selected'); //$tab_signup
-	}
-
-	function signup_selected() {
-		$('.cd-user-modal').find('#cd-login').removeClass('is-selected'); //$form_login
-		$('.cd-user-modal').find('#cd-signup').addClass('is-selected'); //$form_signup
-		$('#cd-reset-password').removeClass('is-selected');
-		$('#cd-new-password').removeClass('is-selected');
-		$('.cd-switcher').children('li').eq(0).children('a').removeClass('selected'); //$tab_login
-		$('.cd-switcher').children('li').eq(1).children('a').addClass('selected'); //$tab_signup
-	}
-
-	function forgot_password_selected() {
-		//$('.cd-user-modal').find('#cd-login').removeClass('is-selected'); //$form_login
-		//$('.cd-user-modal').find('#cd-signup').removeClass('is-selected'); //$form_signup
-		//$('.cd-user-modal').find('#cd-login').find('.cd-form-bottom-message a').addClass('is-selected'); //$form_forgot_password
-		//$('.cd-user-modal').addClass('is-visible');
-		$('.cd-user-modal').find('#cd-login').removeClass('is-selected');
-		$('.cd-user-modal').find('#cd-signup').removeClass('is-selected');
-		$('#cd-reset-password').addClass('is-selected');
-	}
-
-	function error(form, field, add, msg) {
-
-		var $form_modal = $('.cd-user-modal'),
-			$form_login = $form_modal.find('#cd-login'),
-			$form_signup = $form_modal.find('#cd-signup'),
-			$form_csubd = $form_modal.find('#cd-csubd'),
-			$form_forgot_password = $form_modal.find('#cd-reset-password'),
-			$form_modal_tab = $('.cd-switcher'),
-			$tab_login = $form_modal_tab.children('li').eq(0).children('a'),
-			$tab_signup = $form_modal_tab.children('li').eq(1).children('a'),
-			$forgot_password_link = $form_login.find('.cd-form-bottom-message a'),
-			$back_to_login_link = $form_forgot_password.find('.cd-form-bottom-message a'),
-			$main_nav = $('.main-nav');
-
-		form = form || "signup";
-		field = field || "email";
-		$signup = $form_signup.find('input[type="' + field + '"]');
-		$login = $form_login.find('input[type="' + field + '"]');
-		$csubd = $('#cd-csubd').find('input[type="' + field + '"]');
-		$resetp = $('#cd-reset-password').find('input[type="' + field + '"]');
-
-		//event.preventDefault();
-		//$form_signup.find('input[type="email"]').toggleClass('has-error').next('span').toggleClass('is-visible')
-		if (add === true) {
-			if (form === "signup") {
-				if(field == "email") {
-					$signup.addClass('has-error').next('span').html(msg);
-					$signup.addClass('has-error').next('span').addClass('is-visible');
-				} else if(field == "username") {
-					$signup.addClass('has-error').next('span').html(msg);
-					$signup.addClass('has-error').next('span').addClass('is-visible');
-				} else if (field === "password") {
-					$signup.addClass('has-error').next().next('span').html(msg);
-					$signup.addClass('has-error').next().next('span').addClass('is-visible');
-				}
-			} else if (form === "login") {
-				if(field == "username") {
-					$login.addClass('has-error').next('span').html(msg);
-					$login.addClass('has-error').next('span').addClass('is-visible');
-				} else if (field === "password") {
-					$login.addClass('has-error').next().next('span').html(msg);
-					$login.addClass('has-error').next().next('span').addClass('is-visible');
-				}
-			} else if (form === "csubd") {
-				$csubd.addClass('has-error').next('span').html(msg);
-				$csubd.addClass('has-error').next('span').addClass('is-visible');
-			} else if (form === "resetp") {
-				$resetp.addClass('has-error').next('span').html(msg);
-				$resetp.addClass('has-error').next('span').addClass('is-visible');
-			}
-		} else if (add === false) {
-			if (form === "signup") {
-				if(field == "email") {
-					$signup.removeClass('has-error').next('span').removeClass('is-visible');
-				} else if(field == "username") {
-					$signup.removeClass('has-error').next('span').removeClass('is-visible');
-				} else if (field === "password") {
-					$signup.removeClass('has-error').next().next('span').removeClass('is-visible');
-				}
-			} else if (form === "login") {
-				if(field == "username") {
-					$login.removeClass('has-error').next('span').removeClass('is-visible');
-				} else if (field === "password") {
-					$login.removeClass('has-error').next().next('span').removeClass('is-visible');
-				}
-			} else if (form === "csubd") {
-				$csubd.removeClass('has-error').next('span').removeClass('is-visible');
-			} else if (form === "resetp") {
-				$resetp.removeClass('has-error').next('span').removeClass('is-visible');
-			}
-		}
-	}
-
 });
-
-
-//credits http://css-tricks.com/snippets/jquery/move-cursor-to-end-of-textarea-or-input/
-$.fn.putCursorAtEnd = function() {
-	return this.each(function() {
-		// If this function exists...
-		if (this.setSelectionRange) {
-			// ... then use it (Doesn't work in IE)
-			// Double the length because Opera is inconsistent about whether a carriage return is one character or two. Sigh.
-			var len = $(this).val().length * 2;
-			this.setSelectionRange(len, len);
-		} else {
-			// ... otherwise replace the contents with itself
-			// (Doesn't work in Google Chrome)
-			$(this).val($(this).val());
-		}
-	});
-};
-
-/*
-		$.ajax({
-			url: "/8100/autoLogin",
-			type: "POST",
-			dataType: 'json',
-			data: {
-			},
-			success: function(responseText, status, xhr, $form) {
-                          console.log(responseText);
-			},
-		});
-*/
-},{"./functions":77,"bootstrap":1,"jquery":71}],89:[function(require,module,exports){
+},{"./functions":77,"bootstrap":1,"jquery":71}],92:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};

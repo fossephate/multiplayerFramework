@@ -38,12 +38,12 @@
 			<button id="fireballButton" class="btn btn-default" style="z-index: 9;">Cast Fireball</button>
 		</div>
 	</div>-->
-	
-	
+
+
 	<!--<div id="adsSection1">
 		<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 		<!-- google ad 1 -->
-		<!--<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6534908631362272" data-ad-slot="6456112943" data-ad-format="auto"></ins>
+	<!--<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6534908631362272" data-ad-slot="6456112943" data-ad-format="auto"></ins>
 		<script>
 			(adsbygoogle = window.adsbygoogle || []).push({});
 		</script>
@@ -59,7 +59,7 @@
 				<div class="modal-body">
 					<form>
 						<div id="guest-ls" class="form-group">
-							<button type="button" data-toggle="modal" data-target="#loginSignUpWindow" class="btn btn-play btn-primary btn-needs-server">Login / Signup</button>
+							<button type="button" data-toggle="modal" data-target="#signInSignUpWindow" class="btn btn-play btn-primary btn-needs-server">Login / Signup</button>
 							<br>
 						</div>
 
@@ -169,7 +169,7 @@
 							<li>Programmed (server and client side) by Matthew Fosse</li>
 							<li>Physics objects created for other players client side</li>
 							<li>Player physics objects removed on server on exit</li>
-							<li><b><i>Completly</i></b> functional login and registration</li>
+							<!--<li><b><i>Completly</i></b> functional login and registration</li>-->
 							<li><b><i>Even better</i></b> (than before) WoW controls</li>
 							<li><b><i><u>Passwords are hashed and salted!</u></i></b> (and probably secure)</li>
 						</ul>
@@ -307,8 +307,8 @@
 
 
 
-
-	<div class="modal fade" id="loginSignUpWindow" role="dialog">
+	<!-- SIGNIN / SIGNUP WINDOW ------------------------------------------- -->
+	<div class="modal fade" id="signInSignUpWindow" role="dialog">
 		<div class="modal-dialog">
 			<div class="modal-content">
 
@@ -319,41 +319,72 @@
 						<li class="active"><a href="#signInFrame" data-toggle="tab">Sign in</a></li>
 						<li><a href="#signUpFrame" data-toggle="tab">New account</a></li>
 					</ul>
-
+					
 					<div class="tab-content">
 						<div class="tab-pane active" id="signInFrame">
-							<form id="login-form" class="form-signin">
-								<h2 class="form-signin-heading">Sign in</h2>
-								<label for="lmail" class="sr-only">Username</label>
-								<input type="text" id="lmail" class="form-control" placeholder="Username" required autofocus>
-								<label for="lpass" class="sr-only">Password</label>
-								<input type="password" id="lpass" class="form-control" placeholder="Password" required>
-								<div class="checkbox">
-									<label>
-											<input type="checkbox" id="lremember" value="remember-me"> Remember me
-										</label>
+
+
+							<form id="signInForm" class="form-horizontal">
+								
+								<div class="form-group">
+									<label for="signInUsername" class="col-sm-2 control-label">Username</label>
+									<div class="col-sm-10">
+										<input type="username" class="form-control" id="signInUsername" placeholder="Username">
+									</div>
 								</div>
-								<input class="btn btn-lg btn-primary btn-block" id="login" type="submit" value="Sign in">
+								
+								<div class="form-group">
+									<label for="signInPassword" class="col-sm-2 control-label">Password</label>
+									<div class="col-sm-10">
+										<input type="password" class="form-control" id="signInPassword" placeholder="Password">
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<div class="col-sm-offset-2 col-sm-10">
+										<div class="checkbox">
+											<label><input id="signInRememberMe" type="checkbox"> Remember me</label>
+										</div>
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<div class="col-sm-offset-2 col-sm-10">
+										<button type="submit" class="btn btn-default">Sign in</button>
+									</div>
+								</div>
 							</form>
 						</div>
-
+						
 						<div class="tab-pane" id="signUpFrame">
-							<form id="signup-form" method="post">
-								<label class="" for="email">Email</label>
-								<input class="" name="email" id="smail" type="email" placeholder="Email">
-								<span class="">Error message here!</span>
-
-								<label class="" for="username">Username</label>
-								<input class="" name="username" id="suser" type="text" placeholder="Username">
-								<span class="">Error message here!</span>
-								<label class="" for="password">Password</label>
-
-								<input class="" name="password" id="spass" type="password" placeholder="Password">
-								<a href="" class="hide-password">Show</a>
-								<span class="">Error message here!</span>
-								<input type="checkbox" id="agree">
-								<label for="agree" id="agree-label">I agree to nothing</label>
-								<input class="" type="submit" id="signup">
+							
+							<form id="signUpForm" class="form-horizontal">
+								<div class="form-group">
+									<label for="signUpEmail" class="col-sm-2 control-label">Email</label>
+									<div class="col-sm-10">
+										<input type="email" class="form-control" id="signUpEmail" placeholder="Email">
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label for="signUpUsername" class="col-sm-2 control-label">Username</label>
+									<div class="col-sm-10">
+										<input type="username" class="form-control" id="signUpUsername" placeholder="Username">
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<label for="signUpPassword" class="col-sm-2 control-label">Password</label>
+									<div class="col-sm-10">
+										<input type="password" class="form-control" id="signUpPassword" placeholder="Password">
+									</div>
+								</div>
+								
+								<div class="form-group">
+									<div class="col-sm-offset-2 col-sm-10">
+										<button type="submit" class="btn btn-default">Sign up</button>
+									</div>
+								</div>
 							</form>
 						</div>
 					</div>
@@ -379,7 +410,7 @@
 					<div class="progress">
 						<div id="loadScreenBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
 					</div>
-					<img src="assets/textures/kirby.gif">
+					<img width="80" height="60" src="assets/textures/loading1.gif">
 				</div>
 			</div>
 		</div>

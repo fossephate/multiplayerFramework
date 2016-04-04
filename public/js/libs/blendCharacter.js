@@ -1,4 +1,6 @@
 THREE.BlendCharacter = function(assetHolder) {
+	
+	this.isLoading = false;
 
 	this.animations = {};
 	this.weightSchedule = [];
@@ -32,6 +34,12 @@ THREE.BlendCharacter = function(assetHolder) {
 
 
 	this.loadFast = function(url, assetHolder) {
+		if(this.isLoading) {
+			return;
+		} else {
+			this.isLoading = true;
+		}
+		
 		switch(url) {
 			case "wizard":
 				url = "assets/models/characters/players/wizard/final/wizard.json";
