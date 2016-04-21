@@ -94,6 +94,7 @@ $(document).ready(function() {
 
 	function checkifSignedIn() {
 		if (typeof getCookie('username') !== "undefined" && typeof getCookie('password') != "undefined") {
+			window.signedIn = true;
 			console.log("signed in as: " + getCookie('username'));
 			$("#ls").css('display', 'none');
 			$("#playGuest").css('display', 'none');
@@ -103,7 +104,7 @@ $(document).ready(function() {
 			//$("#playBtn")[0].disabled = false;
 
 
-			var signOut = $('<input id="signOut" type="button" style="float: right; margin-bottom: 4px;" value="signOut" class="btn btn-info"/>');
+			var signOut = $('<input id="signOut" type="button" style="float: right; margin-bottom: 4px;" value="sign out" class="btn btn-info"/>');
 			$("#guest-ls").append(signOut);
 			$("#signOut").on('click', function(event) {
 				$.ajax({
@@ -207,6 +208,7 @@ $(document).ready(function() {
 
 			// NOT Signed IN
 		} else {
+			window.signedIn = false;
 			console.log('not signed in');
 			$("#playBtn")[0].disabled = true;
 

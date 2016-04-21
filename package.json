@@ -25,6 +25,7 @@
     "mongoose": "^4.4.10",
     "passport": "^0.3.2",
     "shader-particle-engine": "^1.0.5",
+    "shortid": "^2.2.6",
     "socket.io": "^1.4.5",
     "three": "^0.75.0",
     "webhamsters": "^3.7.0"

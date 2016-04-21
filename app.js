@@ -12,6 +12,7 @@ var server = require('http').Server(app);
 var bodyParser = require('body-parser');
 var io = require('socket.io')(server);
 var mongoose = require('mongoose');
+var shortid = require('shortid');
 
 var terrain = require('./server/terrain');
 var AM = require('./server/account-manager');
@@ -69,25 +70,25 @@ function gameServer() {
 	//     /      X
 	//    / Y
 	this.filter = new filter();
-	//this.filter.addWords(['a$$']);
 	this.clients = [];
-	this.characters = [];
+	//this.characters = [];
+	this.nodes = [];
 	this.locations = {};
 	this.playersOnline = 0;
 	this.map = [];
 	this.lastId = 0;
 	this.config = {};
-	this.t = {};
-	this.t.scene = new THREE.Scene();
+	//this.t = {};
+	//this.t.scene = new THREE.Scene();
 	this.c = {};
 	this.c.pw = new CANNON.World();
 	this.c.objects = [];
 	this.c.pw.gravity.set(0, 0, -10);
 	this.c.pw.broadphase = new CANNON.SAPBroadphase(this.c.pw);
 	this.c.pw.solver.iterations = 10;
-	this.c.pw.defaultContactMaterial.friction = 0.1;
-	this.c.pw.defaultContactMaterial.restitution = 0;
-};
+	//this.c.pw.defaultContactMaterial.friction = 0.1;
+	//this.c.pw.defaultContactMaterial.restitution = 0;
+}
 
 gameServer.prototype.createPhysicsObject = function(phys) {
 	//var pObject = {};
@@ -98,86 +99,8 @@ gameServer.prototype.createPhysicsObject = function(phys) {
 };
 
 
-
-
-/* CREATE PLAYER */
-/*gameServer.prototype.createPlayer = function() {
-
-	var cylinder = {
-		height: 3.2,
-		radius: 1
-	};
-	var cylinderShape = new CANNON.Cylinder(cylinder.radius, cylinder.radius, cylinder.height, 16);
-	var sphereShape = new CANNON.Sphere(cylinder.radius);
-	var tempBody = new CANNON.Body({
-		mass: 1
-	});
-	tempBody.addShape(cylinderShape);
-	tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, cylinder.height/2));
-	tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, -cylinder.height/2));
-	tempBody.angularDamping = 1;
-	tempBody.position.set(0, 0, 100);
-
-	var pObject = {};
-	pObject.phys = tempBody;
-
-	var length = this.c.objects.length;
-	this.c.objects.push(pObject);
-	this.c.pw.addBody(pObject.phys);
-	return pObject.phys;
-};*/
-
-
-
-
-
-/* CREATE ENEMY */
-/*gameServer.prototype.createEnemyPhys = function(shape) {
-	var that = this;
-	var createCollider;
-	switch(shape) {
-		case "capsule":
-			createCollider = function(radius, height, isRotated) {
-				var cylinderShape = new CANNON.Cylinder(radius, radius, height, 16);
-				var sphereShape = new CANNON.Sphere(radius);
-				var tempBody = new CANNON.Body({
-					mass: 1
-				});
-				
-				// CHANGE LATER
-				if(!isRotated || isRotated) {
-					tempBody.addShape(cylinderShape);
-					tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, height/2));
-					tempBody.addShape(sphereShape, new CANNON.Vec3(0, 0, -height/2));
-				} else if(isRotated) {
-					// TODO
-				}
-				
-				tempBody.angularDamping = 1;
-				
-				var testObject = {};
-				testObject.phys = tempBody;
-				
-				var length = that.c.objects.length;
-				that.c.objects.push(testObject);
-				that.c.pw.addBody(that.c.objects[length].phys);
-				return that.c.objects[length].phys;
-			};
-			break;
-		case "box":
-			
-			break;
-		
-		case "sphere":
-			
-			break;
-			
-	}
-	return createCollider;
-};*/
-
 gameServer.prototype.initScene = function() {
-	terrain.physicsFromHeightmap(__dirname + "/public/assets/models/environment/terrain/area1/test.png", function(phys) {
+	terrain.physicsFromHeightmap(__dirname + "/public/assets/models/environment/terrain/area1/heightmap.png", function(phys) {
 		var terrain2 = gs.createPhysicsObject(phys);
 		//console.log(hfBody);
 	});
@@ -206,10 +129,89 @@ gameServer.prototype.findPlayerByName = function(username) {
 	return null;
 };
 
+gameServer.prototype.findNodeById = function(uniqueId) {
+	for (var i = 0; i < this.nodes.length; i++) {
+		if (this.nodes[i].uniqueId == uniqueId) {
+			return this.nodes[i];
+		}
+	}
+	return null;
+};
 
 
-function character() {
+
+
+
+
+
+
+
+
+// in memory account
+function client(id) {
+	this.characterOnline = "";
+	this.socketId = id;
+	this.signedIn = false;
+	//this.visibleCharacters = [];
+	this.username = "";
+	
+	this.friends = [];
+	
+	this.characterNames = [];
+	this.characters = [];
+	this.nodes;
+
+	this.getCharacter = function(num) {
+		return this.characters[this.characterNames[num]];
+	};
+	
+	this.getOnlineCharacter = function() {
+		var onlineCharacter;
+		for(var i = 0; i < this.characterNames.length; i++) {
+			if(this.characters[this.characterNames[i]].online === true) {
+				onlineCharacter = this.characters[this.characterNames[i]];
+				//continue;
+				return onlineCharacter;
+			}
+		}
+		return null;
+	}
+
+	this.keys = [];
+	this.data = {};
+
+	this.mouseX = 0;
+	this.mouseY = 0;
+}
+
+client.prototype.update = function() {
+	
+	var onlineCharacter = this.getOnlineCharacter();
+	if(!onlineCharacter) {
+		return;
+	}
+	
+	//var onlineCharacter = this.characters[this.characterOnline];
+	onlineCharacter.previouslyVisibleNodes = onlineCharacter.visibleNodes;
+	onlineCharacter.visibleNodes = onlineCharacter.calcViewBox();
+	
+	io.to(this.socketId).emit('visibleNodes', {
+		vn: onlineCharacter.visibleNodes
+	});
+};
+
+
+
+
+
+
+
+
+function node() {
+	this.uniqueId = shortid.generate();
 	this.online = false;
+	
+	this.visibleNodes = [];
 
 	// Viewing box
 	this.sightRange = 1200; //change sightrange later should be 0 at start
@@ -222,8 +224,9 @@ function character() {
 		zMax: 0 // Backwards/Forwards
 	};
 }
-character.prototype.collisionCheck = function(xMin, xMax, yMin, yMax, zMin, zMax) {
-	// Coll	jision checking
+
+node.prototype.collisionCheck = function(xMin, xMax, yMin, yMax, zMin, zMax) {
+	// Collision checking
 	var obj;
 	if (true) {
 		obj = this.phys;
@@ -250,9 +253,66 @@ character.prototype.collisionCheck = function(xMin, xMax, yMin, yMax, zMin, zMax
 };
 
 
-function spell(name, castTime) {
+node.prototype.calcViewBox = function() {
+	var pos = this.position;
+	
+	this.viewBox.xMin = pos.x - this.sightRange;
+	this.viewBox.xMax = pos.x + this.sightRange;
+	this.viewBox.yMin = pos.y - this.sightRange;
+	this.viewBox.yMax = pos.y + this.sightRange;
+	this.viewBox.zMin = pos.z - this.sightRange;
+	this.viewBox.zMax = pos.z + this.sightRange;
+
+	var newVisible = [];
+	for (var i = 0; i < gs.nodes.length; i++) {
+		var tempNode = gs.nodes[i];
+		
+		if (tempNode.collisionCheck(this.viewBox.xMin, this.viewBox.xMax, this.viewBox.yMin, this.viewBox.yMax, this.viewBox.zMin, this.viewBox.zMax)) {
+			newVisible.push(tempNode.viewObj());
+		}
+	}
+	return newVisible;
+};
+
+
+function spell(name, cooldownTime, castTime) {
 	this.name = name;
-	this.castTime = castTime;
+	this.enabled = true;
+	this.cooldownTime = cooldownTime || 2000;
+	this.castTime = castTime || 0;
+	
+	this.use = function() {
+		this.enabled = false;
+		setTimeout(function() {
+			this.enabled = true;
+		}, this.cooldownTime);
+	}
+}
+
+
+
+
+function wizard() {
+	this.checkSpells = function() {
+		if(this.level >= 0) {
+			this.learnSpell("melee");
+		}
+		if(this.level >= 5) {
+			this.learnSpell("fireball");
+		}
+	}
+}
+
+function rogue() {
+	this.checkSpells = function() {
+		if(this.level >= 0) {
+			this.learnSpell("melee");
+			
+		}
+		if(this.level >= 5) {
+			this.learnSpell("fireball");
+		}
+	}
 }
 
 
@@ -260,24 +320,34 @@ function spell(name, castTime) {
 
 
 
-function player(owner, username, classType) {
+function character() {
+	node.call(this);
+	
+}
+character.prototype = Object.create(node.prototype);
+character.prototype.constructor = character;
+
+
+
+
+
+
+
+
+function player(owner, characterName, classType) {
 	character.call(this);
 	
-	if(classType) {
-		this.class = classType;
-	} else {
-		this.class = "wizard";
-	}
+	this.online = false;
 
 	this.type = "player";
 	this.owner = owner;
-	this.id = this.owner.socketId;
+	this.socketId = this.owner.socketId;
 	this.keys = this.owner.keys;
 	this.data = this.owner.data;
 	
-	this.username = username;
-	if(this.owner.usernames.indexOf(this.username) == -1) {
-		this.owner.usernames.push(this.username);
+	this.characterName = characterName;
+	if(this.owner.characterNames.indexOf(this.characterName) == -1) {
+		this.owner.characterNames.push(this.characterName);
 	}
 
 
@@ -288,44 +358,60 @@ function player(owner, username, classType) {
 		isGrounded: false
 	};
 
-	this.phys = phys.createPhysBody("capsule")(1, 3.2);
+	this.phys = phys.createPhysBody("capsule", 2)(1, 3.2);
 	gs.c.pw.addBody(this.phys);
+	this.phys.position.set(0,0,100);
 	
-	this.phys.username = this.username;
+	
 	this.position = this.phys.position;
 	this.quaternion = this.phys.quaternion;
 	this.velocity = this.phys.velocity;
 	this.rotation2 = function(){
 		return this.owner.data.rotation;	
 	};
-	this.score = 0;
 	this.health = 100;
 	this.level = 0;
 	this.experience = 0;
-	this.target = 0;
-	this.cooldowns = {};
-	this.cooldowns.globalCooldown = 0;
-	this.animTo = "idle";
-	this.warpTime = 0.2;
+	
+	this.targetId = 0;
+	//this.casting = false;
 	this.casting = "none";
 	this.castStart = 0;
-	this.spells = [];
+	this.learnedSpells = [];
+	this.spells = {};
+	
+	this.autoAttacking = false;
+	
+	
+	//this.cooldowns = {};
+	//this.cooldowns.globalCooldown = 0;
+	
+	this.animTo = "idle";
+	this.warpTime = 0.2;
+
+	
+	this.setClass(classType);
 
 	this.load = function(savedCharacter) {
-		var sn = savedCharacter;
-		this.class = sn.class;
-		this.username = sn.username;
-		if(typeof sn.position != "undefined") {
-			this.position.set(sn.position.x, sn.position.y, sn.position.z + 10);
+		var sc = savedCharacter;
+		//this.uniqueId = sn.uniqueId;
+		this.characterName = sc.characterName;
+		if(typeof sc.position != "undefined") {
+			this.position.set(sc.position.x, sc.position.y, sc.position.z + 10);
 		}
-		if(typeof sn.velocity != "undefined") {
-			this.velocity.set(sn.velocity.x, sn.velocity.y, sn.velocity.z);
+		if(typeof sc.velocity != "undefined") {
+			this.velocity.set(sc.velocity.x, sc.velocity.y, sc.velocity.z);
 		}
-		this.score = sn.score;
-		this.health = sn.health;
-		this.level = sn.level;
-		this.experience = sn.experience;
+		this.score = sc.score;
+		this.health = sc.health;
+		this.level = sc.level;
+		this.experience = sc.experience;
+		this.setClass(sc.class);
 	}
+	
+	
+	//io.sockets.connected[socketId]
+	
 }
 player.prototype = Object.create(character.prototype);
 player.prototype.constructor = player;
@@ -333,16 +419,18 @@ player.prototype.constructor = player;
 
 player.prototype.viewObj = function() {
 	return {
+		uniqueId: this.uniqueId,
 		type: this.type,
 		class: this.class,
 		position: this.position,
 		velocity: this.velocity,
 		quaternion: this.quaternion,
 		rotation2: this.rotation2(),
-		username: this.username,
-		score: this.score,
+		characterName: this.characterName,
 		health: this.health,
 		level: this.level,
+		spells: this.spells,
+		learnedSpells: this.learnedSpells,
 		experience: this.experience,
 		cooldowns: this.cooldowns,
 		animTo: this.animTo,
@@ -352,19 +440,42 @@ player.prototype.viewObj = function() {
 
 player.prototype.saveObj = function() {
 	return {
+		// should I save unique Id?
 		type: this.type,
 		class: this.class,
 		position: this.position,
 		velocity: this.velocity,
 		quaternion: this.quaternion,
-		rotation2: this.rotation2,
-		username: this.username,
-		score: this.score,
+		//rotation2: this.rotation2,
+		characterName: this.characterName,
 		health: this.health,
 		level: this.level,
 		experience: this.experience
 	};
 };
+
+player.prototype.updateOwner = function() {
+	io.to(this.socketId).emit('visibleNodes', {
+		vn: this.visibleNodes
+	});
+};
+
+player.prototype.setClass = function(classType) {
+	if(classType != "wizard" || classType != "rogue") {
+		classType = "wizard";
+	}
+	
+	this.class = classType;
+	
+	if(this.class == "wizard") {
+		wizard.call(this);
+	} else if(this.class == "rogue") {
+		rogue.call(this);
+	}
+	this.checkSpells();
+};
+
+
 
 
 
@@ -384,30 +495,54 @@ player.prototype.takeDamage = function(amount, shooter) {
 	}
 };
 
+player.prototype.levelUp = function() {
+	this.experience = 0;
+	this.level += 1;
+	this.health = 100;
+	this.checkSpells();
+};
+
+
 player.prototype.gainXP = function(amount) {
 	this.experience += amount;
 	if (this.experience > 100 * this.level) {
-		this.experience = 0;
-		this.level += 1;
-		io.emit('level up', {
-			user: this.username
-		});
-	}
-};
-
-player.prototype.checkCooldowns = function() {
-	for (var i in this.cooldowns) {
-		if (this.cooldowns[i] > 0) {
-			this.cooldowns[i] -= 60;
-		}
+		this.levelUp();
 	}
 };
 
 
 player.prototype.cast = function(spellName) {
-	if (typeof this.spells[spellName] != "undefined") {
+	if (typeof this.learnedSpells[spellName] != "undefined") {
+		
+		if(!this.spells[spellName].enabled) {
+			return;
+		}
+		
+		switch(spellName) {
+			case "fireball":
+				
+				
+				break;
+				
+			case "melee":
+				if(!this.targetId) {
+					break;
+				}
+				var character = gs.findNodeById(this.targetId);
+				character.takeDamage(10);
+				this.spells[spellName].use();
+				
+				
+				break;
+		}
 		//this.spells[spellName]
 	}
+};
+
+
+player.prototype.learnSpell = function(spellName) {
+	this.learnedSpells.push(spellName);
+	this.spells[spellName] = new spell(spellName, 3000);
 };
 
 player.prototype.move = function() {
@@ -415,21 +550,24 @@ player.prototype.move = function() {
 	var keys = this.owner.keys;
 	var rotation = this.owner.data.rotation || new THREE.Vector3();
 
-	this.checkCooldowns();
+	//this.checkCooldowns();
 
 	this.temp.inputVelocity.set(0, 0, 0);
+	
+	
 	if (keys.indexOf("moveForward") > -1 && this.temp.isGrounded == true) {
 		this.animTo = "walking_inPlace";
-		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
+		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x);
 		if (rotatedV.x > 0) {
 			this.temp.inputVelocity.x = -rotatedV.x;
 		} else {
 			this.temp.inputVelocity.x = -20;
 		}
 	}
+	
 	if (keys.indexOf("moveBackward") > -1 && this.temp.isGrounded == true) {
 		this.animTo = "walking_inPlace";
-		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
+		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x);
 		if (rotatedV.x < 0) {
 			this.temp.inputVelocity.x = -rotatedV.x;
 		} else {
@@ -438,7 +576,7 @@ player.prototype.move = function() {
 	}
 	if (keys.indexOf("moveLeft") > -1 && this.temp.isGrounded == true) {
 		this.animTo = "left_strafe_walking_inPlace";
-		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
+		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x);
 		if (rotatedV.y > 0) {
 			this.temp.inputVelocity.y = -rotatedV.y;
 		} else {
@@ -447,24 +585,26 @@ player.prototype.move = function() {
 	}
 	if (keys.indexOf("moveRight") > -1 && this.temp.isGrounded == true) {
 		this.animTo = "right_strafe_walking_inPlace";
-		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z);
+		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x);
 		if (rotatedV.y < 0) {
 			this.temp.inputVelocity.y = -rotatedV.y;
 		} else {
 			this.temp.inputVelocity.y = 20;
 		}
 	}
+	//this.temp.inputVelocity.normalize();
+	this.temp.inputVelocity.setLength(20);
 
 	if (keys.indexOf("moveForward") == -1 && keys.indexOf("moveBackward") == -1 && this.temp.isGrounded == true) {
-		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z).multiplyScalar(0.1);
+		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x).multiplyScalar(0.1);
 		this.temp.inputVelocity.x = -rotatedV.x;
 	}
 	if (keys.indexOf("moveLeft") == -1 && keys.indexOf("moveRight") == -1 && this.temp.isGrounded == true) {
-		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.z).multiplyScalar(0.1);
+		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x).multiplyScalar(0.1);
 		this.temp.inputVelocity.y = -rotatedV.y;
 	}
 	
-	if (data.target) {
+	/*if (data.target) {
 		this.target = data.target;
 	}
 	
@@ -477,21 +617,11 @@ player.prototype.move = function() {
 	}
 	if(this.casting != "none") {
 		this.cast(this.casting);
-	}
-
-	/*if (keys.indexOf("castFireball") > -1 && this.target != null && this.cooldowns.globalCooldown === 0) {
-		this.animTo = "fireball";
-		this.cooldowns.globalCooldown = 60 * 10;
-
-		var playerCharacter = gs.findPlayerByName(this.target);
-		if (playerCharacter != null) {
-			playerCharacter.takeDamage(5, this);
-		}
 	}*/
 
 
 
-	this.temp.inputVelocity.applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.z);
+	this.temp.inputVelocity.applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.x);
 	if (this.temp.isGrounded === true) {
 		this.phys.velocity.x = this.temp.inputVelocity.x;
 		this.phys.velocity.y = this.temp.inputVelocity.y;
@@ -532,114 +662,32 @@ player.prototype.move = function() {
 		this.gainXP(10);
 		//this.score += 1;
 		this.temp.isJumping = true;
-		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 50), new CANNON.Vec3(0, 0, 0));
+		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3(0, 0, 0));
 		//this.phys.position.z += 0.5;
 	}
-	
 	
 	if (keys.indexOf("jump") == -1 && this.temp.isGrounded === true) {
 		this.temp.isJumping = false;
 	}
 	
-};
-
-/*function enemy(level, health, name) {
-	character.call(this);
-	this.type = "enemy";
-	this.class = "enemy";
-	this.username = "blob"+Math.floor(Math.random()*5000);
-
-	this.rotation2 = new CANNON.Vec3(0, 0, 0);
-	this.health = health;
-	this.level = level;
-	this.animTo = "idle";
-	this.warpTime = 0.2;
-}
-enemy.prototype = Object.create(character.prototype); // See note below
-enemy.prototype.constructor = enemy;
-
-
-enemy.prototype.viewObj = function() {
-	return {
-		type: this.type,
-		which: this.which,
-		position: this.position,
-		velocity: this.velocity,
-		quaternion: this.quaternion,
-		rotation2: this.rotation2,
-		characterId: this.characterId,
-		username: this.username,
-		health: this.health,
-		level: this.level,
-		animTo: this.animTo,
-		warpTime: this.warpTime,
-	};
-};
-
-enemy.prototype.saveObj = function() {
-	return {
-		type: this.type,
-		position: this.position,
-		velocity: this.velocity,
-		quaternion: this.quaternion,
-		rotation2: this.rotation2,
-		characterId: this.characterId,
-		username: this.username,
-		health: this.health,
-		level: this.level,
-	};
-};
-
-
-
-
-
-function rInt(min, max, isSignRandom, roundNum) {
-	var num;
-	if(roundNum) {
-		num = Math.floor(Math.random() * (max - min + 1) + min);
-	} else {
-		num = Math.random() * (max - min + 1) + min;
+	
+	//if(data.target) {
+		
+	//}
+	
+	if(data.casting && this.casting == "none") {
+		this.cast(data.casting);
 	}
-	if(isSignRandom) {
-		var plusOrMinus = Math.round(Math.random()) * 2 - 1;
-		var final = num*plusOrMinus;
-		return final;
-	} else {
-		return num;
-	}
-}
+	
+	
+	
+	
+	
+};
 
-var rMove = function(num) {
-	return rInt(0, num, true, false);
-}
 
-enemy.prototype.move = function() {
-		this.phys.applyLocalImpulse(new CANNON.Vec3(rMove(1), rMove(1), rMove(0.2)), new CANNON.Vec3(0, 0, 0));
-};*/
 
-function client(id) {
-	this.isOnline = false;
-	this.socketId = id;
-	this.visibleCharacters = [];
-	this.username = "";
-	this.accountName = "";
-	this.usernames = [];
-	this.characters = [];
-
-	this.getCharacter = function(num) {
-		return this.characters[this.usernames[num]];
-	};
-
-	this.keys = [];
-	this.data = {};
-	this.score = 0;
-
-	this.mouseX = 0;
-	this.mouseY = 0;
-}
-
-character.prototype.update = function() {
+/*character.prototype.update = function() {
 
 	// Get visible characters
 	this.previouslyVisibleCharacters = this.visibleCharacters;
@@ -647,29 +695,31 @@ character.prototype.update = function() {
 	io.to(this.id).emit('visibleCharacters', {
 		vn: this.visibleCharacters
 	});
-};
+};*/
 
 
-character.prototype.calcViewBox = function() {
-	var pos = this.position;
-	
-	this.viewBox.xMin = pos.x - this.sightRange;
-	this.viewBox.xMax = pos.x + this.sightRange;
-	this.viewBox.yMin = pos.y - this.sightRange;
-	this.viewBox.yMax = pos.y + this.sightRange;
-	this.viewBox.zMin = pos.z - this.sightRange;
-	this.viewBox.zMax = pos.z + this.sightRange;
 
-	var newVisible = [];
-	for (var i = 0; i < gs.characters.length; i++) {
-		var character1 = gs.characters[i];
-		
-		if (character1.collisionCheck(this.viewBox.xMin, this.viewBox.xMax, this.viewBox.yMin, this.viewBox.yMax, this.viewBox.zMin, this.viewBox.zMax)) {
-			newVisible.push(character1.viewObj());
-		}
-	}
-	return newVisible;
-};
+function cooldown(cooldownTime) {
+	this.enabled = true;
+	this.cooldownTime = cooldownTime;
+	return this;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 var gameServer1 = new gameServer();
@@ -677,12 +727,14 @@ var gs = gameServer1;
 gs.initScene();
 
 io.on('connection', function(socket) {
+	gs.playersOnline += 1;
+	io.emit('playersOnline', gs.playersOnline);
 
 	var newClient = new client(socket.id);
 
 	gs.clients[socket.id] = newClient;
 	gs.map.push(socket.id);
-	console.log("connected id: " + socket.id);
+	//console.log("connected id: " + socket.id);
 	console.log("gs.map.length: " + gs.map.length);
 	
 	
@@ -695,9 +747,31 @@ io.on('connection', function(socket) {
 	});
 	
 	socket.on('joinWorld', function(data) {
-		if(gs.clients[socket.id].loggedIn === true) {
+		if(gs.clients[socket.id].signedIn === true) {
+			
+		} else {
+			var guestName = "guest" + Math.floor(Math.random()*1000000);
+			gs.clients[socket.id].username = guestName;
+			gs.clients[socket.id].characterNames.push(guestName);
+			
+			var newCharacter = new player(gs.clients[socket.id], guestName, data.class);
+			newCharacter.online = true;
+			gs.clients[socket.id].characters[guestName] = newCharacter;
+			gs.nodes.push( gs.clients[socket.id].characters[guestName] );
+
+			socket.emit('initData', {
+				accountName: guestName,
+				characterName: guestName,
+				uniqueId: newCharacter.uniqueId,
+			});
 			
 		}
+	});
+	
+	socket.on('getLatency', function(data) {
+		io.to(socket.id).emit('returnLatency', {
+			latency: data.latency,
+		});
 	});
 	
 	
@@ -710,58 +784,46 @@ io.on('connection', function(socket) {
 	});
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-	/*socket.on('disconnect', function() {
-		var i;
-
-		//ADDED
-		var clcharacters = gs.clients[socket.id].characters;
-		var usernames = gs.clients[socket.id].usernames;
-
-		var tcharacters = [];
-		for (i = 0; i < usernames.length; i++) {
-			var clcharacter2 = gs.clients[socket.id].getCharacter(i);
-			tcharacters.push(clcharacter2.saveObj());
-			
-			io.emit('numOfPlayersOnline', gs.playersOnline);
-			gs.c.pw.removeBody(clcharacter2.phys);
-			
-			if (i == usernames.length && gs.clients[socket.id].username.indexOf("guest") == -1) {
-				var data = {
-					user: gs.clients[socket.id].username,
-					characters: tcharacters
-				};
-
-				AM.addData(data, function(e, o) {
-				});
-			}
+	socket.on('disconnect', function() {
+		gs.playersOnline -= 1;
+		io.emit('playersOnline', gs.playersOnline);
+		
+		var tempClient = gs.clients[socket.id];
+		
+		var onlineCharacter = tempClient.getOnlineCharacter();
+		if(!onlineCharacter) {
+			return;
 		}
 		
 		
-		//END OF ADDED
+		gs.c.pw.removeBody(onlineCharacter.phys);
+		
+		var path = 'characters.'+onlineCharacter.characterName;
+		var data = {};
+		data.username = gs.clients[socket.id].username;
+		data.$set = {};
+		data.$set[path] = onlineCharacter;
 
+		AM.updateAccount(data, function(err, tempAccount) {
+			if(tempAccount) {
+				console.log("character saved");
+			}
+		});
+		
 		delete gs.clients[socket.id];
 		gs.map.splice(gs.map.indexOf(socket.id), 1);
-
-		console.log("disconnected id: " + socket.id);
-		console.log("gs.characters.length: " + gs.characters.length);
+		
 		console.log("gs.map.length: " + gs.map.length);
-		console.log("gs.clients.length: " + gs.clients.length);
-	});*/
+	});
+	
+	socket.on('gainXP', function() {
+		var tempClient = gs.clients[socket.id];
+		
+		var onlineCharacter = tempClient.getOnlineCharacter();
+		onlineCharacter.gainXP(100);
+	});
+	
+	
 	
 	/*socket.on('addUser', function(data) {
 		gs.playersOnline += 1;
@@ -845,21 +907,27 @@ io.on('connection', function(socket) {
 
 
 function loop() {
-	for (var i = 0; i < gs.characters.length; i++) {
-		if(gs.characters[i].type == "player" && typeof gs.clients[gs.characters[i].id] == "undefined") {
-			gs.characters.splice(i, 1);
-			console.log("character deleted");
+	for (var i = 0; i < gs.nodes.length; i++) {
+		if(gs.nodes[i].type == "player" && typeof gs.clients[gs.nodes[i].socketId] == "undefined") {
+			gs.nodes.splice(i, 1);
+			console.log("node deleted");
 			continue;
 		}
 		
-		var character1 = gs.characters[i];
-		character1.move();
+		var tempNode = gs.nodes[i];
+		tempNode.move();
 	}
 	
-	for (var j = 0; j < gs.characters.length; j++) {
-		if(gs.characters[j].type == "player") {
-			gs.characters[j].update();
+	
+	/*for (var i = 0; i < gs.nodes.length; i++) {
+		if(gs.nodes[i].type == "player") {
+			var tempNode = gs.nodes[i];
+			tempNode.updateOwner();
 		}
+	}*/
+	
+	for (var j = 0; j < gs.map.length; j++) {
+		gs.clients[gs.map[j]].update();
 	}
 
 	gs.updatePhysics();

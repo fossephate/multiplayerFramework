@@ -26732,2698 +26732,6 @@ return jQuery;
 }));
 
 },{}],72:[function(require,module,exports){
-//! © 2015 Nathan Rugg <nmrugg@gmail.com> | MIT
-
-var lzma;
-
-function load_lzma()
-{
-    return require("./src/lzma_worker.js").LZMA_WORKER;
-    //return require(require("path").join(__dirname, "src" ,"lzma_worker.js")).LZMA_WORKER;
-}
-
-lzma = load_lzma();
-
-///NOTE: This function is for backwards compatibility's sake.
-module.exports.LZMA = function LZMA()
-{
-    return lzma;
-}
-
-module.exports.compress   = lzma.compress;
-module.exports.decompress = lzma.decompress;
-
-},{"./src/lzma_worker.js":73}],73:[function(require,module,exports){
-/// © 2015 Nathan Rugg <nmrugg@gmail.com> | MIT
-/// See LICENSE for more details.
-
-/* jshint noarg:true, boss:true, unused:strict, strict:true, undef:true, noarg: true, forin:true, evil:true, newcap:false, -W041, -W021, worker:true, browser:true, node:true */
-
-/* global setImmediate, setTimeout, window, onmessage */
-
-/** xs */
-///NOTE: This is the master file that is used to generate lzma-c.js and lzma-d.js.
-///      Comments are used to determine which parts are to be removed.
-///
-/// cs-ce (compression start-end)
-/// ds-de (decompression start-end)
-/// xs-xe (only in this file start-end)
-/// co    (compression only)
-/// do    (decompression only)
-/** xe */
-
-var LZMA = (function () {
-    
-    "use strict";
-    
-    var /** cs */
-        action_compress   = 1,
-        /** ce */
-        /** ds */
-        action_decompress = 2,
-        /** de */
-        action_progress   = 3,
-        wait = typeof setImmediate == "function" ? setImmediate : setTimeout,
-        __4294967296 = 4294967296,
-        N1_longLit = [4294967295, -__4294967296],
-        /** cs */
-        MIN_VALUE = [0, -9223372036854775808],
-        /** ce */
-        P0_longLit = [0, 0],
-        P1_longLit = [1, 0];
-    
-    function update_progress(percent, cbn) {
-        postMessage({
-            action: action_progress,
-            cbn: cbn,
-            result: percent
-        });
-    }
-    
-    function initDim(len) {
-        ///NOTE: This is MUCH faster than "new Array(len)" in newer versions of v8 (starting with Node.js 0.11.15, which uses v8 3.28.73).
-        var a = [];
-        a[len - 1] = undefined;
-        return a;
-    }
-    
-    function add(a, b) {
-        return create(a[0] + b[0], a[1] + b[1]);
-    }
-    
-    /** cs */
-    function and(a, b) {
-        return makeFromBits(~~Math.max(Math.min(a[1] / __4294967296, 2147483647), -2147483648) & ~~Math.max(Math.min(b[1] / __4294967296, 2147483647), -2147483648), lowBits_0(a) & lowBits_0(b));
-    }
-    /** ce */
-    
-    function compare(a, b) {
-        var nega, negb;
-        if (a[0] == b[0] && a[1] == b[1]) {
-            return 0;
-        }
-        nega = a[1] < 0;
-        negb = b[1] < 0;
-        if (nega && !negb) {
-            return -1;
-        }
-        if (!nega && negb) {
-            return 1;
-        }
-        if (sub(a, b)[1] < 0) {
-            return -1;
-        }
-        return 1;
-    }
-    
-    function create(valueLow, valueHigh) {
-        var diffHigh, diffLow;
-        valueHigh %= 1.8446744073709552E19;
-        valueLow %= 1.8446744073709552E19;
-        diffHigh = valueHigh % __4294967296;
-        diffLow = Math.floor(valueLow / __4294967296) * __4294967296;
-        valueHigh = valueHigh - diffHigh + diffLow;
-        valueLow = valueLow - diffLow + diffHigh;
-        while (valueLow < 0) {
-            valueLow += __4294967296;
-            valueHigh -= __4294967296;
-        }
-        while (valueLow > 4294967295) {
-            valueLow -= __4294967296;
-            valueHigh += __4294967296;
-        }
-        valueHigh = valueHigh % 1.8446744073709552E19;
-        while (valueHigh > 9223372032559808512) {
-            valueHigh -= 1.8446744073709552E19;
-        }
-        while (valueHigh < -9223372036854775808) {
-            valueHigh += 1.8446744073709552E19;
-        }
-        return [valueLow, valueHigh];
-    }
-    
-    /** cs */
-    function eq(a, b) {
-        return a[0] == b[0] && a[1] == b[1];
-    }
-    /** ce */
-    function fromInt(value) {
-        if (value >= 0) {
-            return [value, 0];
-        } else {
-            return [value + __4294967296, -__4294967296];
-        }
-    }
-    
-    function lowBits_0(a) {
-        if (a[0] >= 2147483648) {
-            return ~~Math.max(Math.min(a[0] - __4294967296, 2147483647), -2147483648);
-        } else {
-            return ~~Math.max(Math.min(a[0], 2147483647), -2147483648);
-        }
-    }
-    /** cs */
-    function makeFromBits(highBits, lowBits) {
-        var high, low;
-        high = highBits * __4294967296;
-        low = lowBits;
-        if (lowBits < 0) {
-            low += __4294967296;
-        }
-        return [low, high];
-    }
-    
-    function pwrAsDouble(n) {
-        if (n <= 30) {
-            return 1 << n;
-        } else {
-            return pwrAsDouble(30) * pwrAsDouble(n - 30);
-        }
-    }
-    
-    function shl(a, n) {
-        var diff, newHigh, newLow, twoToN;
-        n &= 63;
-        if (eq(a, MIN_VALUE)) {
-            if (!n) {
-                return a;
-            }
-            return P0_longLit;
-        }
-        if (a[1] < 0) {
-            throw new Error("Neg");
-        }
-        twoToN = pwrAsDouble(n);
-        newHigh = a[1] * twoToN % 1.8446744073709552E19;
-        newLow = a[0] * twoToN;
-        diff = newLow - newLow % __4294967296;
-        newHigh += diff;
-        newLow -= diff;
-        if (newHigh >= 9223372036854775807) {
-            newHigh -= 1.8446744073709552E19;
-        }
-        return [newLow, newHigh];
-    }
-    
-    function shr(a, n) {
-        var shiftFact;
-        n &= 63;
-        shiftFact = pwrAsDouble(n);
-        return create(Math.floor(a[0] / shiftFact), a[1] / shiftFact);
-    }
-    
-    function shru(a, n) {
-        var sr;
-        n &= 63;
-        sr = shr(a, n);
-        if (a[1] < 0) {
-            sr = add(sr, shl([2, 0], 63 - n));
-        }
-        return sr;
-    }
-    
-    /** ce */
-    
-    function sub(a, b) {
-        return create(a[0] - b[0], a[1] - b[1]);
-    }
-    
-    function $ByteArrayInputStream(this$static, buf) {
-        this$static.buf = buf;
-        this$static.pos = 0;
-        this$static.count = buf.length;
-        return this$static;
-    }
-    
-    /** ds */
-    function $read(this$static) {
-        if (this$static.pos >= this$static.count)
-            return -1;
-        return this$static.buf[this$static.pos++] & 255;
-    }
-    /** de */
-    /** cs */
-    function $read_0(this$static, buf, off, len) {
-        if (this$static.pos >= this$static.count)
-            return -1;
-        len = Math.min(len, this$static.count - this$static.pos);
-        arraycopy(this$static.buf, this$static.pos, buf, off, len);
-        this$static.pos += len;
-        return len;
-    }
-    /** ce */
-    
-    function $ByteArrayOutputStream(this$static) {
-        this$static.buf = initDim(32);
-        this$static.count = 0;
-        return this$static;
-    }
-    
-    function $toByteArray(this$static) {
-        var data = this$static.buf;
-        data.length = this$static.count;
-        return data;
-    }
-    
-    /** cs */
-    function $write(this$static, b) {
-        this$static.buf[this$static.count++] = b << 24 >> 24;
-    }
-    /** ce */
-    
-    function $write_0(this$static, buf, off, len) {
-        arraycopy(buf, off, this$static.buf, this$static.count, len);
-        this$static.count += len;
-    }
-    
-    /** cs */
-    function $getChars(this$static, srcBegin, srcEnd, dst, dstBegin) {
-        var srcIdx;
-        for (srcIdx = srcBegin; srcIdx < srcEnd; ++srcIdx) {
-            dst[dstBegin++] = this$static.charCodeAt(srcIdx);
-        }
-    }
-    /** ce */
-    
-    function arraycopy(src, srcOfs, dest, destOfs, len) {
-        for (var i = 0; i < len; ++i) {
-            dest[destOfs + i] = src[srcOfs + i];
-        }
-    }
-    
-    /** cs */
-    function $configure(this$static, encoder) {
-        $SetDictionarySize_0(encoder, 1 << this$static.s);
-        encoder._numFastBytes = this$static.f;
-        $SetMatchFinder(encoder, this$static.m);
-        
-        /// lc is always 3
-        /// lp is always 0
-        /// pb is always 2
-        encoder._numLiteralPosStateBits = 0;
-        encoder._numLiteralContextBits = 3;
-        encoder._posStateBits = 2;
-        ///this$static._posStateMask = (1 << pb) - 1;
-        encoder._posStateMask = 3;
-    }
-    
-    function $init(this$static, input, output, length_0, mode) {
-        var encoder, i;
-        if (compare(length_0, N1_longLit) < 0)
-            throw new Error("invalid length " + length_0);
-        this$static.length_0 = length_0;
-        encoder = $Encoder({});
-        $configure(mode, encoder);
-        encoder._writeEndMark = typeof LZMA.disableEndMark == "undefined";
-        $WriteCoderProperties(encoder, output);
-        for (i = 0; i < 64; i += 8)
-            $write(output, lowBits_0(shr(length_0, i)) & 255);
-        this$static.chunker = (encoder._needReleaseMFStream = 0 , (encoder._inStream = input , encoder._finished = 0 , $Create_2(encoder) , encoder._rangeEncoder.Stream = output , $Init_4(encoder) , $FillDistancesPrices(encoder) , $FillAlignPrices(encoder) , encoder._lenEncoder._tableSize = encoder._numFastBytes + 1 - 2 , $UpdateTables(encoder._lenEncoder, 1 << encoder._posStateBits) , encoder._repMatchLenEncoder._tableSize = encoder._numFastBytes + 1 - 2 , $UpdateTables(encoder._repMatchLenEncoder, 1 << encoder._posStateBits) , encoder.nowPos64 = P0_longLit , undefined) , $Chunker_0({}, encoder));
-    }
-    
-    function $LZMAByteArrayCompressor(this$static, data, mode) {
-        this$static.output = $ByteArrayOutputStream({});
-        $init(this$static, $ByteArrayInputStream({}, data), this$static.output, fromInt(data.length), mode);
-        return this$static;
-    }
-    /** ce */
-    
-    /** ds */
-    function $init_0(this$static, input, output) {
-        var decoder,
-            hex_length = "",
-            i,
-            properties = [],
-            r,
-            tmp_length;
-        
-        for (i = 0; i < 5; ++i) {
-            r = $read(input);
-            if (r == -1)
-                throw new Error("truncated input");
-            properties[i] = r << 24 >> 24;
-        }
-        
-        decoder = $Decoder({});
-        if (!$SetDecoderProperties(decoder, properties)) {
-            throw new Error("corrupted input");
-        }
-        for (i = 0; i < 64; i += 8) {
-            r = $read(input);
-            if (r == -1)
-                throw new Error("truncated input");
-            r = r.toString(16);
-            if (r.length == 1) r = "0" + r;
-            hex_length = r + "" + hex_length;
-        }
-        
-        /// Was the length set in the header (if it was compressed from a stream, the length is all f"s).
-        if (/^0+$|^f+$/i.test(hex_length)) {
-            /// The length is unknown, so set to -1.
-            this$static.length_0 = N1_longLit;
-        } else {
-            ///NOTE: If there is a problem with the decoder because of the length, you can always set the length to -1 (N1_longLit) which means unknown.
-            tmp_length = parseInt(hex_length, 16);
-            /// If the length is too long to handle, just set it to unknown.
-            if (tmp_length > 4294967295) {
-                this$static.length_0 = N1_longLit;
-            } else {
-                this$static.length_0 = fromInt(tmp_length);
-            }
-        }
-        
-        this$static.chunker = $CodeInChunks(decoder, input, output, this$static.length_0);
-    }
-    
-    function $LZMAByteArrayDecompressor(this$static, data) {
-        this$static.output = $ByteArrayOutputStream({});
-        $init_0(this$static, $ByteArrayInputStream({}, data), this$static.output);
-        return this$static;
-    }
-    /** de */
-    /** cs */
-    function $Create_4(this$static, keepSizeBefore, keepSizeAfter, keepSizeReserv) {
-        var blockSize;
-        this$static._keepSizeBefore = keepSizeBefore;
-        this$static._keepSizeAfter = keepSizeAfter;
-        blockSize = keepSizeBefore + keepSizeAfter + keepSizeReserv;
-        if (this$static._bufferBase == null || this$static._blockSize != blockSize) {
-            this$static._bufferBase = null;
-            this$static._blockSize = blockSize;
-            this$static._bufferBase = initDim(this$static._blockSize);
-        }
-        this$static._pointerToLastSafePosition = this$static._blockSize - keepSizeAfter;
-    }
-    
-    function $GetIndexByte(this$static, index) {
-        return this$static._bufferBase[this$static._bufferOffset + this$static._pos + index];
-    }
-    
-    function $GetMatchLen(this$static, index, distance, limit) {
-        var i, pby;
-        if (this$static._streamEndWasReached) {
-            if (this$static._pos + index + limit > this$static._streamPos) {
-                limit = this$static._streamPos - (this$static._pos + index);
-            }
-        }
-        ++distance;
-        pby = this$static._bufferOffset + this$static._pos + index;
-        for (i = 0; i < limit && this$static._bufferBase[pby + i] == this$static._bufferBase[pby + i - distance]; ++i) {
-        }
-        return i;
-    }
-    
-    function $GetNumAvailableBytes(this$static) {
-        return this$static._streamPos - this$static._pos;
-    }
-    
-    function $MoveBlock(this$static) {
-        var i, numBytes, offset;
-        offset = this$static._bufferOffset + this$static._pos - this$static._keepSizeBefore;
-        if (offset > 0) {
-            --offset;
-        }
-        numBytes = this$static._bufferOffset + this$static._streamPos - offset;
-        for (i = 0; i < numBytes; ++i) {
-            this$static._bufferBase[i] = this$static._bufferBase[offset + i];
-        }
-        this$static._bufferOffset -= offset;
-    }
-    
-    function $MovePos_1(this$static) {
-        var pointerToPostion;
-        ++this$static._pos;
-        if (this$static._pos > this$static._posLimit) {
-            pointerToPostion = this$static._bufferOffset + this$static._pos;
-            if (pointerToPostion > this$static._pointerToLastSafePosition) {
-                $MoveBlock(this$static);
-            }
-            $ReadBlock(this$static);
-        }
-    }
-    
-    function $ReadBlock(this$static) {
-        var numReadBytes, pointerToPostion, size;
-        if (this$static._streamEndWasReached)
-            return;
-        while (1) {
-            size = -this$static._bufferOffset + this$static._blockSize - this$static._streamPos;
-            if (!size)
-                return;
-            numReadBytes = $read_0(this$static._stream, this$static._bufferBase, this$static._bufferOffset + this$static._streamPos, size);
-            if (numReadBytes == -1) {
-                this$static._posLimit = this$static._streamPos;
-                pointerToPostion = this$static._bufferOffset + this$static._posLimit;
-                if (pointerToPostion > this$static._pointerToLastSafePosition) {
-                    this$static._posLimit = this$static._pointerToLastSafePosition - this$static._bufferOffset;
-                }
-                this$static._streamEndWasReached = 1;
-                return;
-            }
-            this$static._streamPos += numReadBytes;
-            if (this$static._streamPos >= this$static._pos + this$static._keepSizeAfter) {
-                this$static._posLimit = this$static._streamPos - this$static._keepSizeAfter;
-            }
-        }
-    }
-    
-    function $ReduceOffsets(this$static, subValue) {
-        this$static._bufferOffset += subValue;
-        this$static._posLimit -= subValue;
-        this$static._pos -= subValue;
-        this$static._streamPos -= subValue;
-    }
-    
-    var CrcTable = (function () {
-        var i, j, r, CrcTable = [];
-        for (i = 0; i < 256; ++i) {
-            r = i;
-            for (j = 0; j < 8; ++j)
-            if ((r & 1) != 0) {
-                r = r >>> 1 ^ -306674912;
-            } else {
-                r >>>= 1;
-            }
-            CrcTable[i] = r;
-        }
-        return CrcTable;
-    }());
-    
-    function $Create_3(this$static, historySize, keepAddBufferBefore, matchMaxLen, keepAddBufferAfter) {
-        var cyclicBufferSize, hs, windowReservSize;
-        if (historySize < 1073741567) {
-            this$static._cutValue = 16 + (matchMaxLen >> 1);
-            windowReservSize = ~~((historySize + keepAddBufferBefore + matchMaxLen + keepAddBufferAfter) / 2) + 256;
-            $Create_4(this$static, historySize + keepAddBufferBefore, matchMaxLen + keepAddBufferAfter, windowReservSize);
-            this$static._matchMaxLen = matchMaxLen;
-            cyclicBufferSize = historySize + 1;
-            if (this$static._cyclicBufferSize != cyclicBufferSize) {
-                this$static._son = initDim((this$static._cyclicBufferSize = cyclicBufferSize) * 2);
-            }
-    
-            hs = 65536;
-            if (this$static.HASH_ARRAY) {
-                hs = historySize - 1;
-                hs |= hs >> 1;
-                hs |= hs >> 2;
-                hs |= hs >> 4;
-                hs |= hs >> 8;
-                hs >>= 1;
-                hs |= 65535;
-                if (hs > 16777216)
-                hs >>= 1;
-                this$static._hashMask = hs;
-                ++hs;
-                hs += this$static.kFixHashSize;
-            }
-            
-            if (hs != this$static._hashSizeSum) {
-                this$static._hash = initDim(this$static._hashSizeSum = hs);
-            }
-        }
-    }
-    
-    function $GetMatches(this$static, distances) {
-        var count, cur, curMatch, curMatch2, curMatch3, cyclicPos, delta, hash2Value, hash3Value, hashValue, len, len0, len1, lenLimit, matchMinPos, maxLen, offset, pby1, ptr0, ptr1, temp;
-        if (this$static._pos + this$static._matchMaxLen <= this$static._streamPos) {
-            lenLimit = this$static._matchMaxLen;
-        } else {
-            lenLimit = this$static._streamPos - this$static._pos;
-            if (lenLimit < this$static.kMinMatchCheck) {
-                $MovePos_0(this$static);
-                return 0;
-            }
-        }
-        offset = 0;
-        matchMinPos = this$static._pos > this$static._cyclicBufferSize?this$static._pos - this$static._cyclicBufferSize:0;
-        cur = this$static._bufferOffset + this$static._pos;
-        maxLen = 1;
-        hash2Value = 0;
-        hash3Value = 0;
-        if (this$static.HASH_ARRAY) {
-            temp = CrcTable[this$static._bufferBase[cur] & 255] ^ this$static._bufferBase[cur + 1] & 255;
-            hash2Value = temp & 1023;
-            temp ^= (this$static._bufferBase[cur + 2] & 255) << 8;
-            hash3Value = temp & 65535;
-            hashValue = (temp ^ CrcTable[this$static._bufferBase[cur + 3] & 255] << 5) & this$static._hashMask;
-        } else {
-            hashValue = this$static._bufferBase[cur] & 255 ^ (this$static._bufferBase[cur + 1] & 255) << 8;
-        }
-
-        curMatch = this$static._hash[this$static.kFixHashSize + hashValue] || 0;
-        if (this$static.HASH_ARRAY) {
-            curMatch2 = this$static._hash[hash2Value] || 0;
-            curMatch3 = this$static._hash[1024 + hash3Value] || 0;
-            this$static._hash[hash2Value] = this$static._pos;
-            this$static._hash[1024 + hash3Value] = this$static._pos;
-            if (curMatch2 > matchMinPos) {
-                if (this$static._bufferBase[this$static._bufferOffset + curMatch2] == this$static._bufferBase[cur]) {
-                    distances[offset++] = maxLen = 2;
-                    distances[offset++] = this$static._pos - curMatch2 - 1;
-                }
-            }
-            if (curMatch3 > matchMinPos) {
-                if (this$static._bufferBase[this$static._bufferOffset + curMatch3] == this$static._bufferBase[cur]) {
-                    if (curMatch3 == curMatch2) {
-                        offset -= 2;
-                    }
-                    distances[offset++] = maxLen = 3;
-                    distances[offset++] = this$static._pos - curMatch3 - 1;
-                    curMatch2 = curMatch3;
-                }
-            }
-            if (offset != 0 && curMatch2 == curMatch) {
-                offset -= 2;
-                maxLen = 1;
-            }
-        }
-        this$static._hash[this$static.kFixHashSize + hashValue] = this$static._pos;
-        ptr0 = (this$static._cyclicBufferPos << 1) + 1;
-        ptr1 = this$static._cyclicBufferPos << 1;
-        len0 = len1 = this$static.kNumHashDirectBytes;
-        if (this$static.kNumHashDirectBytes != 0) {
-            if (curMatch > matchMinPos) {
-                if (this$static._bufferBase[this$static._bufferOffset + curMatch + this$static.kNumHashDirectBytes] != this$static._bufferBase[cur + this$static.kNumHashDirectBytes]) {
-                    distances[offset++] = maxLen = this$static.kNumHashDirectBytes;
-                    distances[offset++] = this$static._pos - curMatch - 1;
-                }
-            }
-        }
-        count = this$static._cutValue;
-        while (1) {
-            if (curMatch <= matchMinPos || count-- == 0) {
-                this$static._son[ptr0] = this$static._son[ptr1] = 0;
-                break;
-            }
-            delta = this$static._pos - curMatch;
-            cyclicPos = (delta <= this$static._cyclicBufferPos?this$static._cyclicBufferPos - delta:this$static._cyclicBufferPos - delta + this$static._cyclicBufferSize) << 1;
-            pby1 = this$static._bufferOffset + curMatch;
-            len = len0 < len1?len0:len1;
-            if (this$static._bufferBase[pby1 + len] == this$static._bufferBase[cur + len]) {
-                while (++len != lenLimit) {
-                    if (this$static._bufferBase[pby1 + len] != this$static._bufferBase[cur + len]) {
-                        break;
-                    }
-                }
-                if (maxLen < len) {
-                    distances[offset++] = maxLen = len;
-                    distances[offset++] = delta - 1;
-                    if (len == lenLimit) {
-                    this$static._son[ptr1] = this$static._son[cyclicPos];
-                    this$static._son[ptr0] = this$static._son[cyclicPos + 1];
-                    break;
-                    }
-                }
-            }
-            if ((this$static._bufferBase[pby1 + len] & 255) < (this$static._bufferBase[cur + len] & 255)) {
-                this$static._son[ptr1] = curMatch;
-                ptr1 = cyclicPos + 1;
-                curMatch = this$static._son[ptr1];
-                len1 = len;
-            } else {
-                this$static._son[ptr0] = curMatch;
-                ptr0 = cyclicPos;
-                curMatch = this$static._son[ptr0];
-                len0 = len;
-            }
-        }
-        $MovePos_0(this$static);
-        return offset;
-    }
-    
-    function $Init_5(this$static) {
-        this$static._bufferOffset = 0;
-        this$static._pos = 0;
-        this$static._streamPos = 0;
-        this$static._streamEndWasReached = 0;
-        $ReadBlock(this$static);
-        this$static._cyclicBufferPos = 0;
-        $ReduceOffsets(this$static, -1);
-    }
-    
-    function $MovePos_0(this$static) {
-        var subValue;
-        if (++this$static._cyclicBufferPos >= this$static._cyclicBufferSize) {
-            this$static._cyclicBufferPos = 0;
-        }
-        $MovePos_1(this$static);
-        if (this$static._pos == 1073741823) {
-            subValue = this$static._pos - this$static._cyclicBufferSize;
-            $NormalizeLinks(this$static._son, this$static._cyclicBufferSize * 2, subValue);
-            $NormalizeLinks(this$static._hash, this$static._hashSizeSum, subValue);
-            $ReduceOffsets(this$static, subValue);
-        }
-    }
-    
-    ///NOTE: This is only called after reading one whole gigabyte.
-    function $NormalizeLinks(items, numItems, subValue) {
-        var i, value;
-        for (i = 0; i < numItems; ++i) {
-            value = items[i] || 0;
-            if (value <= subValue) {
-                value = 0;
-            } else {
-                value -= subValue;
-            }
-            items[i] = value;
-        }
-    }
-    
-    function $SetType(this$static, numHashBytes) {
-        this$static.HASH_ARRAY = numHashBytes > 2;
-        if (this$static.HASH_ARRAY) {
-            this$static.kNumHashDirectBytes = 0;
-            this$static.kMinMatchCheck = 4;
-            this$static.kFixHashSize = 66560;
-        } else {
-            this$static.kNumHashDirectBytes = 2;
-            this$static.kMinMatchCheck = 3;
-            this$static.kFixHashSize = 0;
-        }
-    }
-    
-    function $Skip(this$static, num) {
-        var count, cur, curMatch, cyclicPos, delta, hash2Value, hash3Value, hashValue, len, len0, len1, lenLimit, matchMinPos, pby1, ptr0, ptr1, temp;
-        do {
-            if (this$static._pos + this$static._matchMaxLen <= this$static._streamPos) {
-                lenLimit = this$static._matchMaxLen;
-            } else {
-                lenLimit = this$static._streamPos - this$static._pos;
-                if (lenLimit < this$static.kMinMatchCheck) {
-                    $MovePos_0(this$static);
-                    continue;
-                }
-            }
-            matchMinPos = this$static._pos > this$static._cyclicBufferSize?this$static._pos - this$static._cyclicBufferSize:0;
-            cur = this$static._bufferOffset + this$static._pos;
-            if (this$static.HASH_ARRAY) {
-                temp = CrcTable[this$static._bufferBase[cur] & 255] ^ this$static._bufferBase[cur + 1] & 255;
-                hash2Value = temp & 1023;
-                this$static._hash[hash2Value] = this$static._pos;
-                temp ^= (this$static._bufferBase[cur + 2] & 255) << 8;
-                hash3Value = temp & 65535;
-                this$static._hash[1024 + hash3Value] = this$static._pos;
-                hashValue = (temp ^ CrcTable[this$static._bufferBase[cur + 3] & 255] << 5) & this$static._hashMask;
-            } else {
-                hashValue = this$static._bufferBase[cur] & 255 ^ (this$static._bufferBase[cur + 1] & 255) << 8;
-            }
-            curMatch = this$static._hash[this$static.kFixHashSize + hashValue];
-            this$static._hash[this$static.kFixHashSize + hashValue] = this$static._pos;
-            ptr0 = (this$static._cyclicBufferPos << 1) + 1;
-            ptr1 = this$static._cyclicBufferPos << 1;
-            len0 = len1 = this$static.kNumHashDirectBytes;
-            count = this$static._cutValue;
-            while (1) {
-                if (curMatch <= matchMinPos || count-- == 0) {
-                    this$static._son[ptr0] = this$static._son[ptr1] = 0;
-                    break;
-                }
-                delta = this$static._pos - curMatch;
-                cyclicPos = (delta <= this$static._cyclicBufferPos?this$static._cyclicBufferPos - delta:this$static._cyclicBufferPos - delta + this$static._cyclicBufferSize) << 1;
-                pby1 = this$static._bufferOffset + curMatch;
-                len = len0 < len1?len0:len1;
-                if (this$static._bufferBase[pby1 + len] == this$static._bufferBase[cur + len]) {
-                    while (++len != lenLimit) {
-                        if (this$static._bufferBase[pby1 + len] != this$static._bufferBase[cur + len]) {
-                            break;
-                        }
-                    }
-                    if (len == lenLimit) {
-                        this$static._son[ptr1] = this$static._son[cyclicPos];
-                        this$static._son[ptr0] = this$static._son[cyclicPos + 1];
-                        break;
-                    }
-                }
-                if ((this$static._bufferBase[pby1 + len] & 255) < (this$static._bufferBase[cur + len] & 255)) {
-                    this$static._son[ptr1] = curMatch;
-                    ptr1 = cyclicPos + 1;
-                    curMatch = this$static._son[ptr1];
-                    len1 = len;
-                } else {
-                    this$static._son[ptr0] = curMatch;
-                    ptr0 = cyclicPos;
-                    curMatch = this$static._son[ptr0];
-                    len0 = len;
-                }
-            }
-            $MovePos_0(this$static);
-        }
-        while (--num != 0);
-    }
-    
-    /** ce */
-    /** ds */
-    function $CopyBlock(this$static, distance, len) {
-        var pos = this$static._pos - distance - 1;
-        if (pos < 0) {
-            pos += this$static._windowSize;
-        }
-        for (; len != 0; --len) {
-            if (pos >= this$static._windowSize) {
-                pos = 0;
-            }
-            this$static._buffer[this$static._pos++] = this$static._buffer[pos++];
-            if (this$static._pos >= this$static._windowSize) {
-                $Flush_0(this$static);
-            }
-        }
-    }
-    
-    function $Create_5(this$static, windowSize) {
-        if (this$static._buffer == null || this$static._windowSize != windowSize) {
-            this$static._buffer = initDim(windowSize);
-        }
-        this$static._windowSize = windowSize;
-        this$static._pos = 0;
-        this$static._streamPos = 0;
-    }
-    
-    function $Flush_0(this$static) {
-        var size = this$static._pos - this$static._streamPos;
-        if (!size) {
-            return;
-        }
-        $write_0(this$static._stream, this$static._buffer, this$static._streamPos, size);
-        if (this$static._pos >= this$static._windowSize) {
-            this$static._pos = 0;
-        }
-        this$static._streamPos = this$static._pos;
-    }
-    
-    function $GetByte(this$static, distance) {
-        var pos = this$static._pos - distance - 1;
-        if (pos < 0) {
-            pos += this$static._windowSize;
-        }
-        return this$static._buffer[pos];
-    }
-    
-    function $PutByte(this$static, b) {
-        this$static._buffer[this$static._pos++] = b;
-        if (this$static._pos >= this$static._windowSize) {
-            $Flush_0(this$static);
-        }
-    }
-    
-    function $ReleaseStream(this$static) {
-        $Flush_0(this$static);
-        this$static._stream = null;
-    }
-    /** de */
-    
-    function GetLenToPosState(len) {
-        len -= 2;
-        if (len < 4) {
-            return len;
-        }
-        return 3;
-    }
-    
-    function StateUpdateChar(index) {
-        if (index < 4) {
-            return 0;
-        }
-        if (index < 10) {
-            return index - 3;
-        }
-        return index - 6;
-    }
-    
-    /** cs */
-    function $Chunker_0(this$static, encoder) {
-        this$static.encoder = encoder;
-        this$static.decoder = null;
-        this$static.alive = 1;
-        return this$static;
-    }
-    /** ce */
-    /** ds */
-    function $Chunker(this$static, decoder) {
-        this$static.decoder = decoder;
-        this$static.encoder = null;
-        this$static.alive = 1;
-        return this$static;
-    }
-    /** de */
-    
-    function $processChunk(this$static) {
-        if (!this$static.alive) {
-            throw new Error("bad state");
-        }
-        
-        if (this$static.encoder) {
-            /// do:throw new Error("No encoding");
-            /** cs */
-            $processEncoderChunk(this$static);
-            /** ce */
-        } else {
-            /// co:throw new Error("No decoding");
-            /** ds */
-            $processDecoderChunk(this$static);
-            /** de */
-        }
-        return this$static.alive;
-    }
-    
-    /** ds */
-    function $processDecoderChunk(this$static) {
-        var result = $CodeOneChunk(this$static.decoder);
-        if (result == -1) {
-            throw new Error("corrupted input");
-        }
-        this$static.inBytesProcessed = N1_longLit;
-        this$static.outBytesProcessed = this$static.decoder.nowPos64;
-        if (result || compare(this$static.decoder.outSize, P0_longLit) >= 0 && compare(this$static.decoder.nowPos64, this$static.decoder.outSize) >= 0) {
-            $Flush_0(this$static.decoder.m_OutWindow);
-            $ReleaseStream(this$static.decoder.m_OutWindow);
-            this$static.decoder.m_RangeDecoder.Stream = null;
-            this$static.alive = 0;
-        }
-    }
-    /** de */
-    /** cs */
-    function $processEncoderChunk(this$static) {
-        $CodeOneBlock(this$static.encoder, this$static.encoder.processedInSize, this$static.encoder.processedOutSize, this$static.encoder.finished);
-        this$static.inBytesProcessed = this$static.encoder.processedInSize[0];
-        if (this$static.encoder.finished[0]) {
-            $ReleaseStreams(this$static.encoder);
-            this$static.alive = 0;
-        }
-    }
-    /** ce */
-    
-    /** ds */
-    function $CodeInChunks(this$static, inStream, outStream, outSize) {
-        this$static.m_RangeDecoder.Stream = inStream;
-        $ReleaseStream(this$static.m_OutWindow);
-        this$static.m_OutWindow._stream = outStream;
-        $Init_1(this$static);
-        this$static.state = 0;
-        this$static.rep0 = 0;
-        this$static.rep1 = 0;
-        this$static.rep2 = 0;
-        this$static.rep3 = 0;
-        this$static.outSize = outSize;
-        this$static.nowPos64 = P0_longLit;
-        this$static.prevByte = 0;
-        return $Chunker({}, this$static);
-    }
-    
-    function $CodeOneChunk(this$static) {
-        var decoder2, distance, len, numDirectBits, posSlot, posState;
-        posState = lowBits_0(this$static.nowPos64) & this$static.m_PosStateMask;
-        if (!$DecodeBit(this$static.m_RangeDecoder, this$static.m_IsMatchDecoders, (this$static.state << 4) + posState)) {
-            decoder2 = $GetDecoder(this$static.m_LiteralDecoder, lowBits_0(this$static.nowPos64), this$static.prevByte);
-            if (this$static.state < 7) {
-                this$static.prevByte = $DecodeNormal(decoder2, this$static.m_RangeDecoder);
-            } else {
-                this$static.prevByte = $DecodeWithMatchByte(decoder2, this$static.m_RangeDecoder, $GetByte(this$static.m_OutWindow, this$static.rep0));
-            }
-            $PutByte(this$static.m_OutWindow, this$static.prevByte);
-            this$static.state = StateUpdateChar(this$static.state);
-            this$static.nowPos64 = add(this$static.nowPos64, P1_longLit);
-        } else {
-            if ($DecodeBit(this$static.m_RangeDecoder, this$static.m_IsRepDecoders, this$static.state)) {
-                len = 0;
-                if (!$DecodeBit(this$static.m_RangeDecoder, this$static.m_IsRepG0Decoders, this$static.state)) {
-                    if (!$DecodeBit(this$static.m_RangeDecoder, this$static.m_IsRep0LongDecoders, (this$static.state << 4) + posState)) {
-                        this$static.state = this$static.state < 7?9:11;
-                        len = 1;
-                    }
-                } else {
-                    if (!$DecodeBit(this$static.m_RangeDecoder, this$static.m_IsRepG1Decoders, this$static.state)) {
-                        distance = this$static.rep1;
-                    } else {
-                        if (!$DecodeBit(this$static.m_RangeDecoder, this$static.m_IsRepG2Decoders, this$static.state)) {
-                            distance = this$static.rep2;
-                        } else {
-                            distance = this$static.rep3;
-                            this$static.rep3 = this$static.rep2;
-                        }
-                        this$static.rep2 = this$static.rep1;
-                    }
-                    this$static.rep1 = this$static.rep0;
-                    this$static.rep0 = distance;
-                }
-                if (!len) {
-                    len = $Decode(this$static.m_RepLenDecoder, this$static.m_RangeDecoder, posState) + 2;
-                    this$static.state = this$static.state < 7?8:11;
-                }
-            } else {
-                this$static.rep3 = this$static.rep2;
-                this$static.rep2 = this$static.rep1;
-                this$static.rep1 = this$static.rep0;
-                len = 2 + $Decode(this$static.m_LenDecoder, this$static.m_RangeDecoder, posState);
-                this$static.state = this$static.state < 7?7:10;
-                posSlot = $Decode_0(this$static.m_PosSlotDecoder[GetLenToPosState(len)], this$static.m_RangeDecoder);
-                if (posSlot >= 4) {
-                    numDirectBits = (posSlot >> 1) - 1;
-                    this$static.rep0 = (2 | posSlot & 1) << numDirectBits;
-                    if (posSlot < 14) {
-                        this$static.rep0 += ReverseDecode(this$static.m_PosDecoders, this$static.rep0 - posSlot - 1, this$static.m_RangeDecoder, numDirectBits);
-                    } else {
-                        this$static.rep0 += $DecodeDirectBits(this$static.m_RangeDecoder, numDirectBits - 4) << 4;
-                        this$static.rep0 += $ReverseDecode(this$static.m_PosAlignDecoder, this$static.m_RangeDecoder);
-                        if (this$static.rep0 < 0) {
-                            if (this$static.rep0 == -1) {
-                                return 1;
-                            }
-                            return -1;
-                        }
-                    }
-                } else 
-                    this$static.rep0 = posSlot;
-            }
-            if (compare(fromInt(this$static.rep0), this$static.nowPos64) >= 0 || this$static.rep0 >= this$static.m_DictionarySizeCheck) {
-                return -1;
-            }
-            $CopyBlock(this$static.m_OutWindow, this$static.rep0, len);
-            this$static.nowPos64 = add(this$static.nowPos64, fromInt(len));
-            this$static.prevByte = $GetByte(this$static.m_OutWindow, 0);
-        }
-        return 0;
-    }
-    
-    function $Decoder(this$static) {
-        this$static.m_OutWindow = {};
-        this$static.m_RangeDecoder = {};
-        this$static.m_IsMatchDecoders = initDim(192);
-        this$static.m_IsRepDecoders = initDim(12);
-        this$static.m_IsRepG0Decoders = initDim(12);
-        this$static.m_IsRepG1Decoders = initDim(12);
-        this$static.m_IsRepG2Decoders = initDim(12);
-        this$static.m_IsRep0LongDecoders = initDim(192);
-        this$static.m_PosSlotDecoder = initDim(4);
-        this$static.m_PosDecoders = initDim(114);
-        this$static.m_PosAlignDecoder = $BitTreeDecoder({}, 4);
-        this$static.m_LenDecoder = $Decoder$LenDecoder({});
-        this$static.m_RepLenDecoder = $Decoder$LenDecoder({});
-        this$static.m_LiteralDecoder = {};
-        for (var i = 0; i < 4; ++i) {
-            this$static.m_PosSlotDecoder[i] = $BitTreeDecoder({}, 6);
-        }
-        return this$static;
-    }
-    
-    function $Init_1(this$static) {
-        this$static.m_OutWindow._streamPos = 0;
-        this$static.m_OutWindow._pos = 0;
-        InitBitModels(this$static.m_IsMatchDecoders);
-        InitBitModels(this$static.m_IsRep0LongDecoders);
-        InitBitModels(this$static.m_IsRepDecoders);
-        InitBitModels(this$static.m_IsRepG0Decoders);
-        InitBitModels(this$static.m_IsRepG1Decoders);
-        InitBitModels(this$static.m_IsRepG2Decoders);
-        InitBitModels(this$static.m_PosDecoders);
-        $Init_0(this$static.m_LiteralDecoder);
-        for (var i = 0; i < 4; ++i) {
-            InitBitModels(this$static.m_PosSlotDecoder[i].Models);
-        }
-        $Init(this$static.m_LenDecoder);
-        $Init(this$static.m_RepLenDecoder);
-        InitBitModels(this$static.m_PosAlignDecoder.Models);
-        $Init_8(this$static.m_RangeDecoder);
-    }
-    
-    function $SetDecoderProperties(this$static, properties) {
-        var dictionarySize, i, lc, lp, pb, remainder, val;
-        if (properties.length < 5)
-            return 0;
-        val = properties[0] & 255;
-        lc = val % 9;
-        remainder = ~~(val / 9);
-        lp = remainder % 5;
-        pb = ~~(remainder / 5);
-        dictionarySize = 0;
-        for (i = 0; i < 4; ++i) {
-            dictionarySize += (properties[1 + i] & 255) << i * 8;
-        }
-        ///NOTE: If the input is bad, it might call for an insanely large dictionary size, which would crash the script.
-        if (dictionarySize > 99999999 || !$SetLcLpPb(this$static, lc, lp, pb)) {
-            return 0;
-        }
-        return $SetDictionarySize(this$static, dictionarySize);
-    }
-    
-    function $SetDictionarySize(this$static, dictionarySize) {
-        if (dictionarySize < 0) {
-            return 0;
-        }
-        if (this$static.m_DictionarySize != dictionarySize) {
-            this$static.m_DictionarySize = dictionarySize;
-            this$static.m_DictionarySizeCheck = Math.max(this$static.m_DictionarySize, 1);
-            $Create_5(this$static.m_OutWindow, Math.max(this$static.m_DictionarySizeCheck, 4096));
-        }
-        return 1;
-    }
-    
-    function $SetLcLpPb(this$static, lc, lp, pb) {
-        if (lc > 8 || lp > 4 || pb > 4) {
-            return 0;
-        }
-        $Create_0(this$static.m_LiteralDecoder, lp, lc);
-        var numPosStates = 1 << pb;
-        $Create(this$static.m_LenDecoder, numPosStates);
-        $Create(this$static.m_RepLenDecoder, numPosStates);
-        this$static.m_PosStateMask = numPosStates - 1;
-        return 1;
-    }
-    
-    function $Create(this$static, numPosStates) {
-        for (; this$static.m_NumPosStates < numPosStates; ++this$static.m_NumPosStates) {
-            this$static.m_LowCoder[this$static.m_NumPosStates] = $BitTreeDecoder({}, 3);
-            this$static.m_MidCoder[this$static.m_NumPosStates] = $BitTreeDecoder({}, 3);
-        }
-    }
-    
-    function $Decode(this$static, rangeDecoder, posState) {
-        if (!$DecodeBit(rangeDecoder, this$static.m_Choice, 0)) {
-            return $Decode_0(this$static.m_LowCoder[posState], rangeDecoder);
-        }
-        var symbol = 8;
-        if (!$DecodeBit(rangeDecoder, this$static.m_Choice, 1)) {
-            symbol += $Decode_0(this$static.m_MidCoder[posState], rangeDecoder);
-        } else {
-            symbol += 8 + $Decode_0(this$static.m_HighCoder, rangeDecoder);
-        }
-        return symbol;
-    }
-    
-    function $Decoder$LenDecoder(this$static) {
-        this$static.m_Choice = initDim(2);
-        this$static.m_LowCoder = initDim(16);
-        this$static.m_MidCoder = initDim(16);
-        this$static.m_HighCoder = $BitTreeDecoder({}, 8);
-        this$static.m_NumPosStates = 0;
-        return this$static;
-    }
-    
-    function $Init(this$static) {
-        InitBitModels(this$static.m_Choice);
-        for (var posState = 0; posState < this$static.m_NumPosStates; ++posState) {
-            InitBitModels(this$static.m_LowCoder[posState].Models);
-            InitBitModels(this$static.m_MidCoder[posState].Models);
-        }
-        InitBitModels(this$static.m_HighCoder.Models);
-    }
-    
-    
-    function $Create_0(this$static, numPosBits, numPrevBits) {
-        var i, numStates;
-        if (this$static.m_Coders != null && this$static.m_NumPrevBits == numPrevBits && this$static.m_NumPosBits == numPosBits)
-            return;
-        this$static.m_NumPosBits = numPosBits;
-        this$static.m_PosMask = (1 << numPosBits) - 1;
-        this$static.m_NumPrevBits = numPrevBits;
-        numStates = 1 << this$static.m_NumPrevBits + this$static.m_NumPosBits;
-        this$static.m_Coders = initDim(numStates);
-        for (i = 0; i < numStates; ++i)
-            this$static.m_Coders[i] = $Decoder$LiteralDecoder$Decoder2({});
-    }
-    
-    function $GetDecoder(this$static, pos, prevByte) {
-        return this$static.m_Coders[((pos & this$static.m_PosMask) << this$static.m_NumPrevBits) + ((prevByte & 255) >>> 8 - this$static.m_NumPrevBits)];
-    }
-    
-    function $Init_0(this$static) {
-        var i, numStates;
-        numStates = 1 << this$static.m_NumPrevBits + this$static.m_NumPosBits;
-        for (i = 0; i < numStates; ++i) {
-            InitBitModels(this$static.m_Coders[i].m_Decoders);
-        }
-    }
-    
-    
-    function $DecodeNormal(this$static, rangeDecoder) {
-        var symbol = 1;
-        do {
-            symbol = symbol << 1 | $DecodeBit(rangeDecoder, this$static.m_Decoders, symbol);
-        } while (symbol < 256);
-        return symbol << 24 >> 24;
-    }
-    
-    function $DecodeWithMatchByte(this$static, rangeDecoder, matchByte) {
-        var bit, matchBit, symbol = 1;
-        do {
-            matchBit = matchByte >> 7 & 1;
-            matchByte <<= 1;
-            bit = $DecodeBit(rangeDecoder, this$static.m_Decoders, (1 + matchBit << 8) + symbol);
-            symbol = symbol << 1 | bit;
-            if (matchBit != bit) {
-                while (symbol < 256) {
-                    symbol = symbol << 1 | $DecodeBit(rangeDecoder, this$static.m_Decoders, symbol);
-                }
-            break;
-            }
-        } while (symbol < 256);
-        return symbol << 24 >> 24;
-    }
-    
-    function $Decoder$LiteralDecoder$Decoder2(this$static) {
-        this$static.m_Decoders = initDim(768);
-        return this$static;
-    }
-    
-    /** de */
-    /** cs */
-    var g_FastPos = (function () {
-        var j, k, slotFast, c = 2, g_FastPos = [0, 1];
-        for (slotFast = 2; slotFast < 22; ++slotFast) {
-            k = 1 << (slotFast >> 1) - 1;
-            for (j = 0; j < k; ++j , ++c)
-                g_FastPos[c] = slotFast << 24 >> 24;
-        }
-        return g_FastPos;
-    }());
-    
-    function $Backward(this$static, cur) {
-        var backCur, backMem, posMem, posPrev;
-        this$static._optimumEndIndex = cur;
-        posMem = this$static._optimum[cur].PosPrev;
-        backMem = this$static._optimum[cur].BackPrev;
-        do {
-            if (this$static._optimum[cur].Prev1IsChar) {
-                $MakeAsChar(this$static._optimum[posMem]);
-                this$static._optimum[posMem].PosPrev = posMem - 1;
-                if (this$static._optimum[cur].Prev2) {
-                    this$static._optimum[posMem - 1].Prev1IsChar = 0;
-                    this$static._optimum[posMem - 1].PosPrev = this$static._optimum[cur].PosPrev2;
-                    this$static._optimum[posMem - 1].BackPrev = this$static._optimum[cur].BackPrev2;
-                }
-            }
-            posPrev = posMem;
-            backCur = backMem;
-            backMem = this$static._optimum[posPrev].BackPrev;
-            posMem = this$static._optimum[posPrev].PosPrev;
-            this$static._optimum[posPrev].BackPrev = backCur;
-            this$static._optimum[posPrev].PosPrev = cur;
-            cur = posPrev;
-        } while (cur > 0);
-        this$static.backRes = this$static._optimum[0].BackPrev;
-        this$static._optimumCurrentIndex = this$static._optimum[0].PosPrev;
-        return this$static._optimumCurrentIndex;
-    }
-    
-    function $BaseInit(this$static) {
-        this$static._state = 0;
-        this$static._previousByte = 0;
-        for (var i = 0; i < 4; ++i) {
-            this$static._repDistances[i] = 0;
-        }
-    }
-    
-    function $CodeOneBlock(this$static, inSize, outSize, finished) {
-        var baseVal, complexState, curByte, distance, footerBits, i, len, lenToPosState, matchByte, pos, posReduced, posSlot, posState, progressPosValuePrev, subCoder;
-        inSize[0] = P0_longLit;
-        outSize[0] = P0_longLit;
-        finished[0] = 1;
-        if (this$static._inStream) {
-            this$static._matchFinder._stream = this$static._inStream;
-            $Init_5(this$static._matchFinder);
-            this$static._needReleaseMFStream = 1;
-            this$static._inStream = null;
-        }
-        if (this$static._finished) {
-            return;
-        }
-        this$static._finished = 1;
-        progressPosValuePrev = this$static.nowPos64;
-        if (eq(this$static.nowPos64, P0_longLit)) {
-            if (!$GetNumAvailableBytes(this$static._matchFinder)) {
-                $Flush(this$static, lowBits_0(this$static.nowPos64));
-                return;
-            }
-            $ReadMatchDistances(this$static);
-            posState = lowBits_0(this$static.nowPos64) & this$static._posStateMask;
-            $Encode_3(this$static._rangeEncoder, this$static._isMatch, (this$static._state << 4) + posState, 0);
-            this$static._state = StateUpdateChar(this$static._state);
-            curByte = $GetIndexByte(this$static._matchFinder, -this$static._additionalOffset);
-            $Encode_1($GetSubCoder(this$static._literalEncoder, lowBits_0(this$static.nowPos64), this$static._previousByte), this$static._rangeEncoder, curByte);
-            this$static._previousByte = curByte;
-            --this$static._additionalOffset;
-            this$static.nowPos64 = add(this$static.nowPos64, P1_longLit);
-        }
-        if (!$GetNumAvailableBytes(this$static._matchFinder)) {
-            $Flush(this$static, lowBits_0(this$static.nowPos64));
-            return;
-        }
-        while (1) {
-            len = $GetOptimum(this$static, lowBits_0(this$static.nowPos64));
-            pos = this$static.backRes;
-            posState = lowBits_0(this$static.nowPos64) & this$static._posStateMask;
-            complexState = (this$static._state << 4) + posState;
-            if (len == 1 && pos == -1) {
-                $Encode_3(this$static._rangeEncoder, this$static._isMatch, complexState, 0);
-                curByte = $GetIndexByte(this$static._matchFinder, -this$static._additionalOffset);
-                subCoder = $GetSubCoder(this$static._literalEncoder, lowBits_0(this$static.nowPos64), this$static._previousByte);
-                if (this$static._state < 7) {
-                    $Encode_1(subCoder, this$static._rangeEncoder, curByte);
-                } else {
-                    matchByte = $GetIndexByte(this$static._matchFinder, -this$static._repDistances[0] - 1 - this$static._additionalOffset);
-                    $EncodeMatched(subCoder, this$static._rangeEncoder, matchByte, curByte);
-                }
-                this$static._previousByte = curByte;
-                this$static._state = StateUpdateChar(this$static._state);
-            } else {
-                $Encode_3(this$static._rangeEncoder, this$static._isMatch, complexState, 1);
-                if (pos < 4) {
-                    $Encode_3(this$static._rangeEncoder, this$static._isRep, this$static._state, 1);
-                    if (!pos) {
-                        $Encode_3(this$static._rangeEncoder, this$static._isRepG0, this$static._state, 0);
-                        if (len == 1) {
-                            $Encode_3(this$static._rangeEncoder, this$static._isRep0Long, complexState, 0);
-                        } else {
-                            $Encode_3(this$static._rangeEncoder, this$static._isRep0Long, complexState, 1);
-                        }
-                    } else {
-                        $Encode_3(this$static._rangeEncoder, this$static._isRepG0, this$static._state, 1);
-                        if (pos == 1) {
-                            $Encode_3(this$static._rangeEncoder, this$static._isRepG1, this$static._state, 0);
-                        } else {
-                            $Encode_3(this$static._rangeEncoder, this$static._isRepG1, this$static._state, 1);
-                            $Encode_3(this$static._rangeEncoder, this$static._isRepG2, this$static._state, pos - 2);
-                        }
-                    }
-                    if (len == 1) {
-                        this$static._state = this$static._state < 7?9:11;
-                    } else {
-                        $Encode_0(this$static._repMatchLenEncoder, this$static._rangeEncoder, len - 2, posState);
-                        this$static._state = this$static._state < 7?8:11;
-                    }
-                    distance = this$static._repDistances[pos];
-                    if (pos != 0) {
-                        for (i = pos; i >= 1; --i) {
-                            this$static._repDistances[i] = this$static._repDistances[i - 1];
-                        }
-                        this$static._repDistances[0] = distance;
-                    }
-                } else {
-                    $Encode_3(this$static._rangeEncoder, this$static._isRep, this$static._state, 0);
-                    this$static._state = this$static._state < 7?7:10;
-                    $Encode_0(this$static._lenEncoder, this$static._rangeEncoder, len - 2, posState);
-                    pos -= 4;
-                    posSlot = GetPosSlot(pos);
-                    lenToPosState = GetLenToPosState(len);
-                    $Encode_2(this$static._posSlotEncoder[lenToPosState], this$static._rangeEncoder, posSlot);
-                    if (posSlot >= 4) {
-                        footerBits = (posSlot >> 1) - 1;
-                        baseVal = (2 | posSlot & 1) << footerBits;
-                        posReduced = pos - baseVal;
-                        if (posSlot < 14) {
-                            ReverseEncode(this$static._posEncoders, baseVal - posSlot - 1, this$static._rangeEncoder, footerBits, posReduced);
-                        } else {
-                            $EncodeDirectBits(this$static._rangeEncoder, posReduced >> 4, footerBits - 4);
-                            $ReverseEncode(this$static._posAlignEncoder, this$static._rangeEncoder, posReduced & 15);
-                            ++this$static._alignPriceCount;
-                        }
-                    }
-                    distance = pos;
-                    for (i = 3; i >= 1; --i) {
-                        this$static._repDistances[i] = this$static._repDistances[i - 1];
-                    }
-                    this$static._repDistances[0] = distance;
-                    ++this$static._matchPriceCount;
-                }
-                this$static._previousByte = $GetIndexByte(this$static._matchFinder, len - 1 - this$static._additionalOffset);
-            }
-            this$static._additionalOffset -= len;
-            this$static.nowPos64 = add(this$static.nowPos64, fromInt(len));
-            if (!this$static._additionalOffset) {
-                if (this$static._matchPriceCount >= 128) {
-                    $FillDistancesPrices(this$static);
-                }
-                if (this$static._alignPriceCount >= 16) {
-                    $FillAlignPrices(this$static);
-                }
-                inSize[0] = this$static.nowPos64;
-                outSize[0] = $GetProcessedSizeAdd(this$static._rangeEncoder);
-                if (!$GetNumAvailableBytes(this$static._matchFinder)) {
-                    $Flush(this$static, lowBits_0(this$static.nowPos64));
-                    return;
-                }
-                if (compare(sub(this$static.nowPos64, progressPosValuePrev), [4096, 0]) >= 0) {
-                    this$static._finished = 0;
-                    finished[0] = 0;
-                    return;
-                }
-            }
-        }
-    }
-    
-    function $Create_2(this$static) {
-        var bt, numHashBytes;
-        if (!this$static._matchFinder) {
-            bt = {};
-            numHashBytes = 4;
-            if (!this$static._matchFinderType) {
-                numHashBytes = 2;
-            }
-            $SetType(bt, numHashBytes);
-            this$static._matchFinder = bt;
-        }
-        $Create_1(this$static._literalEncoder, this$static._numLiteralPosStateBits, this$static._numLiteralContextBits);
-        if (this$static._dictionarySize == this$static._dictionarySizePrev && this$static._numFastBytesPrev == this$static._numFastBytes) {
-            return;
-        }
-        $Create_3(this$static._matchFinder, this$static._dictionarySize, 4096, this$static._numFastBytes, 274);
-        this$static._dictionarySizePrev = this$static._dictionarySize;
-        this$static._numFastBytesPrev = this$static._numFastBytes;
-    }
-    
-    function $Encoder(this$static) {
-        var i;
-        this$static._repDistances = initDim(4);
-        this$static._optimum = [];
-        this$static._rangeEncoder = {};
-        this$static._isMatch = initDim(192);
-        this$static._isRep = initDim(12);
-        this$static._isRepG0 = initDim(12);
-        this$static._isRepG1 = initDim(12);
-        this$static._isRepG2 = initDim(12);
-        this$static._isRep0Long = initDim(192);
-        this$static._posSlotEncoder = [];
-        this$static._posEncoders = initDim(114);
-        this$static._posAlignEncoder = $BitTreeEncoder({}, 4);
-        this$static._lenEncoder = $Encoder$LenPriceTableEncoder({});
-        this$static._repMatchLenEncoder = $Encoder$LenPriceTableEncoder({});
-        this$static._literalEncoder = {};
-        this$static._matchDistances = [];
-        this$static._posSlotPrices = [];
-        this$static._distancesPrices = [];
-        this$static._alignPrices = initDim(16);
-        this$static.reps = initDim(4);
-        this$static.repLens = initDim(4);
-        this$static.processedInSize = [P0_longLit];
-        this$static.processedOutSize = [P0_longLit];
-        this$static.finished = [0];
-        this$static.properties = initDim(5);
-        this$static.tempPrices = initDim(128);
-        this$static._longestMatchLength = 0;
-        this$static._matchFinderType = 1;
-        this$static._numDistancePairs = 0;
-        this$static._numFastBytesPrev = -1;
-        this$static.backRes = 0;
-        for (i = 0; i < 4096; ++i) {
-            this$static._optimum[i] = {};
-        }
-        for (i = 0; i < 4; ++i) {
-            this$static._posSlotEncoder[i] = $BitTreeEncoder({}, 6);
-        }
-        return this$static;
-    }
-    
-    function $FillAlignPrices(this$static) {
-        for (var i = 0; i < 16; ++i) {
-            this$static._alignPrices[i] = $ReverseGetPrice(this$static._posAlignEncoder, i);
-        }
-        this$static._alignPriceCount = 0;
-    }
-    
-    function $FillDistancesPrices(this$static) {
-        var baseVal, encoder, footerBits, i, lenToPosState, posSlot, st, st2;
-        for (i = 4; i < 128; ++i) {
-            posSlot = GetPosSlot(i);
-            footerBits = (posSlot >> 1) - 1;
-            baseVal = (2 | posSlot & 1) << footerBits;
-            this$static.tempPrices[i] = ReverseGetPrice(this$static._posEncoders, baseVal - posSlot - 1, footerBits, i - baseVal);
-        }
-        for (lenToPosState = 0; lenToPosState < 4; ++lenToPosState) {
-            encoder = this$static._posSlotEncoder[lenToPosState];
-            st = lenToPosState << 6;
-            for (posSlot = 0; posSlot < this$static._distTableSize; ++posSlot) {
-                this$static._posSlotPrices[st + posSlot] = $GetPrice_1(encoder, posSlot);
-            }
-            for (posSlot = 14; posSlot < this$static._distTableSize; ++posSlot) {
-                this$static._posSlotPrices[st + posSlot] += (posSlot >> 1) - 1 - 4 << 6;
-            }
-            st2 = lenToPosState * 128;
-            for (i = 0; i < 4; ++i) {
-                this$static._distancesPrices[st2 + i] = this$static._posSlotPrices[st + i];
-            }
-            for (; i < 128; ++i) {
-                this$static._distancesPrices[st2 + i] = this$static._posSlotPrices[st + GetPosSlot(i)] + this$static.tempPrices[i];
-            }
-        }
-        this$static._matchPriceCount = 0;
-    }
-    
-    function $Flush(this$static, nowPos) {
-        $ReleaseMFStream(this$static);
-        $WriteEndMarker(this$static, nowPos & this$static._posStateMask);
-        for (var i = 0; i < 5; ++i) {
-            $ShiftLow(this$static._rangeEncoder);
-        }
-    }
-    
-    function $GetOptimum(this$static, position) {
-        var cur, curAnd1Price, curAndLenCharPrice, curAndLenPrice, curBack, curPrice, currentByte, distance, i, len, lenEnd, lenMain, lenRes, lenTest, lenTest2, lenTestTemp, matchByte, matchPrice, newLen, nextIsChar, nextMatchPrice, nextOptimum, nextRepMatchPrice, normalMatchPrice, numAvailableBytes, numAvailableBytesFull, numDistancePairs, offs, offset, opt, optimum, pos, posPrev, posState, posStateNext, price_4, repIndex, repLen, repMatchPrice, repMaxIndex, shortRepPrice, startLen, state, state2, t, price, price_0, price_1, price_2, price_3;
-        if (this$static._optimumEndIndex != this$static._optimumCurrentIndex) {
-            lenRes = this$static._optimum[this$static._optimumCurrentIndex].PosPrev - this$static._optimumCurrentIndex;
-            this$static.backRes = this$static._optimum[this$static._optimumCurrentIndex].BackPrev;
-            this$static._optimumCurrentIndex = this$static._optimum[this$static._optimumCurrentIndex].PosPrev;
-            return lenRes;
-        }
-        this$static._optimumCurrentIndex = this$static._optimumEndIndex = 0;
-        if (this$static._longestMatchWasFound) {
-            lenMain = this$static._longestMatchLength;
-            this$static._longestMatchWasFound = 0;
-        } else {
-            lenMain = $ReadMatchDistances(this$static);
-        }
-        numDistancePairs = this$static._numDistancePairs;
-        numAvailableBytes = $GetNumAvailableBytes(this$static._matchFinder) + 1;
-        if (numAvailableBytes < 2) {
-            this$static.backRes = -1;
-            return 1;
-        }
-        if (numAvailableBytes > 273) {
-            numAvailableBytes = 273;
-        }
-        repMaxIndex = 0;
-        for (i = 0; i < 4; ++i) {
-            this$static.reps[i] = this$static._repDistances[i];
-            this$static.repLens[i] = $GetMatchLen(this$static._matchFinder, -1, this$static.reps[i], 273);
-            if (this$static.repLens[i] > this$static.repLens[repMaxIndex]) {
-                repMaxIndex = i;
-            }
-        }
-        if (this$static.repLens[repMaxIndex] >= this$static._numFastBytes) {
-            this$static.backRes = repMaxIndex;
-            lenRes = this$static.repLens[repMaxIndex];
-            $MovePos(this$static, lenRes - 1);
-            return lenRes;
-        }
-        if (lenMain >= this$static._numFastBytes) {
-            this$static.backRes = this$static._matchDistances[numDistancePairs - 1] + 4;
-            $MovePos(this$static, lenMain - 1);
-            return lenMain;
-        }
-        currentByte = $GetIndexByte(this$static._matchFinder, -1);
-        matchByte = $GetIndexByte(this$static._matchFinder, -this$static._repDistances[0] - 1 - 1);
-        if (lenMain < 2 && currentByte != matchByte && this$static.repLens[repMaxIndex] < 2) {
-            this$static.backRes = -1;
-            return 1;
-        }
-        this$static._optimum[0].State = this$static._state;
-        posState = position & this$static._posStateMask;
-        this$static._optimum[1].Price = ProbPrices[this$static._isMatch[(this$static._state << 4) + posState] >>> 2] + $GetPrice_0($GetSubCoder(this$static._literalEncoder, position, this$static._previousByte), this$static._state >= 7, matchByte, currentByte);
-        $MakeAsChar(this$static._optimum[1]);
-        matchPrice = ProbPrices[2048 - this$static._isMatch[(this$static._state << 4) + posState] >>> 2];
-        repMatchPrice = matchPrice + ProbPrices[2048 - this$static._isRep[this$static._state] >>> 2];
-        if (matchByte == currentByte) {
-            shortRepPrice = repMatchPrice + $GetRepLen1Price(this$static, this$static._state, posState);
-            if (shortRepPrice < this$static._optimum[1].Price) {
-                this$static._optimum[1].Price = shortRepPrice;
-                $MakeAsShortRep(this$static._optimum[1]);
-            }
-        }
-        lenEnd = lenMain >= this$static.repLens[repMaxIndex]?lenMain:this$static.repLens[repMaxIndex];
-        if (lenEnd < 2) {
-            this$static.backRes = this$static._optimum[1].BackPrev;
-            return 1;
-        }
-        this$static._optimum[1].PosPrev = 0;
-        this$static._optimum[0].Backs0 = this$static.reps[0];
-        this$static._optimum[0].Backs1 = this$static.reps[1];
-        this$static._optimum[0].Backs2 = this$static.reps[2];
-        this$static._optimum[0].Backs3 = this$static.reps[3];
-        len = lenEnd;
-        do {
-            this$static._optimum[len--].Price = 268435455;
-        } while (len >= 2);
-        for (i = 0; i < 4; ++i) {
-            repLen = this$static.repLens[i];
-            if (repLen < 2) {
-                continue;
-            }
-            price_4 = repMatchPrice + $GetPureRepPrice(this$static, i, this$static._state, posState);
-            do {
-                curAndLenPrice = price_4 + $GetPrice(this$static._repMatchLenEncoder, repLen - 2, posState);
-                optimum = this$static._optimum[repLen];
-                if (curAndLenPrice < optimum.Price) {
-                    optimum.Price = curAndLenPrice;
-                    optimum.PosPrev = 0;
-                    optimum.BackPrev = i;
-                    optimum.Prev1IsChar = 0;
-                }
-            } while (--repLen >= 2);
-        }
-        normalMatchPrice = matchPrice + ProbPrices[this$static._isRep[this$static._state] >>> 2];
-        len = this$static.repLens[0] >= 2?this$static.repLens[0] + 1:2;
-        if (len <= lenMain) {
-            offs = 0;
-            while (len > this$static._matchDistances[offs]) {
-                offs += 2;
-            }
-            for (;; ++len) {
-                distance = this$static._matchDistances[offs + 1];
-                curAndLenPrice = normalMatchPrice + $GetPosLenPrice(this$static, distance, len, posState);
-                optimum = this$static._optimum[len];
-                if (curAndLenPrice < optimum.Price) {
-                    optimum.Price = curAndLenPrice;
-                    optimum.PosPrev = 0;
-                    optimum.BackPrev = distance + 4;
-                    optimum.Prev1IsChar = 0;
-                }
-                if (len == this$static._matchDistances[offs]) {
-                    offs += 2;
-                    if (offs == numDistancePairs) {
-                        break;
-                    }
-                }
-            }
-        }
-        cur = 0;
-        while (1) {
-            ++cur;
-            if (cur == lenEnd) {
-                return $Backward(this$static, cur);
-            }
-            newLen = $ReadMatchDistances(this$static);
-            numDistancePairs = this$static._numDistancePairs;
-            if (newLen >= this$static._numFastBytes) {
-                this$static._longestMatchLength = newLen;
-                this$static._longestMatchWasFound = 1;
-                return $Backward(this$static, cur);
-            }
-            ++position;
-            posPrev = this$static._optimum[cur].PosPrev;
-            if (this$static._optimum[cur].Prev1IsChar) {
-                --posPrev;
-                if (this$static._optimum[cur].Prev2) {
-                    state = this$static._optimum[this$static._optimum[cur].PosPrev2].State;
-                    if (this$static._optimum[cur].BackPrev2 < 4) {
-                        state = (state < 7) ? 8 : 11;
-                    } else {
-                        state = (state < 7) ? 7 : 10;
-                    }
-                } else {
-                    state = this$static._optimum[posPrev].State;
-                }
-                state = StateUpdateChar(state);
-            } else {
-                state = this$static._optimum[posPrev].State;
-            }
-            if (posPrev == cur - 1) {
-                if (!this$static._optimum[cur].BackPrev) {
-                    state = state < 7?9:11;
-                } else {
-                    state = StateUpdateChar(state);
-                }
-            } else {
-                if (this$static._optimum[cur].Prev1IsChar && this$static._optimum[cur].Prev2) {
-                    posPrev = this$static._optimum[cur].PosPrev2;
-                    pos = this$static._optimum[cur].BackPrev2;
-                    state = state < 7?8:11;
-                } else {
-                    pos = this$static._optimum[cur].BackPrev;
-                    if (pos < 4) {
-                        state = state < 7?8:11;
-                    } else {
-                        state = state < 7?7:10;
-                    }
-                }
-                opt = this$static._optimum[posPrev];
-                if (pos < 4) {
-                    if (!pos) {
-                        this$static.reps[0] = opt.Backs0;
-                        this$static.reps[1] = opt.Backs1;
-                        this$static.reps[2] = opt.Backs2;
-                        this$static.reps[3] = opt.Backs3;
-                    } else if (pos == 1) {
-                        this$static.reps[0] = opt.Backs1;
-                        this$static.reps[1] = opt.Backs0;
-                        this$static.reps[2] = opt.Backs2;
-                        this$static.reps[3] = opt.Backs3;
-                    } else if (pos == 2) {
-                        this$static.reps[0] = opt.Backs2;
-                        this$static.reps[1] = opt.Backs0;
-                        this$static.reps[2] = opt.Backs1;
-                        this$static.reps[3] = opt.Backs3;
-                    } else {
-                        this$static.reps[0] = opt.Backs3;
-                        this$static.reps[1] = opt.Backs0;
-                        this$static.reps[2] = opt.Backs1;
-                        this$static.reps[3] = opt.Backs2;
-                    }
-                } else {
-                    this$static.reps[0] = pos - 4;
-                    this$static.reps[1] = opt.Backs0;
-                    this$static.reps[2] = opt.Backs1;
-                    this$static.reps[3] = opt.Backs2;
-                }
-            }
-            this$static._optimum[cur].State = state;
-            this$static._optimum[cur].Backs0 = this$static.reps[0];
-            this$static._optimum[cur].Backs1 = this$static.reps[1];
-            this$static._optimum[cur].Backs2 = this$static.reps[2];
-            this$static._optimum[cur].Backs3 = this$static.reps[3];
-            curPrice = this$static._optimum[cur].Price;
-            currentByte = $GetIndexByte(this$static._matchFinder, -1);
-            matchByte = $GetIndexByte(this$static._matchFinder, -this$static.reps[0] - 1 - 1);
-            posState = position & this$static._posStateMask;
-            curAnd1Price = curPrice + ProbPrices[this$static._isMatch[(state << 4) + posState] >>> 2] + $GetPrice_0($GetSubCoder(this$static._literalEncoder, position, $GetIndexByte(this$static._matchFinder, -2)), state >= 7, matchByte, currentByte);
-            nextOptimum = this$static._optimum[cur + 1];
-            nextIsChar = 0;
-            if (curAnd1Price < nextOptimum.Price) {
-                nextOptimum.Price = curAnd1Price;
-                nextOptimum.PosPrev = cur;
-                nextOptimum.BackPrev = -1;
-                nextOptimum.Prev1IsChar = 0;
-                nextIsChar = 1;
-            }
-            matchPrice = curPrice + ProbPrices[2048 - this$static._isMatch[(state << 4) + posState] >>> 2];
-            repMatchPrice = matchPrice + ProbPrices[2048 - this$static._isRep[state] >>> 2];
-            if (matchByte == currentByte && !(nextOptimum.PosPrev < cur && !nextOptimum.BackPrev)) {
-                shortRepPrice = repMatchPrice + (ProbPrices[this$static._isRepG0[state] >>> 2] + ProbPrices[this$static._isRep0Long[(state << 4) + posState] >>> 2]);
-                if (shortRepPrice <= nextOptimum.Price) {
-                    nextOptimum.Price = shortRepPrice;
-                    nextOptimum.PosPrev = cur;
-                    nextOptimum.BackPrev = 0;
-                    nextOptimum.Prev1IsChar = 0;
-                    nextIsChar = 1;
-                }
-            }
-            numAvailableBytesFull = $GetNumAvailableBytes(this$static._matchFinder) + 1;
-            numAvailableBytesFull = 4095 - cur < numAvailableBytesFull?4095 - cur:numAvailableBytesFull;
-            numAvailableBytes = numAvailableBytesFull;
-            if (numAvailableBytes < 2) {
-                continue;
-            }
-            if (numAvailableBytes > this$static._numFastBytes) {
-                numAvailableBytes = this$static._numFastBytes;
-            }
-            if (!nextIsChar && matchByte != currentByte) {
-                t = Math.min(numAvailableBytesFull - 1, this$static._numFastBytes);
-                lenTest2 = $GetMatchLen(this$static._matchFinder, 0, this$static.reps[0], t);
-                if (lenTest2 >= 2) {
-                    state2 = StateUpdateChar(state);
-                    posStateNext = position + 1 & this$static._posStateMask;
-                    nextRepMatchPrice = curAnd1Price + ProbPrices[2048 - this$static._isMatch[(state2 << 4) + posStateNext] >>> 2] + ProbPrices[2048 - this$static._isRep[state2] >>> 2];
-                    offset = cur + 1 + lenTest2;
-                    while (lenEnd < offset) {
-                        this$static._optimum[++lenEnd].Price = 268435455;
-                    }
-                    curAndLenPrice = nextRepMatchPrice + (price = $GetPrice(this$static._repMatchLenEncoder, lenTest2 - 2, posStateNext) , price + $GetPureRepPrice(this$static, 0, state2, posStateNext));
-                    optimum = this$static._optimum[offset];
-                    if (curAndLenPrice < optimum.Price) {
-                        optimum.Price = curAndLenPrice;
-                        optimum.PosPrev = cur + 1;
-                        optimum.BackPrev = 0;
-                        optimum.Prev1IsChar = 1;
-                        optimum.Prev2 = 0;
-                    }
-                }
-            }
-            startLen = 2;
-            for (repIndex = 0; repIndex < 4; ++repIndex) {
-                lenTest = $GetMatchLen(this$static._matchFinder, -1, this$static.reps[repIndex], numAvailableBytes);
-                if (lenTest < 2) {
-                    continue;
-                }
-                lenTestTemp = lenTest;
-                do {
-                    while (lenEnd < cur + lenTest) {
-                        this$static._optimum[++lenEnd].Price = 268435455;
-                    }
-                    curAndLenPrice = repMatchPrice + (price_0 = $GetPrice(this$static._repMatchLenEncoder, lenTest - 2, posState) , price_0 + $GetPureRepPrice(this$static, repIndex, state, posState));
-                    optimum = this$static._optimum[cur + lenTest];
-                    if (curAndLenPrice < optimum.Price) {
-                        optimum.Price = curAndLenPrice;
-                        optimum.PosPrev = cur;
-                        optimum.BackPrev = repIndex;
-                        optimum.Prev1IsChar = 0;
-                    }
-                } while (--lenTest >= 2);
-                lenTest = lenTestTemp;
-                if (!repIndex) {
-                    startLen = lenTest + 1;
-                }
-                if (lenTest < numAvailableBytesFull) {
-                    t = Math.min(numAvailableBytesFull - 1 - lenTest, this$static._numFastBytes);
-                    lenTest2 = $GetMatchLen(this$static._matchFinder, lenTest, this$static.reps[repIndex], t);
-                    if (lenTest2 >= 2) {
-                        state2 = state < 7?8:11;
-                        posStateNext = position + lenTest & this$static._posStateMask;
-                        curAndLenCharPrice = repMatchPrice + (price_1 = $GetPrice(this$static._repMatchLenEncoder, lenTest - 2, posState) , price_1 + $GetPureRepPrice(this$static, repIndex, state, posState)) + ProbPrices[this$static._isMatch[(state2 << 4) + posStateNext] >>> 2] + $GetPrice_0($GetSubCoder(this$static._literalEncoder, position + lenTest, $GetIndexByte(this$static._matchFinder, lenTest - 1 - 1)), 1, $GetIndexByte(this$static._matchFinder, lenTest - 1 - (this$static.reps[repIndex] + 1)), $GetIndexByte(this$static._matchFinder, lenTest - 1));
-                        state2 = StateUpdateChar(state2);
-                        posStateNext = position + lenTest + 1 & this$static._posStateMask;
-                        nextMatchPrice = curAndLenCharPrice + ProbPrices[2048 - this$static._isMatch[(state2 << 4) + posStateNext] >>> 2];
-                        nextRepMatchPrice = nextMatchPrice + ProbPrices[2048 - this$static._isRep[state2] >>> 2];
-                        offset = lenTest + 1 + lenTest2;
-                        while (lenEnd < cur + offset) {
-                            this$static._optimum[++lenEnd].Price = 268435455;
-                        }
-                        curAndLenPrice = nextRepMatchPrice + (price_2 = $GetPrice(this$static._repMatchLenEncoder, lenTest2 - 2, posStateNext) , price_2 + $GetPureRepPrice(this$static, 0, state2, posStateNext));
-                        optimum = this$static._optimum[cur + offset];
-                        if (curAndLenPrice < optimum.Price) {
-                            optimum.Price = curAndLenPrice;
-                            optimum.PosPrev = cur + lenTest + 1;
-                            optimum.BackPrev = 0;
-                            optimum.Prev1IsChar = 1;
-                            optimum.Prev2 = 1;
-                            optimum.PosPrev2 = cur;
-                            optimum.BackPrev2 = repIndex;
-                        }
-                    }
-                }
-            }
-            if (newLen > numAvailableBytes) {
-                newLen = numAvailableBytes;
-                for (numDistancePairs = 0; newLen > this$static._matchDistances[numDistancePairs]; numDistancePairs += 2) {}
-                this$static._matchDistances[numDistancePairs] = newLen;
-                numDistancePairs += 2;
-            }
-            if (newLen >= startLen) {
-            normalMatchPrice = matchPrice + ProbPrices[this$static._isRep[state] >>> 2];
-            while (lenEnd < cur + newLen) {
-                this$static._optimum[++lenEnd].Price = 268435455;
-            }
-            offs = 0;
-            while (startLen > this$static._matchDistances[offs]) {
-                offs += 2;
-            }
-            for (lenTest = startLen;; ++lenTest) {
-                curBack = this$static._matchDistances[offs + 1];
-                curAndLenPrice = normalMatchPrice + $GetPosLenPrice(this$static, curBack, lenTest, posState);
-                optimum = this$static._optimum[cur + lenTest];
-                if (curAndLenPrice < optimum.Price) {
-                    optimum.Price = curAndLenPrice;
-                    optimum.PosPrev = cur;
-                    optimum.BackPrev = curBack + 4;
-                    optimum.Prev1IsChar = 0;
-                }
-                if (lenTest == this$static._matchDistances[offs]) {
-                    if (lenTest < numAvailableBytesFull) {
-                        t = Math.min(numAvailableBytesFull - 1 - lenTest, this$static._numFastBytes);
-                        lenTest2 = $GetMatchLen(this$static._matchFinder, lenTest, curBack, t);
-                        if (lenTest2 >= 2) {
-                            state2 = state < 7?7:10;
-                            posStateNext = position + lenTest & this$static._posStateMask;
-                            curAndLenCharPrice = curAndLenPrice + ProbPrices[this$static._isMatch[(state2 << 4) + posStateNext] >>> 2] + $GetPrice_0($GetSubCoder(this$static._literalEncoder, position + lenTest, $GetIndexByte(this$static._matchFinder, lenTest - 1 - 1)), 1, $GetIndexByte(this$static._matchFinder, lenTest - (curBack + 1) - 1), $GetIndexByte(this$static._matchFinder, lenTest - 1));
-                            state2 = StateUpdateChar(state2);
-                            posStateNext = position + lenTest + 1 & this$static._posStateMask;
-                            nextMatchPrice = curAndLenCharPrice + ProbPrices[2048 - this$static._isMatch[(state2 << 4) + posStateNext] >>> 2];
-                            nextRepMatchPrice = nextMatchPrice + ProbPrices[2048 - this$static._isRep[state2] >>> 2];
-                            offset = lenTest + 1 + lenTest2;
-                            while (lenEnd < cur + offset) {
-                                this$static._optimum[++lenEnd].Price = 268435455;
-                            }
-                            curAndLenPrice = nextRepMatchPrice + (price_3 = $GetPrice(this$static._repMatchLenEncoder, lenTest2 - 2, posStateNext) , price_3 + $GetPureRepPrice(this$static, 0, state2, posStateNext));
-                            optimum = this$static._optimum[cur + offset];
-                            if (curAndLenPrice < optimum.Price) {
-                                optimum.Price = curAndLenPrice;
-                                optimum.PosPrev = cur + lenTest + 1;
-                                optimum.BackPrev = 0;
-                                optimum.Prev1IsChar = 1;
-                                optimum.Prev2 = 1;
-                                optimum.PosPrev2 = cur;
-                                optimum.BackPrev2 = curBack + 4;
-                            }
-                        }
-                    }
-                    offs += 2;
-                    if (offs == numDistancePairs)
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    
-    function $GetPosLenPrice(this$static, pos, len, posState) {
-        var price, lenToPosState = GetLenToPosState(len);
-        if (pos < 128) {
-            price = this$static._distancesPrices[lenToPosState * 128 + pos];
-        } else {
-            price = this$static._posSlotPrices[(lenToPosState << 6) + GetPosSlot2(pos)] + this$static._alignPrices[pos & 15];
-        }
-        return price + $GetPrice(this$static._lenEncoder, len - 2, posState);
-    }
-    
-    function $GetPureRepPrice(this$static, repIndex, state, posState) {
-        var price;
-        if (!repIndex) {
-            price = ProbPrices[this$static._isRepG0[state] >>> 2];
-            price += ProbPrices[2048 - this$static._isRep0Long[(state << 4) + posState] >>> 2];
-        } else {
-            price = ProbPrices[2048 - this$static._isRepG0[state] >>> 2];
-            if (repIndex == 1) {
-                price += ProbPrices[this$static._isRepG1[state] >>> 2];
-            } else {
-                price += ProbPrices[2048 - this$static._isRepG1[state] >>> 2];
-                price += GetPrice(this$static._isRepG2[state], repIndex - 2);
-            }
-        }
-        return price;
-    }
-    
-    function $GetRepLen1Price(this$static, state, posState) {
-        return ProbPrices[this$static._isRepG0[state] >>> 2] + ProbPrices[this$static._isRep0Long[(state << 4) + posState] >>> 2];
-    }
-    
-    function $Init_4(this$static) {
-        $BaseInit(this$static);
-        $Init_9(this$static._rangeEncoder);
-        InitBitModels(this$static._isMatch);
-        InitBitModels(this$static._isRep0Long);
-        InitBitModels(this$static._isRep);
-        InitBitModels(this$static._isRepG0);
-        InitBitModels(this$static._isRepG1);
-        InitBitModels(this$static._isRepG2);
-        InitBitModels(this$static._posEncoders);
-        $Init_3(this$static._literalEncoder);
-        for (var i = 0; i < 4; ++i) {
-            InitBitModels(this$static._posSlotEncoder[i].Models);
-        }
-        $Init_2(this$static._lenEncoder, 1 << this$static._posStateBits);
-        $Init_2(this$static._repMatchLenEncoder, 1 << this$static._posStateBits);
-        InitBitModels(this$static._posAlignEncoder.Models);
-        this$static._longestMatchWasFound = 0;
-        this$static._optimumEndIndex = 0;
-        this$static._optimumCurrentIndex = 0;
-        this$static._additionalOffset = 0;
-    }
-    
-    function $MovePos(this$static, num) {
-        if (num > 0) {
-            $Skip(this$static._matchFinder, num);
-            this$static._additionalOffset += num;
-        }
-    }
-    
-    function $ReadMatchDistances(this$static) {
-        var lenRes = 0;
-        this$static._numDistancePairs = $GetMatches(this$static._matchFinder, this$static._matchDistances);
-        if (this$static._numDistancePairs > 0) {
-            lenRes = this$static._matchDistances[this$static._numDistancePairs - 2];
-            if (lenRes == this$static._numFastBytes)
-            lenRes += $GetMatchLen(this$static._matchFinder, lenRes - 1, this$static._matchDistances[this$static._numDistancePairs - 1], 273 - lenRes);
-        }
-        ++this$static._additionalOffset;
-        return lenRes;
-    }
-    
-    function $ReleaseMFStream(this$static) {
-        if (this$static._matchFinder && this$static._needReleaseMFStream) {
-            this$static._matchFinder._stream = null;
-            this$static._needReleaseMFStream = 0;
-        }
-    }
-    
-    function $ReleaseStreams(this$static) {
-        $ReleaseMFStream(this$static);
-        this$static._rangeEncoder.Stream = null;
-    }
-    
-    function $SetDictionarySize_0(this$static, dictionarySize) {
-        this$static._dictionarySize = dictionarySize;
-        for (var dicLogSize = 0; dictionarySize > 1 << dicLogSize; ++dicLogSize) {}
-        this$static._distTableSize = dicLogSize * 2;
-    }
-    
-    function $SetMatchFinder(this$static, matchFinderIndex) {
-        var matchFinderIndexPrev = this$static._matchFinderType;
-        this$static._matchFinderType = matchFinderIndex;
-        if (this$static._matchFinder && matchFinderIndexPrev != this$static._matchFinderType) {
-            this$static._dictionarySizePrev = -1;
-            this$static._matchFinder = null;
-        }
-    }
-    
-    function $WriteCoderProperties(this$static, outStream) {
-        this$static.properties[0] = (this$static._posStateBits * 5 + this$static._numLiteralPosStateBits) * 9 + this$static._numLiteralContextBits << 24 >> 24;
-        for (var i = 0; i < 4; ++i) {
-            this$static.properties[1 + i] = this$static._dictionarySize >> 8 * i << 24 >> 24;
-        }
-        $write_0(outStream, this$static.properties, 0, 5);
-    }
-    
-    function $WriteEndMarker(this$static, posState) {
-        if (!this$static._writeEndMark) {
-            return;
-        }
-        $Encode_3(this$static._rangeEncoder, this$static._isMatch, (this$static._state << 4) + posState, 1);
-        $Encode_3(this$static._rangeEncoder, this$static._isRep, this$static._state, 0);
-        this$static._state = this$static._state < 7?7:10;
-        $Encode_0(this$static._lenEncoder, this$static._rangeEncoder, 0, posState);
-        var lenToPosState = GetLenToPosState(2);
-        $Encode_2(this$static._posSlotEncoder[lenToPosState], this$static._rangeEncoder, 63);
-        $EncodeDirectBits(this$static._rangeEncoder, 67108863, 26);
-        $ReverseEncode(this$static._posAlignEncoder, this$static._rangeEncoder, 15);
-    }
-    
-    function GetPosSlot(pos) {
-        if (pos < 2048) {
-            return g_FastPos[pos];
-        }
-        if (pos < 2097152) {
-            return g_FastPos[pos >> 10] + 20;
-        }
-        return g_FastPos[pos >> 20] + 40;
-    }
-    
-    function GetPosSlot2(pos) {
-        if (pos < 131072) {
-            return g_FastPos[pos >> 6] + 12;
-        }
-        if (pos < 134217728) {
-            return g_FastPos[pos >> 16] + 32;
-        }
-        return g_FastPos[pos >> 26] + 52;
-    }
-    
-    function $Encode(this$static, rangeEncoder, symbol, posState) {
-        if (symbol < 8) {
-            $Encode_3(rangeEncoder, this$static._choice, 0, 0);
-            $Encode_2(this$static._lowCoder[posState], rangeEncoder, symbol);
-        } else {
-            symbol -= 8;
-            $Encode_3(rangeEncoder, this$static._choice, 0, 1);
-            if (symbol < 8) {
-                $Encode_3(rangeEncoder, this$static._choice, 1, 0);
-                $Encode_2(this$static._midCoder[posState], rangeEncoder, symbol);
-            } else {
-                $Encode_3(rangeEncoder, this$static._choice, 1, 1);
-                $Encode_2(this$static._highCoder, rangeEncoder, symbol - 8);
-            }
-        }
-    }
-    
-    function $Encoder$LenEncoder(this$static) {
-        this$static._choice = initDim(2);
-        this$static._lowCoder = initDim(16);
-        this$static._midCoder = initDim(16);
-        this$static._highCoder = $BitTreeEncoder({}, 8);
-        for (var posState = 0; posState < 16; ++posState) {
-            this$static._lowCoder[posState] = $BitTreeEncoder({}, 3);
-            this$static._midCoder[posState] = $BitTreeEncoder({}, 3);
-        }
-        return this$static;
-    }
-    
-    function $Init_2(this$static, numPosStates) {
-        InitBitModels(this$static._choice);
-        for (var posState = 0; posState < numPosStates; ++posState) {
-            InitBitModels(this$static._lowCoder[posState].Models);
-            InitBitModels(this$static._midCoder[posState].Models);
-        }
-        InitBitModels(this$static._highCoder.Models);
-    }
-    
-    function $SetPrices(this$static, posState, numSymbols, prices, st) {
-        var a0, a1, b0, b1, i;
-        a0 = ProbPrices[this$static._choice[0] >>> 2];
-        a1 = ProbPrices[2048 - this$static._choice[0] >>> 2];
-        b0 = a1 + ProbPrices[this$static._choice[1] >>> 2];
-        b1 = a1 + ProbPrices[2048 - this$static._choice[1] >>> 2];
-        i = 0;
-        for (i = 0; i < 8; ++i) {
-            if (i >= numSymbols)
-            return;
-            prices[st + i] = a0 + $GetPrice_1(this$static._lowCoder[posState], i);
-        }
-        for (; i < 16; ++i) {
-            if (i >= numSymbols)
-            return;
-            prices[st + i] = b0 + $GetPrice_1(this$static._midCoder[posState], i - 8);
-        }
-        for (; i < numSymbols; ++i) {
-            prices[st + i] = b1 + $GetPrice_1(this$static._highCoder, i - 8 - 8);
-        }
-    }
-    
-    function $Encode_0(this$static, rangeEncoder, symbol, posState) {
-        $Encode(this$static, rangeEncoder, symbol, posState);
-        if (--this$static._counters[posState] == 0) {
-            $SetPrices(this$static, posState, this$static._tableSize, this$static._prices, posState * 272);
-            this$static._counters[posState] = this$static._tableSize;
-        }
-    }
-    
-    function $Encoder$LenPriceTableEncoder(this$static) {
-        $Encoder$LenEncoder(this$static);
-        this$static._prices = [];
-        this$static._counters = [];
-        return this$static;
-    }
-    
-    function $GetPrice(this$static, symbol, posState) {
-        return this$static._prices[posState * 272 + symbol];
-    }
-    
-    function $UpdateTables(this$static, numPosStates) {
-        for (var posState = 0; posState < numPosStates; ++posState) {
-            $SetPrices(this$static, posState, this$static._tableSize, this$static._prices, posState * 272);
-            this$static._counters[posState] = this$static._tableSize;
-        }
-    }
-    
-    function $Create_1(this$static, numPosBits, numPrevBits) {
-        var i, numStates;
-        if (this$static.m_Coders != null && this$static.m_NumPrevBits == numPrevBits && this$static.m_NumPosBits == numPosBits) {
-            return;
-        }
-        this$static.m_NumPosBits = numPosBits;
-        this$static.m_PosMask = (1 << numPosBits) - 1;
-        this$static.m_NumPrevBits = numPrevBits;
-        numStates = 1 << this$static.m_NumPrevBits + this$static.m_NumPosBits;
-        this$static.m_Coders = initDim(numStates);
-        for (i = 0; i < numStates; ++i) {
-            this$static.m_Coders[i] = $Encoder$LiteralEncoder$Encoder2({});
-        }
-    }
-    
-    function $GetSubCoder(this$static, pos, prevByte) {
-        return this$static.m_Coders[((pos & this$static.m_PosMask) << this$static.m_NumPrevBits) + ((prevByte & 255) >>> 8 - this$static.m_NumPrevBits)];
-    }
-    
-    function $Init_3(this$static) {
-        var i, numStates = 1 << this$static.m_NumPrevBits + this$static.m_NumPosBits;
-        for (i = 0; i < numStates; ++i) {
-            InitBitModels(this$static.m_Coders[i].m_Encoders);
-        }
-    }
-    
-    function $Encode_1(this$static, rangeEncoder, symbol) {
-        var bit, i, context = 1;
-        for (i = 7; i >= 0; --i) {
-            bit = symbol >> i & 1;
-            $Encode_3(rangeEncoder, this$static.m_Encoders, context, bit);
-            context = context << 1 | bit;
-        }
-    }
-    
-    function $EncodeMatched(this$static, rangeEncoder, matchByte, symbol) {
-        var bit, i, matchBit, state, same = 1, context = 1;
-        for (i = 7; i >= 0; --i) {
-            bit = symbol >> i & 1;
-            state = context;
-            if (same) {
-                matchBit = matchByte >> i & 1;
-                state += 1 + matchBit << 8;
-                same = matchBit == bit;
-            }
-            $Encode_3(rangeEncoder, this$static.m_Encoders, state, bit);
-            context = context << 1 | bit;
-        }
-    }
-    
-    function $Encoder$LiteralEncoder$Encoder2(this$static) {
-        this$static.m_Encoders = initDim(768);
-        return this$static;
-    }
-    
-    function $GetPrice_0(this$static, matchMode, matchByte, symbol) {
-        var bit, context = 1, i = 7, matchBit, price = 0;
-        if (matchMode) {
-            for (; i >= 0; --i) {
-                matchBit = matchByte >> i & 1;
-                bit = symbol >> i & 1;
-                price += GetPrice(this$static.m_Encoders[(1 + matchBit << 8) + context], bit);
-                context = context << 1 | bit;
-                if (matchBit != bit) {
-                    --i;
-                    break;
-                }
-            }
-        }
-        for (; i >= 0; --i) {
-            bit = symbol >> i & 1;
-            price += GetPrice(this$static.m_Encoders[context], bit);
-            context = context << 1 | bit;
-        }
-        return price;
-    }
-    
-    function $MakeAsChar(this$static) {
-        this$static.BackPrev = -1;
-        this$static.Prev1IsChar = 0;
-    }
-    
-    function $MakeAsShortRep(this$static) {
-        this$static.BackPrev = 0;
-        this$static.Prev1IsChar = 0;
-    }
-    /** ce */
-    /** ds */
-    function $BitTreeDecoder(this$static, numBitLevels) {
-        this$static.NumBitLevels = numBitLevels;
-        this$static.Models = initDim(1 << numBitLevels);
-        return this$static;
-    }
-    
-    function $Decode_0(this$static, rangeDecoder) {
-        var bitIndex, m = 1;
-        for (bitIndex = this$static.NumBitLevels; bitIndex != 0; --bitIndex) {
-            m = (m << 1) + $DecodeBit(rangeDecoder, this$static.Models, m);
-        }
-        return m - (1 << this$static.NumBitLevels);
-    }
-    
-    function $ReverseDecode(this$static, rangeDecoder) {
-        var bit, bitIndex, m = 1, symbol = 0;
-        for (bitIndex = 0; bitIndex < this$static.NumBitLevels; ++bitIndex) {
-            bit = $DecodeBit(rangeDecoder, this$static.Models, m);
-            m <<= 1;
-            m += bit;
-            symbol |= bit << bitIndex;
-        }
-        return symbol;
-    }
-    
-    function ReverseDecode(Models, startIndex, rangeDecoder, NumBitLevels) {
-        var bit, bitIndex, m = 1, symbol = 0;
-        for (bitIndex = 0; bitIndex < NumBitLevels; ++bitIndex) {
-            bit = $DecodeBit(rangeDecoder, Models, startIndex + m);
-            m <<= 1;
-            m += bit;
-            symbol |= bit << bitIndex;
-        }
-        return symbol;
-    }
-    /** de */
-    /** cs */
-    function $BitTreeEncoder(this$static, numBitLevels) {
-        this$static.NumBitLevels = numBitLevels;
-        this$static.Models = initDim(1 << numBitLevels);
-        return this$static;
-    }
-    
-    function $Encode_2(this$static, rangeEncoder, symbol) {
-        var bit, bitIndex, m = 1;
-        for (bitIndex = this$static.NumBitLevels; bitIndex != 0;) {
-            --bitIndex;
-            bit = symbol >>> bitIndex & 1;
-            $Encode_3(rangeEncoder, this$static.Models, m, bit);
-            m = m << 1 | bit;
-        }
-    }
-    
-    function $GetPrice_1(this$static, symbol) {
-        var bit, bitIndex, m = 1, price = 0;
-        for (bitIndex = this$static.NumBitLevels; bitIndex != 0;) {
-            --bitIndex;
-            bit = symbol >>> bitIndex & 1;
-            price += GetPrice(this$static.Models[m], bit);
-            m = (m << 1) + bit;
-        }
-        return price;
-    }
-    
-    function $ReverseEncode(this$static, rangeEncoder, symbol) {
-        var bit, i, m = 1;
-        for (i = 0; i < this$static.NumBitLevels; ++i) {
-            bit = symbol & 1;
-            $Encode_3(rangeEncoder, this$static.Models, m, bit);
-            m = m << 1 | bit;
-            symbol >>= 1;
-        }
-    }
-    
-    function $ReverseGetPrice(this$static, symbol) {
-        var bit, i, m = 1, price = 0;
-        for (i = this$static.NumBitLevels; i != 0; --i) {
-            bit = symbol & 1;
-            symbol >>>= 1;
-            price += GetPrice(this$static.Models[m], bit);
-            m = m << 1 | bit;
-        }
-        return price;
-    }
-    
-    function ReverseEncode(Models, startIndex, rangeEncoder, NumBitLevels, symbol) {
-        var bit, i, m = 1;
-        for (i = 0; i < NumBitLevels; ++i) {
-            bit = symbol & 1;
-            $Encode_3(rangeEncoder, Models, startIndex + m, bit);
-            m = m << 1 | bit;
-            symbol >>= 1;
-        }
-    }
-    
-    function ReverseGetPrice(Models, startIndex, NumBitLevels, symbol) {
-        var bit, i, m = 1, price = 0;
-        for (i = NumBitLevels; i != 0; --i) {
-            bit = symbol & 1;
-            symbol >>>= 1;
-            price += ProbPrices[((Models[startIndex + m] - bit ^ -bit) & 2047) >>> 2];
-            m = m << 1 | bit;
-        }
-        return price;
-    }
-    /** ce */
-    /** ds */
-    function $DecodeBit(this$static, probs, index) {
-        var newBound, prob = probs[index];
-        newBound = (this$static.Range >>> 11) * prob;
-        if ((this$static.Code ^ -2147483648) < (newBound ^ -2147483648)) {
-            this$static.Range = newBound;
-            probs[index] = prob + (2048 - prob >>> 5) << 16 >> 16;
-            if (!(this$static.Range & -16777216)) {
-                this$static.Code = this$static.Code << 8 | $read(this$static.Stream);
-                this$static.Range <<= 8;
-            }
-            return 0;
-        } else {
-            this$static.Range -= newBound;
-            this$static.Code -= newBound;
-            probs[index] = prob - (prob >>> 5) << 16 >> 16;
-            if (!(this$static.Range & -16777216)) {
-                this$static.Code = this$static.Code << 8 | $read(this$static.Stream);
-                this$static.Range <<= 8;
-            }
-            return 1;
-        }
-    }
-    
-    function $DecodeDirectBits(this$static, numTotalBits) {
-        var i, t, result = 0;
-        for (i = numTotalBits; i != 0; --i) {
-            this$static.Range >>>= 1;
-            t = this$static.Code - this$static.Range >>> 31;
-            this$static.Code -= this$static.Range & t - 1;
-            result = result << 1 | 1 - t;
-            if (!(this$static.Range & -16777216)) {
-                this$static.Code = this$static.Code << 8 | $read(this$static.Stream);
-                this$static.Range <<= 8;
-            }
-        }
-        return result;
-    }
-    
-    function $Init_8(this$static) {
-        this$static.Code = 0;
-        this$static.Range = -1;
-        for (var i = 0; i < 5; ++i) {
-            this$static.Code = this$static.Code << 8 | $read(this$static.Stream);
-        }
-    }
-    /** de */
-    
-    function InitBitModels(probs) {
-        for (var i = probs.length - 1; i >= 0; --i) {
-            probs[i] = 1024;
-        }
-    }
-    /** cs */
-    var ProbPrices = (function () {
-        var end, i, j, start, ProbPrices = [];
-        for (i = 8; i >= 0; --i) {
-            start = 1 << 9 - i - 1;
-            end = 1 << 9 - i;
-            for (j = start; j < end; ++j) {
-                ProbPrices[j] = (i << 6) + (end - j << 6 >>> 9 - i - 1);
-            }
-        }
-        return ProbPrices;
-    }());
-    
-    function $Encode_3(this$static, probs, index, symbol) {
-        var newBound, prob = probs[index];
-        newBound = (this$static.Range >>> 11) * prob;
-        if (!symbol) {
-            this$static.Range = newBound;
-            probs[index] = prob + (2048 - prob >>> 5) << 16 >> 16;
-        } else {
-            this$static.Low = add(this$static.Low, and(fromInt(newBound), [4294967295, 0]));
-            this$static.Range -= newBound;
-            probs[index] = prob - (prob >>> 5) << 16 >> 16;
-        }
-        if (!(this$static.Range & -16777216)) {
-            this$static.Range <<= 8;
-            $ShiftLow(this$static);
-        }
-    }
-    
-    function $EncodeDirectBits(this$static, v, numTotalBits) {
-        for (var i = numTotalBits - 1; i >= 0; --i) {
-            this$static.Range >>>= 1;
-            if ((v >>> i & 1) == 1) {
-                this$static.Low = add(this$static.Low, fromInt(this$static.Range));
-            }
-            if (!(this$static.Range & -16777216)) {
-                this$static.Range <<= 8;
-                $ShiftLow(this$static);
-            }
-        }
-    }
-    
-    function $GetProcessedSizeAdd(this$static) {
-        return add(add(fromInt(this$static._cacheSize), this$static._position), [4, 0]);
-    }
-    
-    function $Init_9(this$static) {
-        this$static._position = P0_longLit;
-        this$static.Low = P0_longLit;
-        this$static.Range = -1;
-        this$static._cacheSize = 1;
-        this$static._cache = 0;
-    }
-    
-    function $ShiftLow(this$static) {
-        var temp, LowHi = lowBits_0(shru(this$static.Low, 32));
-        if (LowHi != 0 || compare(this$static.Low, [4278190080, 0]) < 0) {
-            this$static._position = add(this$static._position, fromInt(this$static._cacheSize));
-            temp = this$static._cache;
-            do {
-                $write(this$static.Stream, temp + LowHi);
-                temp = 255;
-            } while (--this$static._cacheSize != 0);
-            this$static._cache = lowBits_0(this$static.Low) >>> 24;
-        }
-        ++this$static._cacheSize;
-        this$static.Low = shl(and(this$static.Low, [16777215, 0]), 8);
-    }
-    
-    function GetPrice(Prob, symbol) {
-        return ProbPrices[((Prob - symbol ^ -symbol) & 2047) >>> 2];
-    }
-    
-    /** ce */
-    /** ds */
-    function decode(utf) {
-        var i = 0, j = 0, x, y, z, l = utf.length, buf = [], charCodes = [];
-        for (; i < l; ++i, ++j) {
-            x = utf[i] & 255;
-            if (!(x & 128)) {
-                if (!x) {
-                    /// It appears that this is binary data, so it cannot be converted to a string, so just send it back.
-                    return utf;
-                }
-                charCodes[j] = x;
-            } else if ((x & 224) == 192) {
-                if (i + 1 >= l) {
-                    /// It appears that this is binary data, so it cannot be converted to a string, so just send it back.
-                    return utf;
-                }
-                y = utf[++i] & 255;
-                if ((y & 192) != 128) {
-                    /// It appears that this is binary data, so it cannot be converted to a string, so just send it back.
-                    return utf;
-                }
-                charCodes[j] = ((x & 31) << 6) | (y & 63);
-            } else if ((x & 240) == 224) {
-                if (i + 2 >= l) {
-                    /// It appears that this is binary data, so it cannot be converted to a string, so just send it back.
-                    return utf;
-                }
-                y = utf[++i] & 255;
-                if ((y & 192) != 128) {
-                    /// It appears that this is binary data, so it cannot be converted to a string, so just send it back.
-                    return utf;
-                }
-                z = utf[++i] & 255;
-                if ((z & 192) != 128) {
-                    /// It appears that this is binary data, so it cannot be converted to a string, so just send it back.
-                    return utf;
-                }
-                charCodes[j] = ((x & 15) << 12) | ((y & 63) << 6) | (z & 63);
-            } else {
-                /// It appears that this is binary data, so it cannot be converted to a string, so just send it back.
-                return utf;
-            }
-            if (j == 16383) {
-                buf.push(String.fromCharCode.apply(String, charCodes));
-                j = -1;
-            }
-        }
-        if (j > 0) {
-            charCodes.length = j;
-            buf.push(String.fromCharCode.apply(String, charCodes));
-        }
-        return buf.join("");
-    }
-    /** de */
-    /** cs */
-    function encode(s) {
-        var ch, chars = [], data, elen = 0, i, l = s.length;
-        /// Be able to handle binary arrays and buffers.
-        if (typeof s == "object") {
-            return s;
-        } else {
-            $getChars(s, 0, l, chars, 0);
-        }
-        /// Add extra spaces in the array to break up the unicode symbols.
-        for (i = 0; i < l; ++i) {
-            ch = chars[i];
-            if (ch >= 1 && ch <= 127) {
-                ++elen;
-            } else if (!ch || ch >= 128 && ch <= 2047) {
-                elen += 2;
-            } else {
-                elen += 3;
-            }
-        }
-        data = [];
-        elen = 0;
-        for (i = 0; i < l; ++i) {
-            ch = chars[i];
-            if (ch >= 1 && ch <= 127) {
-                data[elen++] = ch << 24 >> 24;
-            } else if (!ch || ch >= 128 && ch <= 2047) {
-                data[elen++] = (192 | ch >> 6 & 31) << 24 >> 24;
-                data[elen++] = (128 | ch & 63) << 24 >> 24;
-            } else {
-                data[elen++] = (224 | ch >> 12 & 15) << 24 >> 24;
-                data[elen++] = (128 | ch >> 6 & 63) << 24 >> 24;
-                data[elen++] = (128 | ch & 63) << 24 >> 24;
-            }
-        }
-        return data;
-    }
-    /** ce */
-    
-    function toDouble(a) {
-        return a[1] + a[0];
-    }
-    
-    /** cs */
-    function compress(str, mode, on_finish, on_progress) {
-        var this$static = {},
-            percent,
-            cbn, /// A callback number should be supplied instead of on_finish() if we are using Web Workers.
-            sync = typeof on_finish == "undefined" && typeof on_progress == "undefined";
-        
-        if (typeof on_finish != "function") {
-            cbn = on_finish;
-            on_finish = on_progress = 0;
-        }
-        
-        on_progress = on_progress || function(percent) {
-            if (typeof cbn == "undefined")
-                return;
-            
-            return update_progress(percent, cbn);
-        };
-        
-        on_finish = on_finish || function(res, err) {
-            if (typeof cbn == "undefined")
-                return;
-            
-            return postMessage({
-                action: action_compress,
-                cbn: cbn,
-                result: res,
-                error: err
-            });
-        };
-
-        if (sync) {
-            this$static.c = $LZMAByteArrayCompressor({}, encode(str), get_mode_obj(mode));
-            while ($processChunk(this$static.c.chunker));
-            return $toByteArray(this$static.c.output);
-        }
-        
-        try {
-            this$static.c = $LZMAByteArrayCompressor({}, encode(str), get_mode_obj(mode));
-            
-            on_progress(0);
-        } catch (err) {
-            return on_finish(null, err);
-        }
-        
-        function do_action() {
-            try {
-                var res, start = (new Date()).getTime();
-                
-                while ($processChunk(this$static.c.chunker)) {
-                    percent = toDouble(this$static.c.chunker.inBytesProcessed) / toDouble(this$static.c.length_0);
-                    /// If about 200 miliseconds have passed, update the progress.
-                    if ((new Date()).getTime() - start > 200) {
-                        on_progress(percent);
-                        
-                        wait(do_action, 0);
-                        return 0;
-                    }
-                }
-                
-                on_progress(1);
-                
-                res = $toByteArray(this$static.c.output);
-                
-                /// delay so we don’t catch errors from the on_finish handler
-                wait(on_finish.bind(null, res), 0);
-            } catch (err) {
-                on_finish(null, err);
-            }
-        }
-        
-        ///NOTE: We need to wait to make sure it is always async.
-        wait(do_action, 0);
-    }
-    /** ce */
-    /** ds */
-    function decompress(byte_arr, on_finish, on_progress) {
-        var this$static = {},
-            percent,
-            cbn, /// A callback number should be supplied instead of on_finish() if we are using Web Workers.
-            has_progress,
-            len,
-            sync = typeof on_finish == "undefined" && typeof on_progress == "undefined";
-
-        if (typeof on_finish != "function") {
-            cbn = on_finish;
-            on_finish = on_progress = 0;
-        }
-        
-        on_progress = on_progress || function(percent) {
-            if (typeof cbn == "undefined")
-                return;
-            
-            return update_progress(has_progress ? percent : -1, cbn);
-        };
-        
-        on_finish = on_finish || function(res, err) {
-            if (typeof cbn == "undefined")
-                return;
-            
-            return postMessage({
-                action: action_decompress,
-                cbn: cbn,
-                result: res,
-                error: err
-            });
-        };
-
-        if (sync) {
-            this$static.d = $LZMAByteArrayDecompressor({}, byte_arr);
-            while ($processChunk(this$static.d.chunker));
-            return decode($toByteArray(this$static.d.output));
-        }
-        
-        try {
-            this$static.d = $LZMAByteArrayDecompressor({}, byte_arr);
-            
-            len = toDouble(this$static.d.length_0);
-            
-            ///NOTE: If the data was created via a stream, it will not have a length value, and therefore we can't calculate the progress.
-            has_progress = len > -1;
-            
-            on_progress(0);
-        } catch (err) {
-            return on_finish(null, err);
-        }
-        
-        function do_action() {
-            try {
-                var res, i = 0, start = (new Date()).getTime();
-                while ($processChunk(this$static.d.chunker)) {
-                    if (++i % 1000 == 0 && (new Date()).getTime() - start > 200) {
-                        if (has_progress) {
-                            percent = toDouble(this$static.d.chunker.decoder.nowPos64) / len;
-                            /// If about 200 miliseconds have passed, update the progress.
-                            on_progress(percent);
-                        }
-                        
-                        ///NOTE: This allows other code to run, like the browser to update.
-                        wait(do_action, 0);
-                        return 0;
-                    }
-                }
-                
-                on_progress(1);
-                
-                res = decode($toByteArray(this$static.d.output));
-                
-                /// delay so we don’t catch errors from the on_finish handler
-                wait(on_finish.bind(null, res), 0);
-            } catch (err) {
-                on_finish(null, err);
-            }
-        }
-        
-        ///NOTE: We need to wait to make sure it is always async.
-        wait(do_action, 0);
-    }
-    /** de */
-    /** cs */
-    var get_mode_obj = (function () {
-        /// s is dictionarySize
-        /// f is fb
-        /// m is matchFinder
-        ///NOTE: Because some values are always the same, they have been removed.
-        /// lc is always 3
-        /// lp is always 0
-        /// pb is always 2
-        var modes = [
-            {s: 16, f:  64, m: 0},
-            {s: 20, f:  64, m: 0},
-            {s: 19, f:  64, m: 1},
-            {s: 20, f:  64, m: 1},
-            {s: 21, f: 128, m: 1},
-            {s: 22, f: 128, m: 1},
-            {s: 23, f: 128, m: 1},
-            {s: 24, f: 255, m: 1},
-            {s: 25, f: 255, m: 1}
-        ];
-        
-        return function (mode) {
-            return modes[mode - 1] || modes[6];
-        };
-    }());
-    /** ce */
-    
-    /// If we're in a Web Worker, create the onmessage() communication channel.
-    ///NOTE: This seems to be the most reliable way to detect this.
-    if (typeof onmessage != "undefined" && (typeof window == "undefined" || typeof window.document == "undefined")) {
-        (function () {
-            /* jshint -W020 */
-            /// Create the global onmessage function.
-            onmessage = function (e) {
-                if (e && e.data) {
-                    /** xs */
-                    if (e.data.action == action_decompress) {
-                        LZMA.decompress(e.data.data, e.data.cbn);
-                    } else if (e.data.action == action_compress) {
-                        LZMA.compress(e.data.data, e.data.mode, e.data.cbn);
-                    }
-                    /** xe */
-                    /// co:if (e.data.action == action_compress) {
-                    /// co:    LZMA.compress(e.data.data, e.data.mode, e.data.cbn);
-                    /// co:}
-                    /// do:if (e.data.action == action_decompress) {
-                    /// do:    LZMA.decompress(e.data.data, e.data.cbn);
-                    /// do:}
-                }
-            };
-        }());
-    }
-        
-    return {
-        /** xs */
-        compress:   compress,
-        decompress: decompress,
-        /** xe */
-        /// co:compress:   compress
-        /// do:decompress: decompress
-    };
-}());
-
-/// This is used by browsers that do not support web workers (and possibly Node.js).
-this.LZMA = this.LZMA_WORKER = LZMA;
-
-},{}],74:[function(require,module,exports){
 /* shader-particle-engine 1.0.4
  * 
  * (c) 2015 Luke Moody (http://www.github.com/squarefeet)
@@ -29469,7 +26777,7 @@ this.attributes.rotationCenter.typedArray.setVec3(a,this.rotation._center)},SPE.
 "use strict";this.particlesPerSecond=0,this.attributeOffset=0,this.activationIndex=0,this.activeParticleCount=0,this.group=null,this.attributes=null,this.paramsArray=null,this.age=0},SPE.Emitter.prototype._decrementParticleCount=function(){"use strict";--this.activeParticleCount},SPE.Emitter.prototype._incrementParticleCount=function(){"use strict";++this.activeParticleCount},SPE.Emitter.prototype._checkParticleAges=function(a,b,c,d){"use strict";for(var e,f,g,h,i=b-1;i>=a;--i)e=4*i,h=c[e],0!==h&&(g=c[e+1],f=c[e+2],1===this.direction?(g+=d,g>=f&&(g=0,h=0,this._decrementParticleCount())):(g-=d,0>=g&&(g=f,h=0,this._decrementParticleCount())),c[e]=h,c[e+1]=g,this._updateAttributeUpdateRange("params",i))},SPE.Emitter.prototype._activateParticles=function(a,b,c,d){"use strict";for(var e,f,g=this.direction,h=a;b>h;++h)e=4*h,0!=c[e]&&1!==this.particleCount||(this._incrementParticleCount(),c[e]=1,this._resetParticle(h),f=d*(h-a),c[e+1]=-1===g?c[e+2]-f:f,this._updateAttributeUpdateRange("params",h));
 },SPE.Emitter.prototype.tick=function(a){"use strict";if(!this.isStatic){null===this.paramsArray&&(this.paramsArray=this.attributes.params.typedArray.array);var b=this.attributeOffset,c=b+this.particleCount,d=this.paramsArray,e=this.particlesPerSecond*this.activeMultiplier*a,f=this.activationIndex;if(this._resetBufferRanges(),this._checkParticleAges(b,c,d,a),this.alive===!1)return void(this.age=0);if(null!==this.duration&&this.age>this.duration)return this.alive=!1,void(this.age=0);var g=1===this.particleCount?f:0|f,h=Math.min(g+e,this.activationEnd),i=h-this.activationIndex|0,j=i>0?a/i:0;this._activateParticles(g,h,d,j),this.activationIndex+=e,this.activationIndex>c&&(this.activationIndex=b),this.age+=a}},SPE.Emitter.prototype.reset=function(a){"use strict";if(this.age=0,this.alive=!1,a===!0){for(var b,c=this.attributeOffset,d=c+this.particleCount,e=this.paramsArray,f=this.attributes.params.bufferAttribute,g=d-1;g>=c;--g)b=4*g,e[b]=0,e[b+1]=0;f.updateRange.offset=0,f.updateRange.count=-1,
 f.needsUpdate=!0}return this},SPE.Emitter.prototype.enable=function(){"use strict";return this.alive=!0,this},SPE.Emitter.prototype.disable=function(){"use strict";return this.alive=!1,this},SPE.Emitter.prototype.remove=function(){"use strict";return null!==this.group?this.group.removeEmitter(this):console.error("Emitter does not belong to a group, cannot remove."),this};
-},{}],75:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 var self = self || {};// File:src/Three.js
 
 /**
@@ -70152,14 +67460,16 @@ if (typeof exports !== 'undefined') {
   this['THREE'] = THREE;
 }
 
-},{}],76:[function(require,module,exports){
-window.lzma = require('../../node_modules/lzma');
+},{}],74:[function(require,module,exports){
+//window.lzma = require('../../node_modules/lzma');
 
-window.localforage = require('./libs/localforage/localforage.nopromises.js');
+window.localforage = require('./libs/localforage');
+//localforage.clear();
 //var io = require('socket.io');
 window.$ = require('jquery');
 require('./libs/jquery.color')
 window.THREE = require('three');
+require('./libs/orbitControls');
 require('./libs/projector');
 require('./libs/canvasRenderer');
 require('./libs/blendCharacter');
@@ -70170,13 +67480,13 @@ window.CANNON = require('cannon');
 var SPE = require('shader-particle-engine');
 var hamsters = require('./libs/hamsters');
 require('./libs/sweetalert.min');
-var mobileConsole = require('./libs/mobile-console');
+//var mobileConsole = require('./libs/mobile-console');
 var VirtualJoystick = require('./libs/virtualjoystick');
 var randomColor = require('./libs/randomColor');
 
 
 var fn = require('./functions');
-for(var i in fn) {
+for (var i in fn) {
 	window[i] = fn[i];
 }
 
@@ -70188,9 +67498,8 @@ var onRenderFunctions;
 var playerMesh;
 var blendMesh2;
 var blendMesh4;
-var input;
+window.input;
 var terrainScene;
-var cameraOptions;
 var particleGroup;
 var helper;
 var emitter;
@@ -70202,30 +67511,28 @@ var socket;
 var debug = false;
 var sound1;
 var preferences;
-//var models = {};
 
-//end of super global variables (testing)
 $(function() {
 	//(function(){var script=document.createElement('script');script.type='text/javascript';script.src='https://cdn.rawgit.com/zz85/zz85-bookmarklets/master/js/ThreeInspector.js';document.body.appendChild(script);})()
 	THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
-	mobileConsole.show();
-	//CANNON.Quaternion.prototype.slerp = THREE.Quaternion.prototype.slerp;
-	
+	//mobileConsole.show();
+
 	preferences = {};
 	preferences.keyboard = {};
 	preferences.sound = {};
 	preferences.video = {};
-	
-	
+
+
 	input = {};
 	input.mouse = {};
 	input.mouse.x = 0;
 	input.mouse.y = 0;
 	input.mouse.ray = new THREE.Vector2();
 	input.mouse.HUDRay = new THREE.Vector2();
-	input.mouse.prev = {};
-	input.mouse.prev.x = 0;
-	input.mouse.prev.y = 0;
+
+	input.mouse.lclickInitial = new THREE.Vector2();
+	input.mouse.lclickInitial.x = 9999;
+	input.mouse.lclickInitial.y = 9999;
 
 	input.mouse.rclickInitial = new THREE.Vector2();
 	input.mouse.rclickInitial.x = 9999;
@@ -70239,18 +67546,12 @@ $(function() {
 	input.mouse.rclick = false;
 	input.mouse.scrollLevel = 10;
 
-	input.rotation = {};
-	input.rotation.x = 0;
-	input.rotation.y = 0;
-	input.rotation.z = 0;
-
 	input.data = {};
-	
-	input.options = {};
-	
-	
-	
-	
+
+	input.controls = {};
+	input.controls.rotation = new THREE.Vector3();
+
+
 	// Set default keyboard layout
 	preferences.keyboard.layout = {};
 	preferences.keyboard.layout.moveForward = 87;
@@ -70259,44 +67560,40 @@ $(function() {
 	preferences.keyboard.layout.moveRight = 68;
 	preferences.keyboard.layout.jump = 32;
 	//preferences.keyboard.layout.castFireball = 49;
-	
+
 	preferences.keyboard.layout.activateSpellSlot1 = 49;
 	preferences.keyboard.layout.activateSpellSlot2 = 50;
 	preferences.keyboard.layout.activateSpellSlot3 = 51;
 	preferences.keyboard.layout.activateSpellSlot4 = 52;
-	
+
 	preferences.keyboard.layout.toggleInventory = 73;
 	preferences.keyboard.layout.openSettingsWindow = 79;
 
-	/*preferences.keyboard.layout.up = 38;
-	preferences.keyboard.layout.down = 40;
-	preferences.keyboard.layout.left = 37;
-	preferences.keyboard.layout.right = 39;*/
 
 	input.action = {};
 	for (var i in preferences.keyboard.layout) {
 		input.action[i] = false;
 	}
-	
-	
+
+
 	// Get stored preferences
 	localforage.getItem('preferences').then(function(value) {
 		// If they exist, write them
-		if(value) {
+		if (value) {
 			preferences = value;
 		}
 		// Store the preferences (so that the default values get stored)
 		localforage.setItem('preferences', preferences);
-		
-		
+
+
 		// Update the keyboard layout settings window to reflect the stored settings, not the default ones
-		for(var i = 0; i < $(".buttonConfig").length; i++) {
+		for (var i = 0; i < $(".buttonConfig").length; i++) {
 			var div = $(".buttonConfig")[i];
 			var assignedKey = preferences.keyboard.layout[div.id];
 			$("#" + div.id).html(String.fromCharCode(assignedKey).toLowerCase());
 		}
 	});
-	
+
 	//change document to #keyboardLayoutConfig using <tabindex="0">
 	$(".buttonConfig").on('click', function(e) {
 		$(document).off("keydown");
@@ -70312,7 +67609,7 @@ $(function() {
 				$("#" + e.target.id).html(String.fromCharCode(e2.which));
 				preferences.keyboard.layout[e.target.id] = e2.which;
 				localforage.setItem('preferences', preferences);
-				
+
 				$(document).off("keydown");
 				window.addEventListener("keydown", handleKey, false);
 			} else {
@@ -70350,6 +67647,8 @@ $(function() {
 		switch (event.which) {
 			case 1:
 				input.mouse.lclick = true;
+				input.mouse.lclickInitial.x = event.clientX;
+				input.mouse.lclickInitial.y = event.clientY;
 				break;
 			case 2:
 				input.mouse.mclick = true;
@@ -70377,14 +67676,13 @@ $(function() {
 	});
 
 	input.touches = [];
-	//input.ongoingTouches = [];
 
 	function copyTouch(touch) {
-		return {
+		/*return {
 			identifier: touch.identifier,
 			clientX: touch.clientX,
 			clientY: touch.clientY
-		};
+		};*/
 	}
 
 
@@ -70399,12 +67697,12 @@ $(function() {
 	}
 
 	$(document).on('touchstart', function(event) {
-		var evt = event.originalEvent;
+		/*var evt = event.originalEvent;
 		var touches = evt.changedTouches;
 
 		for (var i = 0; i < touches.length; i++) {
 			input.touches.push(copyTouch(touches[i]));
-		}
+		}*/
 
 	});
 
@@ -70418,7 +67716,7 @@ $(function() {
 	chg.y = 0;
 
 	$(document).on('touchmove', function(event) {
-		var evt = event.originalEvent;
+		/*var evt = event.originalEvent;
 		//evt.preventDefault();
 		var touches = evt.touches;
 		if(typeof touches[1] == "undefined") {
@@ -70457,26 +67755,29 @@ $(function() {
 		} else if (input.mouse.chg.y < -1*yminmax) {
 			input.mouse.chg.y = -1*yminmax;
 		}
-
-		cameraOptions.rotateOffset.z += input.mouse.chg.x;
-		cameraOptions.rotateOffset.y += input.mouse.chg.y;
-		cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true, true);
-		cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
-
-		var pMesh = world1.game.player.mesh;
-		var rclone = cameraOptions.rotateOffset.clone();
-		var diff = (pMesh.rotation.y - (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
+		
+		// fix this
+		pMesh.rotation.y += Math.PI/2;
+		input.controls.rotation.x = limit(0, (Math.PI*2), input.controls.rotation.x, true, true);
 		pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
-		if (diff > Math.PI/4) {
-			pMesh.rotation.y -= diff - Math.PI/4;
-		} else if (diff < -Math.PI/4) {
-			pMesh.rotation.y -= diff + Math.PI/4;
+
+		var diff = input.controls.rotation.x-pMesh.rotation.y;
+		if(diff >= Math.PI) {
+			pMesh.rotation.y -= 0.05*Math.abs(diff);//0.05;
+		} else if(diff < -Math.PI) {
+			pMesh.rotation.y += 0.05*Math.abs(diff);//0.05;
+		} else if(diff > 0) {
+			pMesh.rotation.y += 0.05*Math.abs(diff);//0.05;
+		} else if(diff < 0) {
+			pMesh.rotation.y -= 0.05*Math.abs(diff);//0.05;
 		}
+		pMesh.rotation.y -= Math.PI/2;*/
+		// fix this
 
 	});
 
 	$(document).on('touchend', function(event) {
-		var evt = event.originalEvent;
+		/*var evt = event.originalEvent;
 		//evt.preventDefault();
 
 		var touches = evt.changedTouches;
@@ -70486,25 +67787,25 @@ $(function() {
 			if (idx >= 0) {
 				input.touches.splice(idx, 1);
 			}
-		}
+		}*/
 	});
 
 	$(document).on('touchcancel', function(event) {
-		var evt = event.originalEvent;
+		/*var evt = event.originalEvent;
 		evt.preventDefault();
 		var touches = evt.changedTouches;
 
 		for (var i = 0; i < touches.length; i++) {
 			input.touches.splice(i, 1);
-		}
+		}*/
 	});
 
 	function handleKey(event) {
-		
+
 		// Set state variable
 		var state;
 		// Switch between keyup and keydown
-		switch(event.type) {
+		switch (event.type) {
 			case "keydown":
 				state = true;
 				break;
@@ -70512,11 +67813,11 @@ $(function() {
 				state = false;
 				break;
 		}
-		
+
 		// Check which key was pressed using the current keyboard layout
 		// This is just for short(ish) hand notation
 		var keyboardLayout = preferences.keyboard.layout;
-		
+
 		switch (event.keyCode) {
 			case keyboardLayout.jump:
 				input.action.jump = state;
@@ -70550,7 +67851,7 @@ $(function() {
 				break;
 		}
 	}
-	
+
 	window.addEventListener("keydown", handleKey, false);
 	window.addEventListener("keyup", handleKey, false);
 	//window.addEventListener("keypress", handleKey, false);
@@ -70567,39 +67868,40 @@ $(function() {
 		console.log(data);
 	});
 
-	function login(isGuest, character, classType) {
-		if (isGuest) {
-			socket.emit('addUser', {
-				user: 'guest',
+	function login(characterName, classType) {
+		if (window.signedIn) {
+
+			socket.emit('joinWorld', {
+				characterName: characterName,
+			});
+
+		} else {
+			console.log('joining');
+			socket.emit('joinWorld', {
+				characterName: characterName,
 				class: classType,
 			});
-		} else {
-			socket.emit('addUser', {
-				user: getCookie('user'),
-				pass: getCookie('pass'),
-				character: character
-			});
 		}
-		
+
 		// Hide the title screen
 		$('#titleScreen').modal('hide');
 		$('#loadScreen').modal({
 			backdrop: "static",
 			keyboard: false,
 		});
-		
+
 		//$('#loadScreen').modal('show');
 		/*setInterval(function() {
 		var num = parseInt($('#loadScreenText').text());
 		$('#loadScreenText').text(num+1);
 		}, 10);*/
-		
+
 		$(".progress-bar").animate({
-  		width: "0%"
+			width: "0%"
 		}, 10);
 
-		
-		
+
+
 		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
 			//world1.t.camera.aspect = (window.innerWidth/2)/(window.innerHeight/2);
 			//world1.t.camera.aspect = (window.innerWidth/2)/(window.innerHeight/2);
@@ -70614,7 +67916,7 @@ $(function() {
 			});*/
 		}
 	}
-	
+
 	// on change of render settings
 	$("#renderSetter").on('change', function(event) {
 		var newRenderer = $("#renderSetter").val();
@@ -70632,7 +67934,7 @@ $(function() {
 			document.body.appendChild(wt.renderer.domElement);
 		}
 	});
-	
+
 	// custom keyboard layout change
 	/*$("#layoutSetter").on('change', function(event) {
 		var newLayout = $("#layoutSetter").val();
@@ -70652,118 +67954,70 @@ $(function() {
 
 	$("#playBtn").on('click', function(event) {
 		event.preventDefault();
-		
+
 		var character = $("#characterSelector").find(':input:checked')[0].value;
-		if (typeof getCookie('user') != "undefined") {
+		if (typeof getCookie('username') != "undefined") {
 			login(false, character);
 		} else {
 			login(true, character, character);
 		}
-
-
-
 	});
-	
-	
-	
-	
+
+
+	socket.on('returnLatency', function(data) {
+		var currentTime = new Date().getTime();
+		var previousTime = data.latency;
+		var latency = (currentTime - previousTime) / 2;
+		//console.log(latency);
+	});
+
+	setInterval(function() {
+		socket.emit('getLatency', {
+			latency: new Date().getTime()
+		});
+	}, 1000);
+
+
+
+
 	// On confirmed connection
 	socket.on('initData', function(data) {
 		//world1.game.player.id = socket.id;
-		
-		
+
+
 		world1.t.AH.onloadFuncs.push(function() {
 			world1.game.player = new playerConstructor();
 			world1.game.player.setClass("wizard");
-			world1.game.player.username = data.username;
-			
+			//world1.game.player.username = data.username;
+			world1.game.accountName = data.accountName;
+			world1.game.player.characterName = data.characterName;
+			world1.game.player.uniqueId = data.uniqueId;
+
 			world1.game.connected = true;
 			$("#loadScreen").modal('hide');
 		});
-		
+
 		var fileList = [
 			"assets/models/characters/players/wizard/final/wizard.json",
 			"assets/models/environment/trees/animated-tree/final/treeBark.json",
 			"assets/models/environment/trees/animated-tree/final/treeLeaves.json",
 		];
 		world1.t.AH.loadAssets(fileList);
-		
+
 	});
-
-	/*$('#jumpButton').on('click touchstart', function() {
-		input.action.jump = true;
-
-		setTimeout(function() {
-			input.action.jump = false;
-		}, 80);
-		//socket.emit('chat message', $('#msgIn').val());
-
-		return false;
-	});
-	
-	$('#shootButton').on('click touchstart', function() {
-		shootLaser();
-		input.action.shoot = true;
-
-		setTimeout(function() {
-			input.action.shoot = false;
-		}, 80);
-		return false;
-	});
-
-	
-	$('#fireballButton').on('click touchstart', function() {
-		input.action.castFireball = true;
-
-		var pos = world1.game.player.mesh.position;
-		var rot = world1.game.player.mesh.rotation;
-		var fireEmitter = new createFireball(pos, rot, false);
-		world1.spe.groups.smoke.addEmitter(fireEmitter);
-
-		setTimeout(function() {
-			input.action.castFireball = false;
-		}, 80);
-		return false;
-	});*/
-
-
-	/*$('#send').on('click', function() {
-		socket.emit('chat message', $('#msgIn').val());
-		$('#msgIn').val('');
-		return false;
-	});
-
-	$('#send').on('touchstart', function() {
-		socket.emit('chat message', $('#msgIn').val());
-		$('#msgIn').val('');
-		return false;
-	});
-
-	$('#sendIn').on('touchstart', function() {
-		$('#msgIn').focus();
-		//return false;
-	});
-
-
-	$('#msgIn').on('keyup', function(e) {
-		if (e.keyCode == 13) {
-			$('#send').trigger('click');
-		}
-	});
-
-	socket.on('chat message', function(payload) {
-		$('#messages').append($('<li>').text(payload.name + ': ' + payload.msg));
-	});*/
 
 	socket.on('notLoggedIn', function() {
 		swal("Not logged in!");
-		//location.reload();
 	});
 
 	socket.on('playersOnline', function(data) {
 		$("#numOfPlayers").text(data);
 	});
 	socket.emit('getNumOfPlayersOnline');
+
+	window.gainXP = function() {
+		socket.emit('gainXP');
+	};
 
 	/*socket.on('deletePlayer', function(data) {
 		var vp = world1.game.visiblePlayers;
@@ -70813,23 +68067,23 @@ $(function() {
 
 
 
-	socket.on('visibleCharacters', function(data) {
+	socket.on('visibleNodes', function(data) {
 		var vp = world1.game.visiblePlayers;
 		var vpd = world1.game.visiblePlayersData;
 
 		//CHECK FOR DELETED PLAYERS
-		var currentNames = [];
-		var newNames = [];
+		var currentNodes = [];
+		var newNodes = [];
 		for (var i = 0; i < vpd.length; i++) {
-			currentNames.push(vpd[i].username);
+			currentNodes.push(vpd[i].uniqueId);
 		}
 		for (var i = 0; i < data.vn.length; i++) {
-			newNames.push(data.vn[i].username);
+			newNodes.push(data.vn[i].uniqueId);
 		}
-		for (var i = 0; i < currentNames.length; i++) {
-			if (newNames.indexOf(currentNames[i]) == -1) {
-				world1.c.pw.removeBody(vp[currentNames[i]].phys);
-				world1.t.scene.remove(vp[currentNames[i]].mesh);
+		for (var i = 0; i < currentNodes.length; i++) {
+			if (newNodes.indexOf(currentNodes[i]) == -1) {
+				world1.c.pw.removeBody(vp[currentNodes[i]].phys);
+				world1.t.scene.remove(vp[currentNodes[i]].mesh);
 				//world1.t.scene.remove(vp[currentNames[i] + "_label"].label);
 			}
 		}
@@ -70837,168 +68091,167 @@ $(function() {
 
 		world1.game.visiblePlayersData = data.vn;
 
-		// THIS IS A MESS (procrastinating cleanup)
+		// loop through nodes
 		for (var i = 0; i < vpd.length; i++) {
-			if(!world1.game.connected) {
+			if (!world1.game.connected) {
 				continue;
 			}
-			
-			if(vpd[i].type == "player") {
-				if (vpd[i].username == world1.game.player.username) {
+			if (vpd[i].type == "player") {
+				if (vpd[i].uniqueId == world1.game.player.uniqueId) {
 					var player = world1.game.player;
 					player.updateData(vpd[i]);
-					continue;	
-				} else if (typeof vp[vpd[i].username] == "undefined") {
-					vp[vpd[i].username] = new playerConstructor(vpd[i]);
-					
-				} else if (typeof vp[vpd[i].username] != "undefined") {
-					vp[vpd[i].username].updateData(vpd[i]);
+					continue;
+				} else if (typeof vp[vpd[i].uniqueId] == "undefined") {
+					vp[vpd[i].uniqueId] = new playerConstructor(vpd[i]);
+
+				} else if (typeof vp[vpd[i].uniqueId] != "undefined") {
+					vp[vpd[i].uniqueId].updateData(vpd[i]);
 				}
 			}
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-// 			if (vpd[i].type == "player") {
-// 				if (vpd[i].username == world1.game.player.username) {
 
-// 					// cannonjs's lerp function is weird
-// 						playerObject.phys.position.lerp(vpd[i].position, 0.6, playerObject.phys.position);
-// 						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, playerObject.phys.position);
-						
-// 						//playerObject.phys.position.copy(vpd[i].position);
-// 						//var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.6);
-// 						//playerObject.phys.position.copy(newPos);
-// 					// cannonjs's lerp function is weird
-					
-// 					// cannonjs doesn't have a slerp for quaternions but threejs's can be used anyways
-					
-// 					//THREE.Quaternion.slerp(playerObject.phys.quaternion, vpd[i].quaternion, playerObject.phys.quaternion, 0.6);
-// 					playerObject.phys.quaternion.copy(vpd[i].quaternion);
-					
-// 					playerObject.phys.velocity.copy(vpd[i].velocity);
 
-// 					playerObject.mesh.warpTime = vpd[i].warpTime;
-// 					playerObject.mesh.animTo = vpd[i].animTo;
 
-// 					//var half = new THREE.Vector3().copy(vpd[i].position).sub(playerObject.phys.position.clone()).multiplyScalar(0.5);
-// 					//playerObject.phys.position.vadd(half);
 
-// 					/*var sound1 = new THREE.Audio(world1.t.audioListener);
-// 					sound1.load('./sounds/explosion.wav');
-// 					sound1.volume = 1;
-// 					sound1.setRefDistance(20);
-// 					sound1.position.set(0, 0, -28);*/
 
-// 					//world1.t.HUD.items.healthBar.update(vpd[i].health/100);
-// 					//var percent = vpd[i].experience/(100*(vpd[i].level+1));
-// 					//world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
-// 					//world1.t.HUD.items.XPBar.update(percent);
-// 					//world1.t.HUD.items.levelText.update(vpd[i].level);
-// 					continue;
-// 				}
-// 				if (typeof vp[vpd[i].username] == "undefined") {
-// 					//vp[vpd[i].username] = "placeholder";
-// 					var newPlayer = new playerConstructor(vpd[i]);
-// 					vp[vpd[i].username] = newPlayer;
-					
-					
-					
-// 					/*if(world1.t.AH.loadedModels.indexOf("player") > -1) {
-// 						var player = new THREE.BlendCharacter(world1.t.AH);
-// 						player.loadFast("player");
-						
-// 						player.scale.set(0.02, 0.02, 0.02);
-						
-						
-// 						var tempBody = createPhysBody("capsule")(1, 3.2);
-// 						var pObject = new createPhysicsObject(player, tempBody, world1, "player");
-// 						pObject.phys.position.copy(vpd[i].position);
-// 						pObject.phys.quaternion.copy(vpd[i].quaternion);
-// 						pObject.phys.velocity.copy(vpd[i].velocity);
 
-// 						pObject.items.userLabel = new makeTextSprite(vpd[i].username);
-// 						pObject.items.userLabel.scale.set(50, 50, 1);
-// 						pObject.items.userLabel.position.set(0, 250, 0);
-// 						//pObject.items.userLabel.position.copy(vpd[i].position);
-// 						//pObject.items.userLabel.position.y += 250;
-// 						pObject.mesh.add(pObject.items.userLabel);
 
-// 						pObject.items.classLabel = new makeTextSprite(vpd[i].class);
-// 						pObject.items.classLabel.scale.set(30, 30, 1);
-// 						pObject.items.classLabel.position.set(0, 350, 0);
-// 						//pObject.items.classLabel.position.copy(vpd[i].position);
-// 						//pObject.items.classLabel.position.y += 150;
-// 						pObject.mesh.add(pObject.items.classLabel);
-						
-// 						//pObject.items.healthLabel = new createHealthText(vpd[i].health);
-// 						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
-// 						pObject.items.healthLabel.mesh.scale.set(20, 20, 1);
-// 						pObject.items.healthLabel.mesh.position.set(0, 400, 0);
-// 						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
-// 						//pObject.items.healthLabel.mesh.position.y += 200;
-// 						pObject.mesh.add(pObject.items.healthLabel.mesh);
-						
-						
-// 						//pObject.items.healthLabel.sprite.scale.set(200, 200, 200);
-						
-// 						//pObject.items.healthLabel.sprite.position.set(0, 200, 0);
-// 						//pObject.items.healthLabel.scale.set(30, 30, 1);
-// 						//pObject.mesh.add(pObject.items.healthLabel.sprite);
-						
-// 						pObject.mesh.username = vpd[i].username;
-// 						vp[vpd[i].username] = pObject;
-// 					}*/
-					
-					
-					
-// 				} else if (typeof vp[vpd[i].username] != "undefined") {
-					
-					
-// 					// cannonjs's lerp function is weird
-// 						vp[vpd[i].username].phys.position.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
-						
-// 						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
-					
-// 						//vp[vpd[i].username].phys.position.copy(vpd[i].position);
-// 						//var newPos = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.6);
-// 						//vp[vpd[i].username].phys.position.copy(newPos);
-// 					// cannonjs's lerp function is weird
-					
-// 					// cannonjs doesn't have a slerp for quaternions but threejs's can be used
-					
-// 					//THREE.Quaternion.slerp(vp[vpd[i].username].phys.quaternion, vpd[i].quaternion, vp[vpd[i].username].phys.quaternion, 0.6);
-					
-// 					vp[vpd[i].username].phys.quaternion.copy(vpd[i].quaternion);
-// 					vp[vpd[i].username].phys.velocity.copy(vpd[i].velocity);
-// 					//vp[vpd[i].username].quaternion.slerp(vpd[i].quaternion, 0.6);
-					
-					
 
-					
-					
-// 					vp[vpd[i].username].mesh.warpTime = vpd[i].warpTime;
-// 					vp[vpd[i].username].mesh.animTo = vpd[i].animTo;
-					
-					
-// 					//vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
-					
-// 					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI/2);
-// 					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
-// 					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
-// 				}
-				
-// 			}
+
+
+
+
+
+
+			// 			if (vpd[i].type == "player") {
+			// 				if (vpd[i].username == world1.game.player.username) {
+
+			// 					// cannonjs's lerp function is weird
+			// 						playerObject.phys.position.lerp(vpd[i].position, 0.6, playerObject.phys.position);
+			// 						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, playerObject.phys.position);
+
+			// 						//playerObject.phys.position.copy(vpd[i].position);
+			// 						//var newPos = new THREE.Vector3().lerpVectors(playerObject.phys.position.clone(), vpd[i].position, 0.6);
+			// 						//playerObject.phys.position.copy(newPos);
+			// 					// cannonjs's lerp function is weird
+
+			// 					// cannonjs doesn't have a slerp for quaternions but threejs's can be used anyways
+
+			// 					//THREE.Quaternion.slerp(playerObject.phys.quaternion, vpd[i].quaternion, playerObject.phys.quaternion, 0.6);
+			// 					playerObject.phys.quaternion.copy(vpd[i].quaternion);
+
+			// 					playerObject.phys.velocity.copy(vpd[i].velocity);
+
+			// 					playerObject.mesh.warpTime = vpd[i].warpTime;
+			// 					playerObject.mesh.animTo = vpd[i].animTo;
+
+			// 					//var half = new THREE.Vector3().copy(vpd[i].position).sub(playerObject.phys.position.clone()).multiplyScalar(0.5);
+			// 					//playerObject.phys.position.vadd(half);
+
+			// 					/*var sound1 = new THREE.Audio(world1.t.audioListener);
+			// 					sound1.load('./sounds/explosion.wav');
+			// 					sound1.volume = 1;
+			// 					sound1.setRefDistance(20);
+			// 					sound1.position.set(0, 0, -28);*/
+
+			// 					//world1.t.HUD.items.healthBar.update(vpd[i].health/100);
+			// 					//var percent = vpd[i].experience/(100*(vpd[i].level+1));
+			// 					//world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
+			// 					//world1.t.HUD.items.XPBar.update(percent);
+			// 					//world1.t.HUD.items.levelText.update(vpd[i].level);
+			// 					continue;
+			// 				}
+			// 				if (typeof vp[vpd[i].username] == "undefined") {
+			// 					//vp[vpd[i].username] = "placeholder";
+			// 					var newPlayer = new playerConstructor(vpd[i]);
+			// 					vp[vpd[i].username] = newPlayer;
+
+
+
+			// 					/*if(world1.t.AH.loadedModels.indexOf("player") > -1) {
+			// 						var player = new THREE.BlendCharacter(world1.t.AH);
+			// 						player.loadFast("player");
+
+			// 						player.scale.set(0.02, 0.02, 0.02);
+
+
+			// 						var tempBody = createPhysBody("capsule")(1, 3.2);
+			// 						var pObject = new createPhysicsObject(player, tempBody, world1, "player");
+			// 						pObject.phys.position.copy(vpd[i].position);
+			// 						pObject.phys.quaternion.copy(vpd[i].quaternion);
+			// 						pObject.phys.velocity.copy(vpd[i].velocity);
+
+			// 						pObject.items.userLabel = new makeTextSprite(vpd[i].username);
+			// 						pObject.items.userLabel.scale.set(50, 50, 1);
+			// 						pObject.items.userLabel.position.set(0, 250, 0);
+			// 						//pObject.items.userLabel.position.copy(vpd[i].position);
+			// 						//pObject.items.userLabel.position.y += 250;
+			// 						pObject.mesh.add(pObject.items.userLabel);
+
+			// 						pObject.items.classLabel = new makeTextSprite(vpd[i].class);
+			// 						pObject.items.classLabel.scale.set(30, 30, 1);
+			// 						pObject.items.classLabel.position.set(0, 350, 0);
+			// 						//pObject.items.classLabel.position.copy(vpd[i].position);
+			// 						//pObject.items.classLabel.position.y += 150;
+			// 						pObject.mesh.add(pObject.items.classLabel);
+
+			// 						//pObject.items.healthLabel = new createHealthText(vpd[i].health);
+			// 						pObject.items.healthLabel = new createHealthBarSprite(vpd[i].health);
+			// 						pObject.items.healthLabel.mesh.scale.set(20, 20, 1);
+			// 						pObject.items.healthLabel.mesh.position.set(0, 400, 0);
+			// 						//pObject.items.healthLabel.mesh.position.copy(vpd[i].position);
+			// 						//pObject.items.healthLabel.mesh.position.y += 200;
+			// 						pObject.mesh.add(pObject.items.healthLabel.mesh);
+
+
+			// 						//pObject.items.healthLabel.sprite.scale.set(200, 200, 200);
+
+			// 						//pObject.items.healthLabel.sprite.position.set(0, 200, 0);
+			// 						//pObject.items.healthLabel.scale.set(30, 30, 1);
+			// 						//pObject.mesh.add(pObject.items.healthLabel.sprite);
+
+			// 						pObject.mesh.username = vpd[i].username;
+			// 						vp[vpd[i].username] = pObject;
+			// 					}*/
+
+
+
+			// 				} else if (typeof vp[vpd[i].username] != "undefined") {
+
+
+			// 					// cannonjs's lerp function is weird
+			// 						vp[vpd[i].username].phys.position.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
+
+			// 						//CANNON.Vec3.prototype.lerp(vpd[i].position, 0.6, vp[vpd[i].username].phys.position);
+
+			// 						//vp[vpd[i].username].phys.position.copy(vpd[i].position);
+			// 						//var newPos = new THREE.Vector3().lerpVectors(vp[vpd[i].username].phys.position.clone(), vpd[i].position, 0.6);
+			// 						//vp[vpd[i].username].phys.position.copy(newPos);
+			// 					// cannonjs's lerp function is weird
+
+			// 					// cannonjs doesn't have a slerp for quaternions but threejs's can be used
+
+			// 					//THREE.Quaternion.slerp(vp[vpd[i].username].phys.quaternion, vpd[i].quaternion, vp[vpd[i].username].phys.quaternion, 0.6);
+
+			// 					vp[vpd[i].username].phys.quaternion.copy(vpd[i].quaternion);
+			// 					vp[vpd[i].username].phys.velocity.copy(vpd[i].velocity);
+			// 					//vp[vpd[i].username].quaternion.slerp(vpd[i].quaternion, 0.6);
+
+
+
+
+
+			// 					vp[vpd[i].username].mesh.warpTime = vpd[i].warpTime;
+			// 					vp[vpd[i].username].mesh.animTo = vpd[i].animTo;
+
+
+			// 					//vp[vpd[i].username].items.healthLabel.update(vpd[i].health);
+
+			// 					var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), vpd[i].rotation2.z + Math.PI/2);
+			// 					newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
+			// 					vp[vpd[i].username].mesh.quaternion.copy(newRotation);
+			// 				}
+
+			// 			}
 		}
 	});
 
@@ -71028,7 +68281,7 @@ $(function() {
 			// three.js
 			this.t = {};
 			this.t.scene = new THREE.Scene();
-			this.t.camera = new THREE.PerspectiveCamera(75, this.width/this.height, 0.1, 2000000);
+			this.t.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.1, 2000000);
 			this.t.camera.up.set(0, 0, 1);
 			this.t.audioListener = new THREE.AudioListener();
 			this.t.camera.add(this.t.audioListener);
@@ -71037,12 +68290,12 @@ $(function() {
 			this.t.HUD = {};
 			this.t.HUD.items = {};
 			this.t.HUD.scene = new THREE.Scene();
-			this.t.HUD.camera = new THREE.OrthographicCamera(-this.width/2, this.width/2, this.height/2, -this.height/2, 1, 1000);
+			this.t.HUD.camera = new THREE.OrthographicCamera(-this.width / 2, this.width / 2, this.height / 2, -this.height / 2, 1, 1000);
 			this.t.HUD.camera.up.set(0, 0, 1);
 			this.t.HUD.camera.position.set(0, 0, 10);
 			this.t.HUD.raycaster = new THREE.Raycaster();
 
-			//this.t.AH = new assetHolder();
+			this.t.AH = new assetHolder();
 
 			if (webglAvailable()) {
 				this.t.renderer = new THREE.WebGLRenderer();
@@ -71055,6 +68308,13 @@ $(function() {
 			//this.t.renderer.shadowMap.enabled = true;
 			//this.t.renderer.shadowMap.type = THREE.PCFShadowMap;
 			document.body.appendChild(this.t.renderer.domElement);
+
+			// camera controls
+			//this.t.controls = new THREE.OrbitControls(this.t.camera);
+			//this.t.controls.enableDamping = true;
+			//this.t.controls.dampingFactor = 0.25;
+			//this.t.controls.enableZoom = true;
+			//this.t.controls.enablePan = false;
 			//$(this.t.renderer.domElement).attr('id', 'gameCanvas');
 
 			// cannon.js
@@ -71098,7 +68358,7 @@ $(function() {
 	world1.createCanvas('body', 'canvas');
 
 
-	world1.t.AH = new assetHolder();
+	//world1.t.AH = new assetHolder();
 
 
 
@@ -71117,7 +68377,7 @@ $(function() {
 		world1.t.scene.add(sky1.sunSphere);
 
 		//sky1.light = = new THREE.PointLight(0xffffff, 1, 100000);
-		sky1.light = new THREE.DirectionalLight(0xffffff, 0.5);
+		sky1.light = new THREE.DirectionalLight(0xffffff, 01);
 		world1.t.scene.add(sky1.light);
 
 		sky1.effectController = {
@@ -71141,11 +68401,11 @@ $(function() {
 			uniforms.luminance.value = this.effectController.luminance;
 			uniforms.mieCoefficient.value = this.effectController.mieCoefficient;
 			uniforms.mieDirectionalG.value = this.effectController.mieDirectionalG;
-			var theta = Math.PI*(this.effectController.inclination - 0.5);
-			var phi = 2*Math.PI*(this.effectController.azimuth - 0.5);
-			this.sunSphere.position.x = distance*Math.cos(phi);
-			this.sunSphere.position.y = distance*Math.sin(phi)*Math.sin(theta);
-			this.sunSphere.position.z = distance*Math.sin(phi)*Math.cos(theta);
+			var theta = Math.PI * (this.effectController.inclination - 0.5);
+			var phi = 2 * Math.PI * (this.effectController.azimuth - 0.5);
+			this.sunSphere.position.x = distance * Math.cos(phi);
+			this.sunSphere.position.y = distance * Math.sin(phi) * Math.sin(theta);
+			this.sunSphere.position.z = distance * Math.sin(phi) * Math.cos(theta);
 			this.sunSphere.visible = this.effectController.sun;
 
 			var pos = new THREE.Vector3().copy(this.sunSphere.position);
@@ -71169,34 +68429,34 @@ $(function() {
 		//world1.t.sky.effectController.azimuth = 0.00005*n;
 		world1.t.sky.update();
 	}, 50);
-	
-	
-	
-	planeFromHeightmapSrc('assets/models/environment/terrain/area1/test.png', 'assets/models/environment/terrain/area1/textures/texture.bmp', function(mesh) {
-		window.test = mesh;
+
+
+
+	planeFromHeightmapSrc('assets/models/environment/terrain/area1/heightmap.png', 'assets/models/environment/terrain/area1/textures/texture.bmp', function(mesh) {
+		//window.test = mesh;
 		//mesh.position.z -= 70;
 		//mesh.rotation.z -= Math.PI/2;
 		world1.t.scene.add(mesh);
 	});
-	
-	
-	
-	
-	
-	physicsFromHeightmap("assets/models/environment/terrain/area1/test.png", function(mesh, phys) {
+
+
+
+
+
+	physicsFromHeightmap("assets/models/environment/terrain/area1/heightmap.png", function(mesh, phys) {
 		var terrain = {};
 		terrain.phys = phys;
 		terrain.mesh = mesh;
-		terrain.mesh.position.set(0,0,0);
-		
-		terrain.update = function(){};
+		terrain.mesh.position.set(0, 0, 0);
+
+		terrain.update = function() {};
 		world1.c.pw.addBody(terrain.phys);
 		world1.t.scene.add(terrain.mesh);
 		world1.c.objects.push(terrain);
 		//var terrain2 = createPhysicsObject(planeMesh, hfBody, world1, false);
 		//terrain.phys.position.set(0, 0, -60);
 		//terrain.mesh.position.set(0, 0, -60);
-		
+
 	});
 
 
@@ -71207,24 +68467,20 @@ $(function() {
 
 
 	world1.t.AH.onloadFuncs.push(function() {
-		
-		
+
+
 		world1.t.HUD.items.healthBar = new createHealthBar();
-		world1.t.HUD.items.XPBar = new createXPBar2();
+		//world1.t.HUD.items.XPBar = new createXPBar2();
 		world1.t.HUD.items.levelText = new createLevelText(0);
 		//world1.t.HUD.items.inventory = new createHUDInventory();
 		world1.t.HUD.items.spellBar = new createSpellBar();
-		//creatSpellBar();
-		
-		
-		//var tempBody = createPhysBody("capsule", 1)(1, 3.2); //3.76
-		//world1.game.player = new createPhysicsObject(player, tempBody, world1, "player");
-		
-		//world1.game.player = new playerConstructor();
-		//world1.game.player.setClass("wizard");
-		
-		//world1.game.player.username = world1.game.player.username;
-		
+
+		//world1.t.HUD.items.healthBar.update(vpd[i].health/100);
+		//var percent = vpd[i].experience/(100*(vpd[i].level+1));
+		//world1.t.HUD.items.XPBar.update(vpd[i].experience, vpd[i].level);
+		//world1.t.HUD.items.XPBar.update(percent);
+		//world1.t.HUD.items.levelText.update(vpd[i].level);
+
 	});
 
 
@@ -71249,10 +68505,10 @@ $(function() {
 		var tempBody = createPhysBody("capsule", 1)(1, 3.2);
 		tree1 = new createPhysicsObject(treeBarkMesh, tempBody, world1, false);
 	});*/
-	
-	
-	
-	
+
+
+
+
 	/*world1.t.AH.onloadFuncs.push(function() {
 		var enemy = new THREE.BlendCharacter(world1.t.AH);
 		enemy.loadFast("abababe");
@@ -71271,94 +68527,97 @@ $(function() {
 
 
 
-	
+
 
 
 	function followObject(world, obj, cam, options) {
 		var targetSet = {
 			object: obj,
-			camPos: new THREE.Vector3(10, 10, 5),
-			translateOffset: new THREE.Vector3(0, 0, 0),
-			rotateOffset: new THREE.Vector3(0, 0, 0),
+			//camPos: new THREE.Vector3(10, 10, 5),
+			translateOffset: new THREE.Vector3(0, 0, 3.5),
+			//rotateOffset: new THREE.Vector3(0, 0, 0),
 			fixed: false,
 			stiffness: 0.4,
-			rotationStiffness: null,
-			transStiffness: null,
+			rotationalStiffness: null,
+			translationalStiffness: null,
 			matchRotation: true,
 			lookAt: false
 		};
 
-		if (options) {
+		/*if (options) {
 			targetSet.rotateOffset = options.rotateOffset;
-		}
-		
+		}*/
+
 		var ideal = new THREE.Object3D();
 		ideal.up.set(0, 0, 1);
 		ideal.position.copy(targetSet.object.position);
 		ideal.quaternion.copy(targetSet.object.quaternion);
 
-		var tPos = targetSet.object.position;
-		var tRot = new THREE.Vector3();
-		var tr = targetSet.rotateOffset;
-		
-		ideal.position.x = tPos.x + (Math.cos(tr.z)*Math.cos(tr.y)*input.mouse.scrollLevel);
-		ideal.position.y = tPos.y + (Math.sin(tr.z)*Math.cos(tr.y)*input.mouse.scrollLevel);
-		ideal.position.z = tPos.z + (Math.sin(tr.y)*input.mouse.scrollLevel) + 3.5;
+		var targetPosition = targetSet.object.position;
+		var targetRotation = new THREE.Vector3();
 
-		var q = new THREE.Quaternion();
-		q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI/2);
-		ideal.quaternion.multiply(q);
-		q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/2);
-		ideal.quaternion.multiply(q);
-		
-		var tstiff = targetSet.transStiffness || targetSet.stiffness;
-		var rstiff = targetSet.rotationStiffness || targetSet.stiffness;
-		
-		var camVec1 = new CANNON.Vec3().copy(cam.position);
+		var angle1 = input.controls.rotation.x;
+		var angle2 = input.controls.rotation.y;
+
+
+
+		ideal.position.x = targetPosition.x + (Math.cos(angle1) * Math.cos(angle2) * input.mouse.scrollLevel);
+		ideal.position.y = targetPosition.y + (Math.sin(angle1) * Math.cos(angle2) * input.mouse.scrollLevel);
+		ideal.position.z = targetPosition.z + Math.sin(angle2) * input.mouse.scrollLevel;
+
+		ideal.position.add(targetSet.translateOffset);
+
+		//ideal.position.x = tPos.x + (Math.cos(tr.z)*Math.cos(tr.y)*input.mouse.scrollLevel);
+		//ideal.position.y = tPos.y + (Math.sin(tr.z)*Math.cos(tr.y)*input.mouse.scrollLevel);
+		//ideal.position.z = tPos.z + (Math.sin(tr.y)*input.mouse.scrollLevel) + 3.5;
+
+		var translationalStiffness = targetSet.translationalStiffness || targetSet.stiffness;
+		var rotationalStiffness = targetSet.rotationalStiffness || targetSet.stiffness;
+
+		/*var camVec1 = new CANNON.Vec3().copy(cam.position);
 		var camVec2 = camVec1.vsub(new CANNON.Vec3(0, 0, 600));
 		var result = new CANNON.RaycastResult();
-		
 		camVec2 = camVec2.negate();
 		world1.c.pw.raycastAny(camVec1, camVec2, {}, result);
 		
 		if (result.hasHit) {
 			//ideal.position.z += result.distance;
-		}
-		
-		cam.position.lerp(ideal.position, tstiff);
+		}*/
+
+		cam.position.lerp(ideal.position, translationalStiffness);
 		//cam.position.copy(ideal.position);
 		//cam.quaternion.slerp(ideal.quaternion, rstiff);
-		var tempv = new THREE.Vector3().copy(targetSet.object.position).add(new THREE.Vector3(0, 0, 3.5));
+		var tempv = new THREE.Vector3().copy(targetSet.object.position).add(targetSet.translateOffset);
 		cam.lookAt(tempv);
 	}
 
 
-	
-	
+
+
 	window.addEventListener('resize', function() {
 		world1.width = window.innerWidth;
 		world1.height = window.innerHeight;
 		world1.canvas.width = window.innerWidth;
 		world1.canvas.height = window.innerHeight;
 
-		world1.t.camera.aspect = window.innerWidth/window.innerHeight;
+		world1.t.camera.aspect = window.innerWidth / window.innerHeight;
 		world1.t.camera.updateProjectionMatrix();
 
-		world1.t.HUD.camera.aspect = window.innerWidth/window.innerHeight;
-		world1.t.HUD.camera.left = -window.innerWidth/2;
-		world1.t.HUD.camera.right = window.innerWidth/2;
-		world1.t.HUD.camera.top = window.innerHeight/2;
-		world1.t.HUD.camera.bottom = -window.innerHeight/2;
+		world1.t.HUD.camera.aspect = window.innerWidth / window.innerHeight;
+		world1.t.HUD.camera.left = -window.innerWidth / 2;
+		world1.t.HUD.camera.right = window.innerWidth / 2;
+		world1.t.HUD.camera.top = window.innerHeight / 2;
+		world1.t.HUD.camera.bottom = -window.innerHeight / 2;
 
 
 		world1.t.HUD.camera.updateProjectionMatrix();
 
 		for (var i in world1.t.HUD.items) {
-			if(typeof world1.t.HUD.items[i].recalc != "undefined") {
+			if (typeof world1.t.HUD.items[i].recalc != "undefined") {
 				world1.t.HUD.items[i].recalc();
 			}
 		}
-		
+
 		world1.t.renderer.setSize(window.innerWidth, window.innerHeight);
 	}, true);
 
@@ -71369,7 +68628,7 @@ $(function() {
 			window.webkitRequestAnimationFrame ||
 			window.mozRequestAnimationFrame ||
 			function(callback) {
-				window.setTimeout(callback, 1000/60);
+				window.setTimeout(callback, 1000 / 60);
 			};
 	})();
 
@@ -71384,7 +68643,7 @@ $(function() {
 		} else if (logReset > 100) {
 			logReset = 0;
 		}
-		
+
 		updatePhysics(world1);
 		renderParticles(clock.getDelta());
 		gameLoop(world1);
@@ -71419,15 +68678,15 @@ $(function() {
 		var line = new THREE.Line(geometry, material);
 		world1.t.scene.add(line);
 	}
-	
+
 
 	var testGeometry = new THREE.CylinderGeometry(0, 2, 10, 3);
 	testGeometry.translate(0, 0, 0);
-	testGeometry.rotateX(Math.PI/2);
+	testGeometry.rotateX(Math.PI / 2);
 	var helper = new THREE.Mesh(testGeometry, new THREE.MeshNormalMaterial());
 	world1.t.scene.add(helper);
-	
-	
+
+
 
 	var explosionSettings = {
 		type: SPE.distributions.SPHERE,
@@ -71579,21 +68838,21 @@ $(function() {
 		}
 	}
 
-	world1.spe.groups.smoke = new SPE.Group({
+	/*world1.spe.groups.smoke = new SPE.Group({
 		texture: {
-			value: THREE.ImageUtils.loadTexture('./img/smokeparticle.png')
+			value: THREE.ImageUtils.loadTexture('./assets/models/icons/particles/particle1.png')
 		},
 		maxParticleCount: 10000,
 	});
 	world1.spe.groups.smoke.mesh.frustrumCulled = false;
 	world1.spe.groups.smoke.mesh.frustumCulled = false;
-	world1.t.scene.add(world1.spe.groups.smoke.mesh);
+	world1.t.scene.add(world1.spe.groups.smoke.mesh);*/
 
 
 
-	world1.spe.groups.rain = new SPE.Group({
+	/*world1.spe.groups.rain = new SPE.Group({
 		texture: {
-			value: THREE.ImageUtils.loadTexture('./img/waterdrop.png')
+			value: THREE.ImageUtils.loadTexture('./assets/models/icons/particles/waterdrop.png')
 		},
 		hasPerspective: true,
 		//transparent: true
@@ -71603,7 +68862,7 @@ $(function() {
 	});
 	world1.spe.groups.rain.mesh.frustrumCulled = false;
 	world1.spe.groups.rain.mesh.frustumCulled = false;
-	world1.t.scene.add(world1.spe.groups.rain.mesh);
+	world1.t.scene.add(world1.spe.groups.rain.mesh);*/
 
 
 	//var pos = world1.game.player.phys.position;
@@ -71615,24 +68874,12 @@ $(function() {
 
 
 
-
-
-
-
-
-
-
-
-
 	var temp = {
 		isGrounded: true,
 		isJumping: false,
 		isCasting: false,
 		inputVelocity: new THREE.Vector3(),
 	};
-	var cameraOptions = {};
-	cameraOptions.rotateOffset = new THREE.Vector3();
-	var co = cameraOptions.rotateOffset;
 
 	function gameLoop(world) {
 		if (world.game.connected) {
@@ -71643,15 +68890,18 @@ $(function() {
 				}
 			}
 
-			input.data.rotation = cameraOptions.rotateOffset;
+			input.data.rotation = input.controls.rotation;
+			input.data.targetId = world1.game.player.targetId;
+			//input.data.casting = world1.
 
 			socket.emit('input', {
 				keys: input.keys,
 				data: input.data,
-				rotation: cameraOptions.rotateOffset
+				//rotation: input.controls.rotation,
+				//rotation: new THREE.Vector3(0, 0, world1.t.controls.getAzimuthalAngle()),
 			});
 
-			/*if (typeof input.joystick !== "undefined") {
+			if (typeof input.joystick !== "undefined") {
 				if (input.joystick.up()) {
 					input.action.moveForward = true;
 				} else if (input.action.moveForward && !input.joystick.up()) {
@@ -71671,24 +68921,15 @@ $(function() {
 					input.action.moveLeft = false;
 				}
 
-
 				if (input.joystick.right()) {
 					input.action.moveRight = true;
 				} else if (input.action.moveRight && !input.joystick.right()) {
 					input.action.moveRight = false;
 				}
-			}*/
+			}
 
-
-			var playerObj = world1.game.player;
 			var pMesh = world1.game.player.mesh;
 			var pPhys = world1.game.player.phys;
-
-
-			var rclone = cameraOptions.rotateOffset.clone();
-			//rclone.z += Math.PI/2;
-			var wasKeyPressed = false;
-			var dirOffset = 0;
 
 			/*temp.inputVelocity.set(0, 0, 0);
 			if (input.action.moveForward) {
@@ -71708,8 +68949,8 @@ $(function() {
 				pPhys.applyLocalImpulse(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3());
 				pPhys.position.z += 0.5;
 			}*/
-			
-			
+
+
 			/*if (input.action.castFireball && temp.isCasting === false) {
 				temp.isCasting = true;
 				var pos = world1.game.player.mesh.position;
@@ -71722,8 +68963,8 @@ $(function() {
 					input.action.castFireball = false;
 				}, 80);
 			}*/
-			
-			
+
+
 			/*if (!input.action.moveForward && !input.action.moveBackward) {
 				var rotatedV = new THREE.Vector3().copy(pPhys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -cameraOptions.rotateOffset.z).multiplyScalar(0.1);
 				temp.inputVelocity.x = -rotatedV.x;
@@ -71740,40 +68981,97 @@ $(function() {
 				pPhys.velocity.z = 0;
 			}*/
 			
-			
-			
-			
-			var pry = pMesh.rotation.y;
+			var rotation = input.controls.rotation;
+
+			temp.inputVelocity.set(0, 0, 0);
+
 			if (input.action.moveForward) {
-				wasKeyPressed = true;
-			} else if (input.action.moveBackward) {
-				wasKeyPressed = true;
-			} else if (input.action.moveLeft) {
-				wasKeyPressed = true;
-			} else if (input.action.moveRight) {
-				wasKeyPressed = true;
+				temp.inputVelocity.x = -20;
+			}
+			if (input.action.moveBackward) {
+				temp.inputVelocity.x = 20;
+			}
+			if (input.action.moveLeft) {
+				temp.inputVelocity.y = -20;
+			}
+			if (input.action.moveRight) {
+				temp.inputVelocity.y = 20;
 			}
 			
-			
-			//var dir = pMesh.rotation.y - (rclone.z + dirOffset);
-			var diff = (pry + (Math.PI/2)) - findNearestCoterminalAngle(pry, rclone.z);
-			if (wasKeyPressed) {
-				pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
-				pMesh.rotation.y -= diff/5;
-				//console.log("offset.z: " + cameraOptions.rotateOffset.z);
-				//console.log("pMesh.rotation.y: " + pMesh.rotation.y);
-			} else if (!input.mouse.lclick && !input.mouse.rclick) {
-				pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
-				pMesh.rotation.y -= diff/5;
+			temp.inputVelocity.setLength(20);
+
+			if (!input.action.moveForward && !input.action.moveBackward && temp.isGrounded == true) {
+				var rotatedV = new THREE.Vector3().copy(pPhys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x).multiplyScalar(0.1);
+				temp.inputVelocity.x = -rotatedV.x;
 			}
-
-
+			if (!input.action.moveLeft && !input.action.moveRight && temp.isGrounded == true) {
+				var rotatedV = new THREE.Vector3().copy(pPhys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x).multiplyScalar(0.1);
+				temp.inputVelocity.y = -rotatedV.y;
+			}
+			
+			temp.inputVelocity.applyAxisAngle(new THREE.Vector3(0, 0, 1), rotation.x);
+			if (temp.isGrounded === true) {
+				pPhys.velocity.x = temp.inputVelocity.x;
+				pPhys.velocity.y = temp.inputVelocity.y;
+				pPhys.applyLocalForce(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3(0, 0, 0));
+			}
 
 			var pVec1 = new CANNON.Vec3().copy(pPhys.position).vadd(new CANNON.Vec3(0, 0, -2.7));
 			var pVec2 = pVec1.vsub(new CANNON.Vec3(0, 0, 800));
 			var result = new CANNON.RaycastResult();
-			//world1.c.pw.raycastClosest(camVec, camVec2);
 			world1.c.pw.raycastAny(pVec1, pVec2, {}, result);
+			if (result.hasHit) {
+				var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
+				if (result.distance < 1 && temp.isJumping === false) {
+					pPhys.position.z += 0.01 - result.distance;
+				}
+				if (result.distance < 0.1) {
+					temp.isGrounded = true;
+				} else {
+					temp.isGrounded = false;
+				}
+			} else {
+				pPhys.position.z += 0.1;
+			}
+
+			if (input.action.jump && temp.isGrounded === true && temp.isJumping === false) {
+				temp.isJumping = true;
+				pPhys.applyLocalImpulse(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3(0, 0, 0));
+			}
+
+			if (!input.action.jump && temp.isGrounded === true) {
+				temp.isJumping = false;
+			}
+
+
+			// fix this later
+			if (!input.mouse.lclick) {
+				pMesh.rotation.y += Math.PI / 2;
+				input.controls.rotation.x = limit(0, (Math.PI * 2), input.controls.rotation.x, true, true);
+				pMesh.rotation.y = limit(0, (Math.PI * 2), pMesh.rotation.y, true, true);
+
+				var diff = input.controls.rotation.x - pMesh.rotation.y;
+				if (diff >= Math.PI) {
+					pMesh.rotation.y -= 0.09 * Math.abs(diff - Math.PI); //0.05;
+				} else if (diff < -Math.PI) {
+					pMesh.rotation.y += 0.09 * Math.abs(diff + Math.PI); //0.05;
+				} else if (diff > 0) {
+					pMesh.rotation.y += 0.09 * Math.abs(diff); //0.05;
+				} else if (diff < 0) {
+					pMesh.rotation.y -= 0.09 * Math.abs(diff); //0.05;
+				}
+				pMesh.rotation.y -= Math.PI / 2;
+			}
+
+
+
+			// fix this later
+
+			//var pVec1 = new CANNON.Vec3().copy(pPhys.position).vadd(new CANNON.Vec3(0, 0, -2.7));
+			//var pVec2 = pVec1.vsub(new CANNON.Vec3(0, 0, 800));
+			//var result = new CANNON.RaycastResult();
+			//world1.c.pw.raycastClosest(camVec, camVec2);
+			//world1.c.pw.raycastAny(pVec1, pVec2, {}, result);
 
 			/*if (result.hasHit) {
 				var hitPoint1 = new THREE.Vector3().copy(result.hitPointWorld);
@@ -71794,12 +69092,15 @@ $(function() {
 			if (!input.action.jump && temp.isGrounded === true) {
 				temp.isJumping = false;
 			}*/
-			
-			//function lerp_dir( cur_dir:Number , tar_dir:Number , inc:Number){		if ( Math.abs( tar_dir - cur_dir) <= inc or Math.abs( tar_dir - cur_dir) >= (360 - inc))	{		cur_dir = tar_dir;	}	else	{		if ( Math.abs( tar_dir - cur_dir) > 180)		{			if (tar_dir < cur_dir)			{				tar_dir += 360;			}			else			{				tar_dir -= 360;			}		}		if ( tar_dir > cur_dir)		{			cur_dir += inc;		}		else		{			if ( tar_dir < cur_dir)			{				cur_dir -= inc;			}		}	}	return cur_dir;}
-			
-			
-			
-			
+
+
+
+
+
+
+
+
+
 			if (!input.mouse.rclick && input.mouse.rclickInitial.x != 9999) {
 				var dx = Math.pow(input.mouse.x - input.mouse.rclickInitial.x, 2);
 				var dy = Math.pow(input.mouse.y - input.mouse.rclickInitial.y, 2);
@@ -71811,25 +69112,31 @@ $(function() {
 					world1.t.raycaster.setFromCamera(input.mouse.ray, world1.t.camera);
 					var intersects = world1.t.raycaster.intersectObjects(world1.t.scene.children);
 					for (var i = 0; i < intersects.length; i++) {
-						if (intersects[i].object.isPlayer === true && intersects[i].object.username != "") {
+						/*if (intersects[i].object.isPlayer === true && intersects[i].object.username != "") {
 							targetPlayer(intersects[i].object);
+						}*/
+						var intersect = intersects[i].object;
+						console.log(intersect);
+						if(typeof intersect.characterObject != "undefined") {
+							world1.game.player.targetObject(intersect.characterObject);
 						}
-						helper.position.set(0, 0, 0);
-						helper.lookAt(intersects[0].point);
-						helper.position.copy(intersects[0].point);
-						
-						
+
 					}
+
+					//helper.position.set(0, 0, 0);
+					//helper.lookAt(intersects[0].point);
+					//helper.position.copy(intersects[0].point);
+
 				}
 			}
-			
-			
-			
+
+
+
 			world1.t.HUD.raycaster.setFromCamera(input.mouse.HUDRay, world1.t.HUD.camera);
 			var intersects = world1.t.HUD.raycaster.intersectObjects(world1.t.HUD.scene.children);
 			for (var i = 0; i < intersects.length; i++) {
 				var obj = intersects[i].object;
-				if(typeof obj.mouseOver != "undefined") {
+				if (typeof obj.mouseOver != "undefined") {
 					obj.mouseOver();
 				}
 				/*if(logReset == 0) {
@@ -71839,24 +69146,28 @@ $(function() {
 			}
 
 
-			followObject(world, world1.game.player.mesh, world.t.camera, cameraOptions);
-			
-			if(typeof world.t.renderer.clear != "undefined") {
+
+
+
+			followObject(world, world1.game.player.mesh, world.t.camera);
+
+			if (typeof world.t.renderer.clear != "undefined") {
 				world.t.renderer.clear();
 			}
 			world.t.renderer.render(world.t.scene, world.t.camera);
-			
+
+			if (typeof world.t.renderer.clearDepth != "undefined") {
+				world.t.renderer.clearDepth();
+			}
+			world.t.renderer.render(world.t.HUD.scene, world.t.HUD.camera);
+
 		}
-		if(typeof world.t.renderer.clearDepth != "undefined") {
-			world.t.renderer.clearDepth();
-		}
-		world.t.renderer.render(world.t.HUD.scene, world.t.HUD.camera);
 	}
-	
-	
-	
+
+
+
 	function updatePhysics(world) {
-		world.c.pw.step(1/60);
+		world.c.pw.step(1 / 60);
 		//world.c.pw.step(1/120);
 		//world.c.pw.step(1/120);
 		for (var i = 0; i < world.c.objects.length; i++) {
@@ -71868,78 +69179,60 @@ $(function() {
 	}
 	loop();
 
+
+
 	document.addEventListener("mousemove", function(e) {
 		e.preventDefault();
 		var movementX = e.movementX || e.mozMovementX || /*e.webkitMovementX ||*/ 0;
 		var movementY = e.movementY || e.mozMovementY || /*e.webkitMovementY ||*/ 0;
-		
+
 		input.mouse.x = e.clientX;
 		input.mouse.y = e.clientY;
-		
+
 		input.mouse.chg.x = movementX;
 		input.mouse.chg.y = movementY;
-		
+
+		input.mouse.HUDRay.x = (e.clientX / world1.width) * 2 - 1;
+		input.mouse.HUDRay.y = -(e.clientY / world1.height) * 2 + 1;
+
+		input.mouse.ray.x = (e.clientX / world1.width) * 2 - 1;
+		input.mouse.ray.y = -(e.clientY / world1.height) * 2 + 1;
+
 		input.mouse.chg.x *= -0.01;
 		input.mouse.chg.y *= 0.01;
-		
-		var n = 1;
-		
+
 		var xminmax = 0.5;
 		var yminmax = 0.5;
-		
-		if (input.mouse.chg.x > xminmax) {
-			input.mouse.chg.x = xminmax;
-		} else if (input.mouse.chg.x < -1*xminmax) {
-			input.mouse.chg.x = -1*xminmax;
-		}
-		if (input.mouse.chg.y > yminmax) {
-			input.mouse.chg.y = yminmax;
-		} else if (input.mouse.chg.y < -1*yminmax) {
-			input.mouse.chg.y = -1*yminmax;
-		}
+
+		input.mouse.chg.x = limit(-1 * xminmax, xminmax, input.mouse.chg.x);
+		input.mouse.chg.y = limit(-1 * yminmax, yminmax, input.mouse.chg.y);
+
 
 		if (input.mouse.rclick) {
 
-			cameraOptions.rotateOffset.z += input.mouse.chg.x;
-			cameraOptions.rotateOffset.y += input.mouse.chg.y;
-			cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true, true);
-			cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
+			input.controls.rotation.x += input.mouse.chg.x;
+			input.controls.rotation.y += input.mouse.chg.y;
+			input.controls.rotation.x = limit(0, Math.PI * 2, input.controls.rotation.x, true, true);
+			input.controls.rotation.y = limit((-Math.PI / 2) + 0.02, (Math.PI / 2) - 0.02, input.controls.rotation.y, false);
 
-			var pMesh = world1.game.player.mesh;
-			var rclone = cameraOptions.rotateOffset.clone();
-			var diff = (pMesh.rotation.y + (Math.PI/2)) - findNearestCoterminalAngle(pMesh.rotation.y, rclone.z);
-			pMesh.rotation.y = limit(0, (Math.PI*2), pMesh.rotation.y, true, true);
-			if (diff > Math.PI/4) {
-				pMesh.rotation.y -= diff - Math.PI/4;
-			} else if (diff < -Math.PI/4) {
-				pMesh.rotation.y -= diff + Math.PI/4;
-			}
-			
 		} else if (input.mouse.lclick) {
-			cameraOptions.rotateOffset.z += input.mouse.chg.x;
-			cameraOptions.rotateOffset.y += input.mouse.chg.y;
-			cameraOptions.rotateOffset.z = limit(0, Math.PI*2, cameraOptions.rotateOffset.z, true);
-			cameraOptions.rotateOffset.y = limit((-Math.PI/2) + 0.02, (Math.PI/2) - 0.02, cameraOptions.rotateOffset.y, false);
+			input.controls.rotation.x += input.mouse.chg.x;
+			input.controls.rotation.y += input.mouse.chg.y;
+			input.controls.rotation.x = limit(0, Math.PI * 2, input.controls.rotation.x, true);
+			input.controls.rotation.y = limit((-Math.PI / 2) + 0.02, (Math.PI / 2) - 0.02, input.controls.rotation.y, false);
 		}
-		
-		input.mouse.HUDRay.x = (e.clientX/world1.width)*2 - 1;
-		input.mouse.HUDRay.y = -(e.clientY/world1.height)*2 + 1;
-		
-		input.mouse.ray.x = (e.clientX/world1.width)*2 - 1;
-		input.mouse.ray.y = -(e.clientY/world1.height)*2 + 1;
 	});
-	
-	
-	
-	
+
+
+
+
 	$(document).on('wheel', function(event) {
 		var delta = event.originalEvent.deltaY;
 		if (delta < 0) {
-			input.mouse.scrollLevel -= 0.5*input.mouse.scrollLevel;
+			input.mouse.scrollLevel -= 0.5 * input.mouse.scrollLevel;
 		} else if (delta > 0) {
-			input.mouse.scrollLevel += 0.5*input.mouse.scrollLevel;
+			input.mouse.scrollLevel += 0.5 * input.mouse.scrollLevel;
 		}
-		//input.mouse.scrollLevel = limit(0.1, 15, input.mouse.scrollLevel, false);
 		input.mouse.scrollLevel = limit(0.1, 10000, input.mouse.scrollLevel, false);
 	});
 
@@ -71947,14 +69240,15 @@ $(function() {
 	world1.canvas.requestPointerLock = world1.canvas.requestPointerLock ||
 		world1.canvas.mozRequestPointerLock ||
 		world1.canvas.webkitRequestPointerLock;
-	
+
 	document.exitPointerLock = document.exitPointerLock ||
 		document.mozExitPointerLock ||
 		document.webkitExitPointerLock;
 
 });
-},{"../../node_modules/lzma":72,"./functions":77,"./libs/blendCharacter":78,"./libs/cannonDebugRenderer":79,"./libs/canvasRenderer":80,"./libs/hamsters":81,"./libs/jquery.color":82,"./libs/localforage/localforage.nopromises.js":83,"./libs/mobile-console":84,"./libs/projector":85,"./libs/randomColor":86,"./libs/skyShader":87,"./libs/stats.min":88,"./libs/sweetalert.min":89,"./libs/virtualjoystick":90,"cannon":15,"jquery":71,"shader-particle-engine":74,"three":75}],77:[function(require,module,exports){
+},{"./functions":75,"./libs/blendCharacter":76,"./libs/cannonDebugRenderer":77,"./libs/canvasRenderer":78,"./libs/hamsters":79,"./libs/jquery.color":80,"./libs/localforage":81,"./libs/orbitControls":82,"./libs/projector":83,"./libs/randomColor":84,"./libs/skyShader":85,"./libs/stats.min":86,"./libs/sweetalert.min":87,"./libs/virtualjoystick":88,"cannon":15,"jquery":71,"shader-particle-engine":72,"three":73}],75:[function(require,module,exports){
 var login = require('./login');
+
 
 
 var fn = {};
@@ -72215,63 +69509,6 @@ function roundRect(ctx, x, y, w, h, r) {
 
 
 
-function whenDo(variables, operator, istypeof, callback, frequency, params) {
-	var isDone = false;
-	if (istypeof) {
-
-		if (operator == "==") {
-			if (typeof variables.var1 == variables.var2) {
-				isDone = true;
-			}
-		} else if (operator == "!=") {
-			if (typeof variables.var1 != variables.var2) {
-				isDone = true;
-			}
-		}
-
-	} else if (!istypeof) {
-
-		if (operator == "==") {
-			if (variables.var1 == variables.var2) {
-				isDone = true;
-			}
-		} else if (operator == "!=") {
-			if (variables.var1 != variables.var2) {
-				isDone = true;
-			}
-		}
-
-	}
-
-	if (isDone === true) {
-		if (params.length === 0) {
-			callback();
-		} else if (params.length == 1) {
-			callback(params[0]);
-		} else if (params.length == 2) {
-			callback(params[0], params[1]);
-		} else if (params.length == 3) {
-			callback(params[0], params[1], params[2]);
-		}
-
-	} else if (isDone === false) {
-		/*setTimeout(function() {
-			whenDo(variable1, variable2, operator, istypeof, callback, frequency, params);
-			console.log("looped");
-		}, frequency);*/
-		//newer browsers
-		//console.log("looped");
-		//console.log(a);
-		console.log(variables.var1);
-		setTimeout(whenDo, frequency, variables, operator, istypeof, callback, frequency, params);
-	}
-
-
-}
-
-
-
-
 
 fn.limit = function limit(min, max, variable, teleport, teleportProp) {
 	if (!teleportProp) {
@@ -72478,162 +69715,6 @@ fn.createHealthBar = function createHealthBar() {
 
 
 
-fn.createXPBar = function createXPBar() {
-	var XPBOpts = {
-		radius: 8,
-		xPos: window.innerWidth / 4,
-		yPos: 10,
-		barLength: window.innerWidth / 2,
-		barLength2: 0,
-		xScale: 1,
-		yScale: 1,
-		calcPos: function() {
-			var pos = {};
-			pos.x = (-window.innerWidth / 2) + this.xPos;
-			pos.y = (-window.innerHeight / 2) + this.yPos;
-			return pos;
-		},
-		calcCylinderPos: function(barLength, isbg) {
-			var pos = {};
-			if (isbg) {
-				pos.x = (-window.innerWidth / 2) + this.xPos + this.barLength / 2 + this.radius;
-				pos.y = (-window.innerHeight / 2) + this.yPos;
-			} else if (!isbg) {
-				pos.x = (-window.innerWidth / 2) + this.xPos + barLength / 2 + this.radius;
-				pos.y = (-window.innerHeight / 2) + this.yPos;
-			}
-			return pos;
-		},
-		calcSpherePos: function(which, isbg) {
-			var pos = {};
-			pos.x = (-window.innerWidth / 2) + this.xPos + this.radius;
-			pos.y = (-window.innerHeight / 2) + this.yPos;
-			if (which == 2) {
-				if (isbg) {
-					//console.log(pos.y);
-					pos.x += this.barLength;
-				} else if (!isbg) {
-					pos.x += this.barLength2;
-				}
-			}
-			return pos;
-		}
-	};
-
-	var bgCylinderGeometry = new THREE.CylinderGeometry(XPBOpts.radius, XPBOpts.radius, XPBOpts.barLength, 32);
-	var bgSphereGeometry = new THREE.SphereGeometry(XPBOpts.radius, 32, 32);
-	var bgBarMaterial = new THREE.MeshBasicMaterial({
-		color: 0x333333,
-	});
-	var bgCylinderMesh = new THREE.Mesh(bgCylinderGeometry, bgBarMaterial);
-	bgCylinderMesh.rotation.z = Math.PI / 2;
-	var bgSphereMesh1 = new THREE.Mesh(bgSphereGeometry, bgBarMaterial);
-	var bgSphereMesh2 = new THREE.Mesh(bgSphereGeometry, bgBarMaterial);
-
-	var bgCylinderPos = XPBOpts.calcCylinderPos(XPBOpts.barLength, true);
-	bgCylinderMesh.position.set(bgCylinderPos.x, bgCylinderPos.y, -10);
-	var bgSpherePos1 = XPBOpts.calcSpherePos(1, true);
-	bgSphereMesh1.position.set(bgSpherePos1.x, bgSpherePos1.y, -10);
-	var bgSpherePos2 = XPBOpts.calcSpherePos(2, true);
-	bgSphereMesh2.position.set(bgSpherePos2.x, bgSpherePos2.y, -10);
-
-
-
-
-	var cylinderGeometry = new THREE.CylinderGeometry(XPBOpts.radius - 2, XPBOpts.radius - 2, XPBOpts.barLength2, 32);
-	var sphereGeometry = new THREE.SphereGeometry(XPBOpts.radius - 2, 32, 32);
-	var barMaterial = new THREE.MeshBasicMaterial({
-		//color: 0x8C8C8C,
-		color: 0x990099,
-		//side: THREE.DoubleSide
-	});
-	var cylinderMesh = new THREE.Mesh(cylinderGeometry, barMaterial);
-	cylinderMesh.rotation.z = Math.PI / 2;
-
-	var sphereMesh1 = new THREE.Mesh(sphereGeometry, barMaterial);
-	var sphereMesh2 = new THREE.Mesh(sphereGeometry, barMaterial);
-	var cylinderPos = XPBOpts.calcCylinderPos(XPBOpts.barLength2);
-	cylinderMesh.position.set(cylinderPos.x, cylinderPos.y, 0);
-	var spherePos1 = XPBOpts.calcSpherePos(1, false);
-	sphereMesh1.position.set(spherePos1.x, spherePos1.y, 0);
-	var spherePos2 = XPBOpts.calcSpherePos(2, false);
-	sphereMesh2.position.set(spherePos2.x, spherePos2.y, 0);
-
-	world1.t.HUD.scene.add(bgCylinderMesh);
-	world1.t.HUD.scene.add(bgSphereMesh1);
-	world1.t.HUD.scene.add(bgSphereMesh2);
-	world1.t.HUD.scene.add(cylinderMesh);
-	world1.t.HUD.scene.add(sphereMesh1);
-	world1.t.HUD.scene.add(sphereMesh2);
-
-
-
-	var XPB = {};
-	XPB.bg = {};
-	XPB.bg.cMesh = bgCylinderMesh;
-	XPB.bg.sMesh1 = bgSphereMesh1;
-	XPB.bg.sMesh2 = bgSphereMesh2;
-
-	XPB.cMesh = cylinderMesh;
-	XPB.sMesh1 = sphereMesh1;
-	XPB.sMesh2 = sphereMesh2;
-
-	XPB.options = XPBOpts;
-
-	XPB.recalc = function() {
-		this.options.barLength = window.innerWidth / 2;
-		this.options.xPos = window.innerWidth / 4;
-
-		var bgCylinderGeometry = new THREE.CylinderGeometry(this.options.radius, this.options.radius, this.options.barLength, 32);
-		this.bg.cMesh.geometry.dispose();
-		this.bg.cMesh.geometry = bgCylinderGeometry;
-		this.bg.cMesh.needsUpdate = true;
-
-		var cylinderGeometry = new THREE.CylinderGeometry(this.options.radius - 2, this.options.radius - 2, this.options.barLength2, 32);
-		this.cMesh.geometry.dispose();
-		this.cMesh.geometry = cylinderGeometry;
-		this.cMesh.needsUpdate = true;
-	};
-
-	XPB.update = function(currentXP, currentLevel) {
-		var levelMaxXP = 100 * currentLevel + 1;
-		this.options.barLength2 = (currentXP / levelMaxXP) * this.options.barLength;
-		//this.options.xPos = window.innerWidth/4;
-		var bgCylinderPos = XPBOpts.calcCylinderPos(this.options.barLength, true);
-		this.bg.cMesh.position.set(bgCylinderPos.x, bgCylinderPos.y, -10);
-		var bgSpherePos1 = XPBOpts.calcSpherePos(1, true);
-		this.bg.sMesh1.position.set(bgSpherePos1.x, bgSpherePos1.y, -10);
-		var bgSpherePos2 = XPBOpts.calcSpherePos(2, true);
-		this.bg.sMesh2.position.set(bgSpherePos2.x, bgSpherePos2.y, -10);
-
-		var spherePos1 = this.options.calcSpherePos(1, false);
-		this.sMesh1.position.set(spherePos1.x, spherePos1.y, 0);
-		var spherePos2 = this.options.calcSpherePos(2, false);
-		this.sMesh2.position.set(spherePos2.x, spherePos2.y, 0);
-
-		var cylinderGeometry = new THREE.CylinderGeometry(this.options.radius - 2, this.options.radius - 2, this.options.barLength2, 32);
-		this.cMesh.geometry.dispose();
-		this.cMesh.geometry = cylinderGeometry;
-		var cylinderPos = this.options.calcCylinderPos(this.options.barLength2, false);
-		this.cMesh.position.set(cylinderPos.x, cylinderPos.y, 0);
-	};
-	return XPB;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -72667,7 +69748,6 @@ fn.createXPBar2 = function createXPBar2(radius, xPos, yPos, barLength) {
 		pos.y = (-window.innerHeight / 2) + this.yPos;
 		if (which == 2) {
 			if (isbg) {
-				//console.log(pos.y);
 				pos.x += this.barLength;
 			} else if (!isbg) {
 				pos.x += this.barLength2;
@@ -72680,8 +69760,6 @@ fn.createXPBar2 = function createXPBar2(radius, xPos, yPos, barLength) {
 
 
 	var XPBOpts = XPB.options;
-
-
 
 	var bgCylinderGeometry = new THREE.CylinderGeometry(XPBOpts.radius, XPBOpts.radius, XPBOpts.barLength, 32);
 	var bgSphereGeometry = new THREE.SphereGeometry(XPBOpts.radius, 32, 32);
@@ -73003,6 +70081,114 @@ function drawGrid(ctx, x, y, width, height, rows, columns, radius, BW, BH) {
 
 
 
+//var fn = {};
+
+function box(x, y, width, height) {
+	this.x = x;
+	this.y = y;
+	this.width = width;
+	this.height = height;
+}
+
+fn.test2 = function(ctx) {
+	var xNum = 5;
+	var yNum = 6;
+	
+	var boxWidth = 300;
+	var boxHeight = 300;
+	
+	var lineWidth = 15;
+	var xGridLines = xNum+1;
+	var yGridLines = yNum+1;
+	
+	var gridWidth = (boxWidth*xNum)+(lineWidth*xGridLines);
+	var gridHeight = (boxHeight*yNum)+(lineWidth*yGridLines);
+	
+	var boxes = [];
+	
+	for(var i = 0; i < yNum; i++) {
+		
+		for(var j = 0; j < xNum; j++) {
+		
+			//var lineWidthAdded = ((i+1)*lineWidth);
+			//         width of boxes   width of borders
+			var xPos = (boxWidth*j) + ((j+1)*lineWidth);
+			
+			var yPos = (boxHeight*i) + ((i+1)*lineWidth);
+			
+			var tempBox = new box(xPos, yPos, boxWidth, boxHeight);
+			boxes.push(tempBox);
+			
+			
+		}
+		
+	}
+	console.log(boxes);
+	
+	var targetx = ctx.width/2;
+	var targety = ctx.height/2;
+	
+	var gcx = gridWidth/2;
+	var gcy = gridHeight/2;
+	
+	var transx = targetx - gcx;
+	var transy = targety - gcy;
+	ctx.save();
+	ctx.translate(transx, transy);
+	
+	
+	ctx.moveTo(0, 0);
+	for(var i = 0; i < xNum+1; i++) {
+		
+		var xPos = (boxWidth*i) + ((i)*lineWidth) + lineWidth/2;
+		ctx.moveTo(xPos, 0);
+		ctx.lineTo(xPos, gridHeight);
+	}
+	for(var i = 0; i < yNum+1; i++) {
+		
+		var yPos = (boxHeight*i) + ((i)*lineWidth) + lineWidth/2;
+		ctx.moveTo(0, yPos);
+		ctx.lineTo(gridWidth, yPos);
+	}
+	ctx.stroke();
+	
+	ctx.restore();
+	
+	//x,y,width,height
+	//ctx.fillRect(0, 0, 2048, 2048);
+};
+
+
+
+var sprite;
+fn.test1 = function() {
+	var canvas = document.createElement('canvas');
+	var context = canvas.getContext('2d');
+	canvas.width = 2048;
+	canvas.height = 2048;
+	context.fillStyle = "#000000";
+	context.lineWidth = 15;
+	
+	fn.test2(context);
+	
+	var texture = new THREE.Texture(canvas);
+	texture.minFilter = THREE.LinearFilter;
+	texture.needsUpdate = true;
+	var spriteMaterial = new THREE.SpriteMaterial({
+		map: texture
+	});
+	sprite = new THREE.Sprite(spriteMaterial);
+	
+	//var scale = window.innerWidth/2;
+	var scale = 200;
+	
+	sprite.scale.set(scale, scale, 1);
+	
+	world1.t.HUD.scene.add(sprite);
+};
+
+
+
 
 
 
@@ -73148,7 +70334,7 @@ a.update(50);
 
 
 
-fn.createHUDInventory = function createHUDInventory() {
+/*fn.createHUDInventory = function createHUDInventory() {
 	var canvas = document.createElement('canvas');
 	var context = canvas.getContext('2d');
 	canvas.width = 2048;
@@ -73179,7 +70365,7 @@ fn.createHUDInventory = function createHUDInventory() {
 	};
 	world1.t.HUD.scene.add(obj.mesh);
 	return obj;
-}
+}*/
 
 
 
@@ -73475,62 +70661,6 @@ fn.physicsFromHeightmap = function physicsFromHeightmap(heightmapSrc, callback) 
 		hfBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI);
 		callback(planeMesh, hfBody);
 	});
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-	/*var heightmap = new Image();
-	heightmap.onload = function() {
-		options.heightmap = this;
-
-		var zValues = fromHeightmap2(heightmap, options);
-		var geometry1 = new THREE.PlaneGeometry(options.xSize, options.ySize, options.xSegments, options.ySegments);
-		for(var i = 0; i < geometry1.vertices.length; i++) {
-			geometry1.vertices[i].z = zValues[i];
-		}
-		
-
-		//var geometry2 = geometry1.clone();
-		var geometry2 = new THREE.PlaneGeometry(options.xSize, options.ySize, options.xSegments, options.ySegments);
-		//fromHeightmap(geometry2.vertices, options);
-		geometry2.vertices = geometry1.vertices;
-		var material = new THREE.MeshLambertMaterial({
-			color: 0xffff00,
-			side: THREE.DoubleSide
-		});
-		var planeMesh = new THREE.Mesh(geometry2, material);
-
-
-
-		var vertices = toArray2D(geometry1.vertices, options);
-		vertices.reverse();
-
-		//var wallGeometry = new THREE.PlaneBufferGeometry(1, 1);
-		//var wallMesh = new THREE.Mesh(wallGeometry);
-		var hfShape = new CANNON.Heightfield(vertices, {
-			elementSize: options.xSize / options.xSegments,
-		});
-		var hfBody = new CANNON.Body({
-			mass: 0,
-		});
-		hfBody.addShape(hfShape);
-		hfBody.shapeOffsets[0].x = -options.xSegments * hfShape.elementSize / 2;
-		hfBody.shapeOffsets[0].y = -options.xSegments * hfShape.elementSize / 2;
-		hfBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI);
-		//createPhysicsObject(wallMesh, hfBody, world1);
-
-
-
-
-		callback(planeMesh, hfBody);
-	};
-	heightmap.src = src;*/
 }
 
 
@@ -73542,14 +70672,14 @@ fn.physicsFromHeightmap = function physicsFromHeightmap(heightmapSrc, callback) 
 var lf = localforage;
 
 localforage.config({
-	driver: localforage.INDEXEDDB, // Force INDEXEDDB; same as using setDriver() // 3-9-16
+	//driver: localforage.INDEXEDDB, // Force INDEXEDDB; same as using setDriver() // 3-9-16
 	name: 'mmo',
 	version: 1.0,
 	//size: 4980736, // Size of database, in bytes. WebSQL-only for now.
 	storeName: 'keyvaluepairs', // Should be alphanumeric, with underscores.
 	description: 'some description'
 });
-localforage.setDriver(localforage.INDEXEDDB);
+//localforage.setDriver(localforage.INDEXEDDB);
 
 // with promises
 /*localforage.setItem('key', 'value').then(function(value) {
@@ -73599,26 +70729,6 @@ fn.assetHolder = function assetHolder() {
 	
 	this.loadedModels = [];
 	this.modelList = [];
-
-
-	/*localforage.setItem('key', 'value').then(function(value) {
-		console.log("value was set");
-	}, function(error) {
-		console.error(error);
-	});*/
-
-	/*localforage.getItem('assets').then(function(value) {
-		if(value !== null) {
-			console.log("loaded assets from storage");
-			scope.assets = value;
-		}
-		//console.log(value);
-	}, function(error) {
-		console.error(error);
-	});*/
-
-
-
 
 	this.manager = new THREE.LoadingManager();
 	this.manager.scope = this;
@@ -73709,13 +70819,15 @@ fn.assetHolder = function assetHolder() {
 					//scope.numberOfLoadedAssets += 1;
 					//scope.assetProgress();
 					//console.log("loaded: " + url + " manually.");
-					var storable = JSON.stringify(scope.assets.files[url].value);
-					
-					localforage.setItem('files.'+url, storable).then(function(value) {
-						//scope.numberOfLoadedAssets += 1;
-						//scope.assetProgress();
-						console.log("loaded and stored: " + url + " manually.");
-					});
+					if(!fn.isMobile()) {
+						var storable = JSON.stringify(scope.assets.files[url].value);
+
+						localforage.setItem('files.'+url, storable).then(function(value) {
+							//scope.numberOfLoadedAssets += 1;
+							//scope.assetProgress();
+							console.log("loaded and stored: " + url + " manually.");
+						});
+					}
 				});
 			}
 		});
@@ -73892,6 +71004,86 @@ a.onProgress = function ( item, loaded, total ) {
 };
 */
 
+
+
+function segment(parentGrid, column, row) {//fill in paramater for heightmap url or define url scheme, also paramater for position
+	this.terrainGrid = parentGrid;
+	
+	
+	this.heightmap = 0;//probably just store url
+	
+	this.width = 1024;//this.terrainGrid.segmentWidth
+	this.height = 1024;//this.terrainGrid.segmentHeight
+	// position from the bottom left? top left? bottom left for now
+	this.worldPosition = new THREE.Vector2(column*this.width, row*this.height);
+	this.coordPosition = new THREE.Vector2(column, row);
+	
+	this.calculateCoordPosition = function() {
+		
+	};
+}
+
+
+
+
+function terrainGrid() {
+	this.rows = 10;
+	this.columns = 10;
+	this.segmentWidth = 1024;
+	this.segmentHeight = 1024;
+	
+	this.segments = [];
+	for(var i = 0; i < this.columns; i++) {
+		this.segments[i] = [];
+	}
+	
+	for(i = 0; i < this.columns; i++) {
+		for(var j = 0; j < this.rows; j++) {
+			this.segments[i][j] = new segment(this, i, j);
+		}
+	}
+	
+	this.findZone = function(position) {
+		var column = Math.floor(position.x/this.segmentWidth);
+		var row = Math.floor(position.y/this.segmentHeight);
+		position.set(column, row);
+		
+		return position;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 THREE.Cache.enabled = true;
 
 
@@ -73929,6 +71121,8 @@ function character() {
 	this.mesh.warpTime = 0.2;
 	this.mesh.animTo = "none";
 	this.mesh.animPlaying = "none";
+	// add reference to this object
+	this.mesh.characterObject = this;
 
 	this.loadModel = function(name, scale) {
 		this.mesh.loadFast(name);
@@ -73992,7 +71186,12 @@ fn.playerConstructor = function playerConstructor(playerData) {
 	this.equipment = {};
 	this.level = 0;
 	this.health = 100;
-	//this.username = "john";
+	
+	this.autoAttacking = false;
+	this.targetId = null;
+	this.casting = false;
+	
+	this.spells = [];
 	
 	
 	this.setClass = function(playerClass) {
@@ -74001,9 +71200,18 @@ fn.playerConstructor = function playerConstructor(playerData) {
 	};
 
 	if (playerData) {
+		this.uniqueId = playerData.uniqueId;
 		if(playerData.class) {
 			this.setClass(playerData.class);
 		}
+		
+		/*if(playerData.spells) {
+			this.spells = playerData.spells;
+			for(var i = 0; i < playerData.spells.length; i++) {
+				
+				//this.learnSpell(playerData.spells[i]);
+			}
+		}*/
 		
 		/*this.items.userLabel = new makeTextSprite(playerData.username);
 		this.items.userLabel.scale.set(50, 50, 1);
@@ -74021,29 +71229,56 @@ fn.playerConstructor = function playerConstructor(playerData) {
 		this.mesh.add(this.items.healthLabel.mesh);*/
 	}
 	
+	this.cast = function() {
+		
+	};
+	
+	this.learnSpell = function() {
+		
+	};
 	
 	
 	
 	
 	
+	this.targetObject = function(objectToTarget) {
+		if(typeof objectToTarget.uniqueId !== "undefined") {
+			this.targetId = objectToTarget.uniqueId;
+		} else {
+			this.targetId = null;
+		}
+	};
 	
 	
 	
 	this.updateData = function(newData) {
-		//if(newData.position) {
-			this.phys.position.lerp(newData.position, 0.6, this.phys.position);
-
-			this.phys.quaternion.copy(newData.quaternion);
-
-			this.phys.velocity.copy(newData.velocity);
-
-			this.mesh.warpTime = newData.warpTime;
-			this.mesh.animTo = newData.animTo;
-		//}
+		this.phys.position.lerp(newData.position, 0.6, this.phys.position);
+		this.phys.quaternion.copy(newData.quaternion);
+		this.phys.velocity.copy(newData.velocity);
+		
+		if(world1.game.player.uniqueId !== this.uniqueId) {
+			var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), newData.rotation2.x - Math.PI/2);
+			newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
+			this.mesh.quaternion.copy(newRotation);
+		} else {
+			
+			//if()
+			for(var i = 0; i < newData.learnedSpells.length; i++) {
+				world1.t.HUD.items.spellBar.spellSlots[i].spell.changeSpell(newData.learnedSpells[i]);
+			}
+			//world1.t.HUD.items.spellBar.spellSlots[0].spell.changeSpell("fireball");
+			
+			world1.t.HUD.items.healthBar.update(newData.health/100);
+			//var percent = newData.experience/(100*(newData.level+1));
+			//world1.t.HUD.items.XPBar.update(newData.experience, newData.level);
+			//world1.t.HUD.items.XPBar.update(percent);
+			world1.t.HUD.items.levelText.update(newData.level);
+			
+		}
+		
+		this.mesh.warpTime = newData.warpTime;
+		this.mesh.animTo = newData.animTo;
 	}
-	
-	
-	
 	
 	
 	return this;
@@ -74160,7 +71395,7 @@ fn.createPhysBody = function createPhysBody(shape, mass) {
 
 
 
-fn.createEnemy = function createEnemy(type) {
+/*fn.createEnemy = function createEnemy(type) {
 	var pObject;
 	switch (type) {
 		case "abababe":
@@ -74179,129 +71414,304 @@ fn.createEnemy = function createEnemy(type) {
 	}
 
 	return pObject;
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function hoverText(text) {
+	var scope = this;
+	
+	this.text = text;
+	
+	if(Array.isArray(text)) {
+		this.textParts = text;
+	} else {
+		this.textParts = [];
+		this.textParts.push(this.text);
+	}
+	
+	this.timer = 0;
+	
+	//this.text = text;
+	//this.textParts = [];
+	//this.textParts.push(this.text);
+	
+	//this.pos.x = 0;
+	//this.pos.y = 0;
+	
+	if (this.textParts.length > 0) {
+		var maxLength = 0;
+		this.textCanvas = document.createElement("canvas");
+		var ctx = this.textCanvas.getContext("2d");
+		ctx.font = "100px Arial";
+		for (var i = 0; i < this.textParts.length; i++) {
+			if (ctx.measureText(this.textParts[i]).width > maxLength) {
+				maxLength = ctx.measureText(this.textParts[i]).width;
+			}
+		}
+		this.textCanvas.height = this.textParts.length * 105;
+		this.textCanvas.width = maxLength;
+		ctx.fillStyle = "#fefefe";
+		ctx.fillRect(0, 0, maxLength, this.textParts.length * 105);
+		ctx.fillStyle = "black";
+
+		ctx.font = "100px Arial";
+		for (var i = 0; i < this.textParts.length; i++) {
+			ctx.fillText(this.textParts[i], 0, (i + 1) * 100);
+			ctx.stroke();
+		}
+		var texture = new THREE.Texture(this.textCanvas);
+		texture.minFilter = THREE.LinearFilter;
+		texture.needsUpdate = true;
+		var textPartsMaterial = new THREE.SpriteMaterial({
+			map: texture
+		});
+		this.sprite = new THREE.Sprite(textPartsMaterial);
+		this.sprite.scale.set(maxLength / 7, this.textParts.length * 15, 1);
+		
+		this.sprite.visible = false;
+		world1.t.HUD.scene.add(this.sprite);
+	}
+	
+	//world1.t.HUD.scene.add(this.sprite);
+	
+	this.update = function() {//function(x, y) {
+		var x = input.mouse.HUDRay.x;
+		var y = input.mouse.HUDRay.y;
+		if(x !== this.sprite.position.x || y !== this.sprite.position.y){
+			this.sprite.position.set(x*window.innerWidth/2, y*window.innerHeight/2, 2);
+		}
+	};
+	
+	this.toggleVisibility = function() {
+		this.sprite.visible = !this.sprite.visible;
+	};
+	
+	this.show = function() {
+		if(scope.sprite.visible === false) {
+			scope.sprite.visible = true;
+		}
+		clearTimeout(scope.timer);
+		scope.timer = setTimeout(scope.hide, 100);
+	};
+	
+	this.hide = function() {
+		if(scope.sprite.visible === true) {
+			scope.sprite.visible = false;
+		}
+	};
+	
 }
+//window.a = new hoverText(['this is some example', 'text for a hover over box']);
+//window.a = new hoverText('this is some example text for a hover over box');
 
 
-
-function creature() {
-
-}
-
-
-
-var noSpellTexture = new THREE.TextureLoader().load("img/spells/none/icon/greycross.svg");
+var noSpellTexture = new THREE.TextureLoader().load("assets/models/icons/spells/nospell/greycross.svg");
 
 function spell(spellSlot, spellName) {
-	var spell1 = {};
-
+	var scope = this;
+	
 	if (spellSlot) {
-		spell1.slot = spellSlot;
+		this.slot = spellSlot;
 	} else {
 		throw new Error("No spellSlot specified!");
 	}
+	
+	this.mouseOverText = "test";
+	
+	
 
-	if (spellName) {
-		spell1.name = spellName;
+	/*if (spellName) {
+		this.spellName = spellName;
 	} else {
-		spell1.name = "none";
-	}
+		this.spellName = "none";
+	}*/
+	spellName = spellName || "none";
 
-	var slot = spell1.slot;
-	var pos = spell1.slot.mesh.position;
-	var bW = slot.width - 10;
-	var bH = slot.height - 10;
+	var slot = this.slot;
+	var pos = this.slot.mesh.position;
+	var bW = slot.width*0.8;
+	var bH = slot.height*0.8;
+	this.originalWidth = slot.originalWidth-10;
+	this.originalHeight = slot.originalHeight-10;
 
-	var geometry = new THREE.BoxGeometry(bW, bH, 0.1);
-	var material = new THREE.MeshBasicMaterial({
-		color: 0x00ff00
-	});
-
-
-	if (spell1.name == "fireball") {
-		var texture = new THREE.TextureLoader().load("img/spells/fireball/icon/fireball.jpg");
-		// 		texture.wrapS = THREE.RepeatWrapping;
-		// 		texture.wrapT = THREE.RepeatWrapping;
-		// 		texture.repeat.set(4, 4);
-
-		material.map = texture;
-		material.map.needsUpdate = true;
-
-		//var pos = spell1.slot.mesh.position;
-		spell1.mesh = new THREE.Mesh(geometry, material);
-		spell1.mesh.position.set(pos.x, pos.y, 1);
-
-		spell1.timer = new createCooldownTimer(pos.x - (1 * spell1.slot.width), pos.y - (1 * spell1.slot.width));
-	}
-
-	if (spell1.name == "none") {
-		var texture = noSpellTexture;
-		//var texture = new THREE.TextureLoader().load("img/spells/none/icon/greycross.svg");
-		// 		texture.wrapS = THREE.RepeatWrapping;
-		// 		texture.wrapT = THREE.RepeatWrapping;
-		// 		texture.repeat.set(4, 4);
-		material.map = texture;
-		material.map.needsUpdate = true;
-		//var pos = spell1.slot.mesh.position;
-		spell1.mesh = new THREE.Mesh(geometry, material);
-		spell1.mesh.position.set(pos.x, pos.y, 1);
-		//spell1.timer = new createCooldownTimer(pos.x-(1*spell1.slot.width), pos.y-(1*spell1.slot.width));
-	}
-
-	spell1.update = function() {
-
+	this.update = function() {
+		
 	};
 
-	spell1.recalc = function() {
+	this.recalc = function() {
+		var slot = this.slot;
+		var pos = this.slot.mesh.position;
+		var bW = slot.width*0.8;
+		var bH = slot.height*0.8;
+		this.mesh.position.set(pos.x, pos.y, 1);
+		var xScale = bW / this.originalWidth;
+		var yScale = bH / this.originalHeight;
+		//console.log(xScale);
+		//console.log(yScale);
+		//console.log(this.originalWidth);
+		//console.log(this.mesh);
+		this.mesh.scale.set(xScale, yScale, 1);
+	};
+	
+	
+	
+	this.changeSpell = function(spellName) {
+		if(this.spellName == spellName) {
+			return;
+		}
+		
+		this.spellName = spellName;
+		
+		if(this.mesh) {
+			world1.t.HUD.scene.remove(this.mesh);
+		}
+		
+		var geometry = new THREE.BoxGeometry(bW, bH, 0.1);
+		var material = new THREE.MeshBasicMaterial({
+			color: 0xffffff
+		});
+		
+		if (this.spellName == "fireball") {
+			this.hoverText = new hoverText("Cast a powerful fireball");
+			
+			var texture = new THREE.TextureLoader().load("assets/models/icons/spells/painterly-spell-icons-1/fireball-red-1.png");
+			texture.minFilter = THREE.LinearFilter;
+			material.map = texture;
+			material.map.needsUpdate = true;
+			this.mesh = new THREE.Mesh(geometry, material);
+			this.mesh.position.set(pos.x, pos.y, 1);
+			this.timer = new cooldownTimer(this, pos.x - (1 * this.slot.width), pos.y - (1 * this.slot.width));
+		}
 
-	}
+		if (this.spellName == "none") {
+			this.hoverText = new hoverText("No spell");
+			var texture = noSpellTexture;
+			texture.minFilter = THREE.LinearFilter;
+			material.map = texture;
+			material.map.needsUpdate = true;
+			this.mesh = new THREE.Mesh(geometry, material);
+			this.mesh.position.set(pos.x, pos.y, 1);
+			//this.timer = new createCooldownTimer(pos.x-(1*spell1.slot.width), pos.y-(1*spell1.slot.width));
+		}
+		world1.t.HUD.scene.add(this.mesh);
+	};
+	
+	this.mouseOver = function() {
+		scope.hoverText.show();
+		scope.hoverText.update();
+		//console.log(scope.hoverText.text);
+	};
+	
+	this.use = function() {
+		this.timer.use();
+	};
+	
+	this.changeSpell(spellName);
 
-	world1.t.HUD.scene.add(spell1.mesh);
-
-	return spell1;
+	//world1.t.HUD.scene.add(this.mesh);
+	
+	return this;
 }
 
 
 
-function spellSlot(width, height, pos, spellName) {
-	var spellSlot1 = {};
-	//spellSlot.spellNumber = spellNum;
+function spellSlot(spellBar, width, height, pos, row, column) {
+	
+	this.row = row;
+	this.column = column;
+	
+	this.spellBar = spellBar;
+	
+	this.width = width;
+	this.height = height;
+	
+	this.originalWidth = width;
+	this.originalHeight = height;
+	
+	var geometry = new THREE.BoxGeometry(this.width, this.height, 0.1);
 
-	spellSlot1.width = width;
-	spellSlot1.height = height;
-	var geometry = new THREE.BoxGeometry(spellSlot1.width, spellSlot1.height, 0.1);
-
-	var texture = new THREE.TextureLoader().load("img/spellSlot/spellSlot.png");
+	var texture = new THREE.TextureLoader().load("assets/models/icons/spells/painterly-spell-icons-3/frame-1-grey.png");
+	texture.minFilter = THREE.LinearFilter;
+	texture.needsUpdate = true;
 	//texture.wrapS = THREE.RepeatWrapping;
 	//texture.wrapT = THREE.RepeatWrapping;
 	//texture.repeat.set(4, 4);
 
 	var material = new THREE.MeshBasicMaterial({
 		map: texture,
-		//color: 0x00ff00
 	});
+	
+	this.pos = {};
+	this.pos.x = pos.x;
+	this.pos.y = pos.y;
+	this.mesh = new THREE.Mesh(geometry, material);
+	this.mesh.position.set(this.pos.x, this.pos.y, 0);
 
-	spellSlot1.mesh = new THREE.Mesh(geometry, material);
-	spellSlot1.mesh.position.set(pos.x, pos.y, 0);
-
-	spellSlot1.spell = new spell(spellSlot1, spellName);
+	this.spell = new spell(this, "none");
 
 
-	spellSlot1.update = function() {
+	this.update = function() {
 
 	};
 
-	spellSlot1.recalc = function() {
-
+	this.recalc = function(bW, bH) {
+		//console.log("test");
+		
+		var xScale = bW / this.originalWidth;
+		var yScale = bH / this.originalHeight;
+		this.width = bW;
+		this.height = bH;
+		
+		this.mesh.scale.set(xScale, yScale, 1);
+		this.pos.x = this.column * bW * 1.2-(this.spellBar.width/2) + this.spellBar.pos.x;
+		this.pos.y = this.row * bH * 1.2-(this.spellBar.height/2) + this.spellBar.pos.y;
+		this.mesh.position.set(this.pos.x, this.pos.y, 0);
+		
+		this.spell.recalc();
 	};
+	
+	this.changeSpell = function(spellName) {
+		this.spell = new spell(this, spellName);
+	};
+	
+	var scope = this;
+	
+	this.mouseOver = function() {
+		this.spell.mouseOver();
+		//console.log(this.spell);
+	};
+	
+	this.mesh.mouseOver = function() {
+		scope.mouseOver();
+	};
+	
+	this.click = function() {
+		//this.spell.click();
+		//console.log(this.spell);
+	};
+	
+	this.mesh.click = function() {
+		scope.click();
+	};
+	
+	world1.t.HUD.scene.add(this.mesh);
 
-
-
-
-	world1.t.HUD.scene.add(spellSlot1.mesh);
-
-	return spellSlot1;
+	return this;
 }
-
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.changeSpell("fireball");
 
 
 
@@ -74315,90 +71725,85 @@ function spellSlot(width, height, pos, spellName) {
 
 
 fn.createSpellBar = function createSpellBar() {
-
-	//var bW = 50;
-	//var bH = 50;
-	var bW = window.innerWidth / 20;
-	var bH = window.innerWidth / 20;
+	
+	var bW = window.innerWidth/20;	
+	var bH = window.innerWidth/20;
 
 	var geometry = new THREE.BoxGeometry(bW, bH, 0.1);
 	var material = new THREE.MeshBasicMaterial({
 		color: 0x00ff00
 	});
-	/*var cube = new THREE.Mesh(geometry, material);
-	var pos = new THREE.Vector2();
-	pos.x = 0;
-	pos.y = ((-window.innerHeight/2)*(2/3));
-	cube.position.set(pos.x, pos.y, 0);*/
+	
+	
+	this.pos = new THREE.Vector2();
+	this.pos.x = 0;
+	this.pos.y = (-window.innerHeight / 2) * (2 / 3);
+	this.rows = 1;
+	this.columns = 5;
+	this.width = bW * this.columns; //500
+	this.height = bW * this.rows; //100
+	this.spellSlots = [];
 
+	for (var i = 0; i < this.rows; i++) {
+		for (var j = 0; j < this.columns; j++) {
 
-
-	var container = {};
-	container.pos = new THREE.Vector2();
-	container.pos.x = 0;
-	container.pos.y = (-window.innerHeight / 2) * (2 / 3);
-	container.rows = 1;
-	container.columns = 5;
-	container.width = bW * container.columns; //500
-	container.height = bW * container.rows; //100
-	container.spellSlots = {};
-
-	for (var i = 0; i < container.rows; i++) {
-		for (var j = 0; j < container.columns; j++) {
-
-			var k = (i * container.columns) + j;
-
-
-
-			//var cube = new THREE.Mesh(geometry, material);
+			var k = (i * this.columns) + j;
 
 			var pos = new THREE.Vector2();
-			pos.x = j * bW * 1.2 - (container.width / 2) + container.pos.x;
-			pos.y = i * bH * 1.2 - (container.height / 2) + container.pos.y;
-			//cube.position.set(pos.x, pos.y, 0);
-			//console.log(k);
-			//console.log(pos.x, pos.y);
-			//var spellSlot = new spellSlot(pos, k);
-			var spellSlot1;
-
-			if (k == 0) {
-				spellSlot1 = new spellSlot(bW, bH, pos, "fireball");
-			} else {
-				spellSlot1 = new spellSlot(bW, bH, pos);
-			}
+			pos.x = j * bW * 1.2 - (this.width / 2) + this.pos.x;
+			pos.y = i * bH * 1.2 - (this.height / 2) + this.pos.y;
+			
+			var spellSlot1 = new spellSlot(this, bW, bH, pos, i, j);
 
 			/*if(k < 3) {
 				var spellSlot = new spellSlot(pos, k);
 				//cube.timer = new createCooldownTimer(pos.x+(window.innerWidth/2)-(1*bW), pos.y+(window.innerHeight/2)-(1*bW));
 			}*/
-			container.spellSlots[k] = spellSlot1;
+			this.spellSlots[k] = spellSlot1;
 
 
 			//world1.t.HUD.scene.add(cube);
 		}
 	}
 
-	container.update = function() {
+	this.update = function() {
 
 	};
 
-	container.recalc = function() {
+	this.recalc = function() {
+		//console.log("test2");
+		//console.log(this.spellSlots);
+		var bW = window.innerWidth/20;
+		var bH = window.innerWidth/20;
+		
+		this.pos.x = 0;
+		this.pos.y = (-window.innerHeight / 2) * (2 / 3);
+		this.width = bW * this.columns;
+		this.height = bW * this.rows;
+		
 		for (var i = 0; i < this.spellSlots.length; i++) {
-			if (typeof this.spellSlots[i].update !== "undefined") {
-				//this.spellSlots[i].upda
+		//for(var i in this.spellSlots) {
+			//console.log(this.spellSlots[i]);
+			if (typeof this.spellSlots[i].recalc !== "undefined") {
+				this.spellSlots[i].recalc(bW, bH);
 			}
 		}
 	};
 
 
-	container.addSpell = function(slot, spell) {
+	/*this.addSpell = function(slot, spell) {
+		
+	};*/
 
-	};
+	return this;
+}
 
 
-	//world1.t.HUD.scene.add(cube);
 
-	return container;
+
+
+function coolDown() {
+	
 }
 
 
@@ -74406,16 +71811,9 @@ fn.createSpellBar = function createSpellBar() {
 
 
 
+//world1.t.HUD.items.spellBar.spellSlots[0].changeSpell("fireball");
 
-
-
-
-
-
-
-
-
-fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
+/*fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 	//console.log(Math.round(x), Math.round(y));
 
 	var bW = ((window.innerWidth / 20) / 2);
@@ -74428,7 +71826,7 @@ fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 		timeRemaining: timeRemaining,
 		totalTime: totalTime,
 		bW: ((window.innerWidth / 20) / 2),
-		radius: (bW) * 0.7 * xScale, //4
+		radius: (bW) * 0.8 * xScale, //4
 		radius2: (bW) * 0.9 * yScale, //5
 		xPos: x || 0,
 		yPos: y || 0,
@@ -74437,8 +71835,8 @@ fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 		calcPos: function() {
 			this.bW = ((window.innerWidth / 20) / 2);
 			var pos = {};
-			pos.x = (this.bW * 2) + this.xPos; //pos.x = (-window.innerWidth/2) + /*this.radius + */(this.radius2*2) + this.xPos;
-			pos.y = (this.bW * 2) + this.yPos; //pos.y = (-window.innerHeight/2) + /*this.radius + */(this.radius2*2) + this.yPos;
+			pos.x = (this.bW * 2) + this.xPos; //pos.x = (-window.innerWidth/2) + /*this.radius + *//*(this.radius2*2) + this.xPos;
+			/*pos.y = (this.bW * 2) + this.yPos; //pos.y = (-window.innerHeight/2) + /*this.radius + *//*(this.radius2*2) + this.yPos;
 			return pos;
 		}
 	};
@@ -74478,7 +71876,127 @@ fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 	world1.t.HUD.scene.add(HB.mesh);
 
 	return HB;
-}
+}*/
+
+
+fn.cooldownTimer = function createCooldownTimer(spell, x, y, width) {
+	var scope = this;
+	
+	this.spell = spell;
+	
+
+	this.options = {};
+	
+	this.timeRemaining = 0;
+	this.totalTime = 4000;
+	this.xScale = 0.85;
+	this.yScale = 0.85;
+	this.bW = ((window.innerWidth / 20) / 2);
+	this.radius1 = (this.bW) * 0.8 * this.xScale;
+	this.radius2 = (this.bW) * 0.9 * this.yScale;
+	this.xPosition = x;
+	this.yPosition = y;
+	
+	this.calculatePosition = function() {
+		this.bW = ((window.innerWidth / 20) / 2);
+		var pos = {};
+		pos.x = (this.bW * 2) + this.xPosition;
+		pos.y = (this.bW * 2) + this.yPosition;
+		return pos;
+	};
+	
+	
+
+	var healthBarGeometry = new THREE.RingGeometry(this.radius1, this.radius2, 10, 8, 0, Math.PI * 2);
+	var healthBarMaterial = new THREE.MeshBasicMaterial({
+		color: 0xffff00,
+		side: THREE.DoubleSide
+	});
+	
+	this.mesh = new THREE.Mesh(healthBarGeometry, healthBarMaterial);
+	this.mesh.scale.set(this.xScale, this.yScale, 1);
+	this.mesh.rotation.y = Math.PI;
+	
+
+	var pos = this.calculatePosition();
+	this.mesh.position.set(pos.x, pos.y, 2);
+
+	this.recalc = function() {
+		var pos = this.calculatePosition();
+		this.mesh.position.set(pos.x, pos.y, 2);
+	};
+
+	this.update = function(timeRemaining, totalTime) {
+		var ratio = timeRemaining / totalTime;
+		var ringGeometry = new THREE.RingGeometry(this.radius1, this.radius2, 10, 8, 0, Math.PI * 2 * ratio);
+		this.mesh.scale.set(this.xScale, this.yScale, 1);
+		this.mesh.geometry.dispose();
+		this.mesh.geometry = ringGeometry;
+		this.mesh.material.color.setRGB(1.6 - ratio, ratio);
+	};
+	
+	
+	
+	
+	this.count = function() {
+		
+		scope.timeRemaining -= 100;
+		scope.update(scope.timeRemaining, scope.totalTime);
+		//setTimeout(scope.count, 100);
+		
+		if(scope.timeRemaining > 0) {
+			setTimeout(scope.count, 100);
+			//scope.timeRemaining -= 100;
+		}
+		
+		
+	};
+	
+	this.use = function() {
+		this.show();
+		this.timeRemaining = 4000;
+		//setInterval(this.count, 100);
+		
+		this.count();
+		setTimeout(this.hide, 4000);
+	};
+	
+	//this.reset = function() {
+		//this.mesh.visible = false;
+	//};
+	
+	
+	
+	this.toggleVisibility = function() {
+		this.mesh.visible = !this.mesh.visible;
+	};
+	
+	this.show = function() {
+		if(scope.mesh.visible === false) {
+			scope.mesh.visible = true;
+		}
+		//clearTimeout(scope.timer);
+		//scope.timer = setTimeout(scope.hide, 100);
+	};
+	
+	this.hide = function() {
+		if(scope.mesh.visible === true) {
+			scope.mesh.visible = false;
+		}
+	};
+	
+	
+	this.mesh.visible = false;
+	world1.t.HUD.scene.add(this.mesh);
+	return this;
+};
+
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.changeSpell("fireball");
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.use();
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.timer.use();
+
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.timer.update(90, 100);
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.timer.reset(0);
 
 
 
@@ -74488,71 +72006,9 @@ fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 
 
 
-
-
-
-
-
-
-
-
-/*
-
-var a;
-var loader = new THREE.JSONLoader();
-loader.load(
-	// resource URL
-	'models/wizard/wizard.json',
-	// Function when resource is loaded
-	function ( collada ) {
-		a = collada;
-		console.log(collada);
-	},
-	// Function called when download progresses
-	function ( xhr ) {
-		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-	}
-);
-
-
-
-var a;
-var loader = new THREE.ColladaLoader();
-loader.load(
-	// resource URL
-	'models/wizard/wizard.dae',
-	// Function when resource is loaded
-	function ( collada ) {
-		a = collada;
-		console.log(collada);
-	},
-	// Function called when download progresses
-	function ( xhr ) {
-		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-	}
-);
-
-
-var a;
-var loader = new THREE.AssimpJSONLoader();
-loader.load(
-	// resource URL
-	'models/wizard/wizard.json',
-	// Function when resource is loaded
-	function ( collada ) {
-		a = collada;
-		console.log(collada);
-	},
-	// Function called when download progresses
-	function ( xhr ) {
-		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-	}
-);
-
-*/
 
 module.exports = fn;
-},{"./login":91}],78:[function(require,module,exports){
+},{"./login":89}],76:[function(require,module,exports){
 THREE.BlendCharacter = function(assetHolder) {
 	
 	this.isLoading = false;
@@ -74696,7 +72152,7 @@ THREE.BlendCharacter.prototype.getForward = function() {
 		return forward;
 	}
 };
-},{}],79:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 /* global CANNON,THREE,Detector */
 
 /**
@@ -74939,7 +72395,7 @@ THREE.CannonDebugRenderer.prototype = {
         }
     }
 };
-},{"cannon":15,"three":75}],80:[function(require,module,exports){
+},{"cannon":15,"three":73}],78:[function(require,module,exports){
 /**
  * @author mrdoob / http://mrdoob.com/
  */
@@ -76054,7 +73510,7 @@ THREE.CanvasRenderer = function ( parameters ) {
 	}
 
 };
-},{}],81:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 (function (process){
 /*
 * Title: WebHamsters
@@ -77130,7 +74586,7 @@ self.hamsters = {
   });
 })();
 }).call(this,require('_process'))
-},{"_process":92}],82:[function(require,module,exports){
+},{"_process":90}],80:[function(require,module,exports){
 /*!
  * jQuery Color Animations v@VERSION
  * https://github.com/jquery/jquery-color
@@ -77805,14 +75261,698 @@ colors = jQuery.Color.names = {
 };
 
 });
-},{"jquery":71}],83:[function(require,module,exports){
+},{"jquery":71}],81:[function(require,module,exports){
+(function (process,global){
 /*!
     localForage -- Offline Storage, Improved
     Version 1.4.0
     https://mozilla.github.io/localForage
     (c) 2013-2015 Mozilla, Apache License 2.0
 */
-(function webpackUniversalModuleDefinition(root, factory) {
+(function() {
+var define, requireModule, require, requirejs;
+
+(function() {
+  var registry = {}, seen = {};
+
+  define = function(name, deps, callback) {
+    registry[name] = { deps: deps, callback: callback };
+  };
+
+  requirejs = require = requireModule = function(name) {
+  requirejs._eak_seen = registry;
+
+    if (seen[name]) { return seen[name]; }
+    seen[name] = {};
+
+    if (!registry[name]) {
+      throw new Error("Could not find module " + name);
+    }
+
+    var mod = registry[name],
+        deps = mod.deps,
+        callback = mod.callback,
+        reified = [],
+        exports;
+
+    for (var i=0, l=deps.length; i<l; i++) {
+      if (deps[i] === 'exports') {
+        reified.push(exports = {});
+      } else {
+        reified.push(requireModule(resolve(deps[i])));
+      }
+    }
+
+    var value = callback.apply(this, reified);
+    return seen[name] = exports || value;
+
+    function resolve(child) {
+      if (child.charAt(0) !== '.') { return child; }
+      var parts = child.split("/");
+      var parentBase = name.split("/").slice(0, -1);
+
+      for (var i=0, l=parts.length; i<l; i++) {
+        var part = parts[i];
+
+        if (part === '..') { parentBase.pop(); }
+        else if (part === '.') { continue; }
+        else { parentBase.push(part); }
+      }
+
+      return parentBase.join("/");
+    }
+  };
+})();
+
+define("promise/all", 
+  ["./utils","exports"],
+  function(__dependency1__, __exports__) {
+    "use strict";
+    /* global toString */
+
+    var isArray = __dependency1__.isArray;
+    var isFunction = __dependency1__.isFunction;
+
+    /**
+      Returns a promise that is fulfilled when all the given promises have been
+      fulfilled, or rejected if any of them become rejected. The return promise
+      is fulfilled with an array that gives all the values in the order they were
+      passed in the `promises` array argument.
+
+      Example:
+
+      ```javascript
+      var promise1 = RSVP.resolve(1);
+      var promise2 = RSVP.resolve(2);
+      var promise3 = RSVP.resolve(3);
+      var promises = [ promise1, promise2, promise3 ];
+
+      RSVP.all(promises).then(function(array){
+        // The array here would be [ 1, 2, 3 ];
+      });
+      ```
+
+      If any of the `promises` given to `RSVP.all` are rejected, the first promise
+      that is rejected will be given as an argument to the returned promises's
+      rejection handler. For example:
+
+      Example:
+
+      ```javascript
+      var promise1 = RSVP.resolve(1);
+      var promise2 = RSVP.reject(new Error("2"));
+      var promise3 = RSVP.reject(new Error("3"));
+      var promises = [ promise1, promise2, promise3 ];
+
+      RSVP.all(promises).then(function(array){
+        // Code here never runs because there are rejected promises!
+      }, function(error) {
+        // error.message === "2"
+      });
+      ```
+
+      @method all
+      @for RSVP
+      @param {Array} promises
+      @param {String} label
+      @return {Promise} promise that is fulfilled when all `promises` have been
+      fulfilled, or rejected if any of them become rejected.
+    */
+    function all(promises) {
+      /*jshint validthis:true */
+      var Promise = this;
+
+      if (!isArray(promises)) {
+        throw new TypeError('You must pass an array to all.');
+      }
+
+      return new Promise(function(resolve, reject) {
+        var results = [], remaining = promises.length,
+        promise;
+
+        if (remaining === 0) {
+          resolve([]);
+        }
+
+        function resolver(index) {
+          return function(value) {
+            resolveAll(index, value);
+          };
+        }
+
+        function resolveAll(index, value) {
+          results[index] = value;
+          if (--remaining === 0) {
+            resolve(results);
+          }
+        }
+
+        for (var i = 0; i < promises.length; i++) {
+          promise = promises[i];
+
+          if (promise && isFunction(promise.then)) {
+            promise.then(resolver(i), reject);
+          } else {
+            resolveAll(i, promise);
+          }
+        }
+      });
+    }
+
+    __exports__.all = all;
+  });
+define("promise/asap", 
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    var browserGlobal = (typeof window !== 'undefined') ? window : {};
+    var BrowserMutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver;
+    var local = (typeof global !== 'undefined') ? global : (this === undefined? window:this);
+
+    // node
+    function useNextTick() {
+      return function() {
+        process.nextTick(flush);
+      };
+    }
+
+    function useMutationObserver() {
+      var iterations = 0;
+      var observer = new BrowserMutationObserver(flush);
+      var node = document.createTextNode('');
+      observer.observe(node, { characterData: true });
+
+      return function() {
+        node.data = (iterations = ++iterations % 2);
+      };
+    }
+
+    function useSetTimeout() {
+      return function() {
+        local.setTimeout(flush, 1);
+      };
+    }
+
+    var queue = [];
+    function flush() {
+      for (var i = 0; i < queue.length; i++) {
+        var tuple = queue[i];
+        var callback = tuple[0], arg = tuple[1];
+        callback(arg);
+      }
+      queue = [];
+    }
+
+    var scheduleFlush;
+
+    // Decide what async method to use to triggering processing of queued callbacks:
+    if (typeof process !== 'undefined' && {}.toString.call(process) === '[object process]') {
+      scheduleFlush = useNextTick();
+    } else if (BrowserMutationObserver) {
+      scheduleFlush = useMutationObserver();
+    } else {
+      scheduleFlush = useSetTimeout();
+    }
+
+    function asap(callback, arg) {
+      var length = queue.push([callback, arg]);
+      if (length === 1) {
+        // If length is 1, that means that we need to schedule an async flush.
+        // If additional callbacks are queued before the queue is flushed, they
+        // will be processed by this flush that we are scheduling.
+        scheduleFlush();
+      }
+    }
+
+    __exports__.asap = asap;
+  });
+define("promise/config", 
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    var config = {
+      instrument: false
+    };
+
+    function configure(name, value) {
+      if (arguments.length === 2) {
+        config[name] = value;
+      } else {
+        return config[name];
+      }
+    }
+
+    __exports__.config = config;
+    __exports__.configure = configure;
+  });
+define("promise/polyfill", 
+  ["./promise","./utils","exports"],
+  function(__dependency1__, __dependency2__, __exports__) {
+    "use strict";
+    /*global self*/
+    var RSVPPromise = __dependency1__.Promise;
+    var isFunction = __dependency2__.isFunction;
+
+    function polyfill() {
+      var local;
+
+      if (typeof global !== 'undefined') {
+        local = global;
+      } else if (typeof window !== 'undefined' && window.document) {
+        local = window;
+      } else {
+        local = self;
+      }
+
+      var es6PromiseSupport = 
+        "Promise" in local &&
+        // Some of these methods are missing from
+        // Firefox/Chrome experimental implementations
+        "resolve" in local.Promise &&
+        "reject" in local.Promise &&
+        "all" in local.Promise &&
+        "race" in local.Promise &&
+        // Older version of the spec had a resolver object
+        // as the arg rather than a function
+        (function() {
+          var resolve;
+          new local.Promise(function(r) { resolve = r; });
+          return isFunction(resolve);
+        }());
+
+      if (!es6PromiseSupport) {
+        local.Promise = RSVPPromise;
+      }
+    }
+
+    __exports__.polyfill = polyfill;
+  });
+define("promise/promise", 
+  ["./config","./utils","./all","./race","./resolve","./reject","./asap","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __dependency6__, __dependency7__, __exports__) {
+    "use strict";
+    var config = __dependency1__.config;
+    var configure = __dependency1__.configure;
+    var objectOrFunction = __dependency2__.objectOrFunction;
+    var isFunction = __dependency2__.isFunction;
+    var now = __dependency2__.now;
+    var all = __dependency3__.all;
+    var race = __dependency4__.race;
+    var staticResolve = __dependency5__.resolve;
+    var staticReject = __dependency6__.reject;
+    var asap = __dependency7__.asap;
+
+    var counter = 0;
+
+    config.async = asap; // default async is asap;
+
+    function Promise(resolver) {
+      if (!isFunction(resolver)) {
+        throw new TypeError('You must pass a resolver function as the first argument to the promise constructor');
+      }
+
+      if (!(this instanceof Promise)) {
+        throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
+      }
+
+      this._subscribers = [];
+
+      invokeResolver(resolver, this);
+    }
+
+    function invokeResolver(resolver, promise) {
+      function resolvePromise(value) {
+        resolve(promise, value);
+      }
+
+      function rejectPromise(reason) {
+        reject(promise, reason);
+      }
+
+      try {
+        resolver(resolvePromise, rejectPromise);
+      } catch(e) {
+        rejectPromise(e);
+      }
+    }
+
+    function invokeCallback(settled, promise, callback, detail) {
+      var hasCallback = isFunction(callback),
+          value, error, succeeded, failed;
+
+      if (hasCallback) {
+        try {
+          value = callback(detail);
+          succeeded = true;
+        } catch(e) {
+          failed = true;
+          error = e;
+        }
+      } else {
+        value = detail;
+        succeeded = true;
+      }
+
+      if (handleThenable(promise, value)) {
+        return;
+      } else if (hasCallback && succeeded) {
+        resolve(promise, value);
+      } else if (failed) {
+        reject(promise, error);
+      } else if (settled === FULFILLED) {
+        resolve(promise, value);
+      } else if (settled === REJECTED) {
+        reject(promise, value);
+      }
+    }
+
+    var PENDING   = void 0;
+    var SEALED    = 0;
+    var FULFILLED = 1;
+    var REJECTED  = 2;
+
+    function subscribe(parent, child, onFulfillment, onRejection) {
+      var subscribers = parent._subscribers;
+      var length = subscribers.length;
+
+      subscribers[length] = child;
+      subscribers[length + FULFILLED] = onFulfillment;
+      subscribers[length + REJECTED]  = onRejection;
+    }
+
+    function publish(promise, settled) {
+      var child, callback, subscribers = promise._subscribers, detail = promise._detail;
+
+      for (var i = 0; i < subscribers.length; i += 3) {
+        child = subscribers[i];
+        callback = subscribers[i + settled];
+
+        invokeCallback(settled, child, callback, detail);
+      }
+
+      promise._subscribers = null;
+    }
+
+    Promise.prototype = {
+      constructor: Promise,
+
+      _state: undefined,
+      _detail: undefined,
+      _subscribers: undefined,
+
+      then: function(onFulfillment, onRejection) {
+        var promise = this;
+
+        var thenPromise = new this.constructor(function() {});
+
+        if (this._state) {
+          var callbacks = arguments;
+          config.async(function invokePromiseCallback() {
+            invokeCallback(promise._state, thenPromise, callbacks[promise._state - 1], promise._detail);
+          });
+        } else {
+          subscribe(this, thenPromise, onFulfillment, onRejection);
+        }
+
+        return thenPromise;
+      },
+
+      'catch': function(onRejection) {
+        return this.then(null, onRejection);
+      }
+    };
+
+    Promise.all = all;
+    Promise.race = race;
+    Promise.resolve = staticResolve;
+    Promise.reject = staticReject;
+
+    function handleThenable(promise, value) {
+      var then = null,
+      resolved;
+
+      try {
+        if (promise === value) {
+          throw new TypeError("A promises callback cannot return that same promise.");
+        }
+
+        if (objectOrFunction(value)) {
+          then = value.then;
+
+          if (isFunction(then)) {
+            then.call(value, function(val) {
+              if (resolved) { return true; }
+              resolved = true;
+
+              if (value !== val) {
+                resolve(promise, val);
+              } else {
+                fulfill(promise, val);
+              }
+            }, function(val) {
+              if (resolved) { return true; }
+              resolved = true;
+
+              reject(promise, val);
+            });
+
+            return true;
+          }
+        }
+      } catch (error) {
+        if (resolved) { return true; }
+        reject(promise, error);
+        return true;
+      }
+
+      return false;
+    }
+
+    function resolve(promise, value) {
+      if (promise === value) {
+        fulfill(promise, value);
+      } else if (!handleThenable(promise, value)) {
+        fulfill(promise, value);
+      }
+    }
+
+    function fulfill(promise, value) {
+      if (promise._state !== PENDING) { return; }
+      promise._state = SEALED;
+      promise._detail = value;
+
+      config.async(publishFulfillment, promise);
+    }
+
+    function reject(promise, reason) {
+      if (promise._state !== PENDING) { return; }
+      promise._state = SEALED;
+      promise._detail = reason;
+
+      config.async(publishRejection, promise);
+    }
+
+    function publishFulfillment(promise) {
+      publish(promise, promise._state = FULFILLED);
+    }
+
+    function publishRejection(promise) {
+      publish(promise, promise._state = REJECTED);
+    }
+
+    __exports__.Promise = Promise;
+  });
+define("promise/race", 
+  ["./utils","exports"],
+  function(__dependency1__, __exports__) {
+    "use strict";
+    /* global toString */
+    var isArray = __dependency1__.isArray;
+
+    /**
+      `RSVP.race` allows you to watch a series of promises and act as soon as the
+      first promise given to the `promises` argument fulfills or rejects.
+
+      Example:
+
+      ```javascript
+      var promise1 = new RSVP.Promise(function(resolve, reject){
+        setTimeout(function(){
+          resolve("promise 1");
+        }, 200);
+      });
+
+      var promise2 = new RSVP.Promise(function(resolve, reject){
+        setTimeout(function(){
+          resolve("promise 2");
+        }, 100);
+      });
+
+      RSVP.race([promise1, promise2]).then(function(result){
+        // result === "promise 2" because it was resolved before promise1
+        // was resolved.
+      });
+      ```
+
+      `RSVP.race` is deterministic in that only the state of the first completed
+      promise matters. For example, even if other promises given to the `promises`
+      array argument are resolved, but the first completed promise has become
+      rejected before the other promises became fulfilled, the returned promise
+      will become rejected:
+
+      ```javascript
+      var promise1 = new RSVP.Promise(function(resolve, reject){
+        setTimeout(function(){
+          resolve("promise 1");
+        }, 200);
+      });
+
+      var promise2 = new RSVP.Promise(function(resolve, reject){
+        setTimeout(function(){
+          reject(new Error("promise 2"));
+        }, 100);
+      });
+
+      RSVP.race([promise1, promise2]).then(function(result){
+        // Code here never runs because there are rejected promises!
+      }, function(reason){
+        // reason.message === "promise2" because promise 2 became rejected before
+        // promise 1 became fulfilled
+      });
+      ```
+
+      @method race
+      @for RSVP
+      @param {Array} promises array of promises to observe
+      @param {String} label optional string for describing the promise returned.
+      Useful for tooling.
+      @return {Promise} a promise that becomes fulfilled with the value the first
+      completed promises is resolved with if the first completed promise was
+      fulfilled, or rejected with the reason that the first completed promise
+      was rejected with.
+    */
+    function race(promises) {
+      /*jshint validthis:true */
+      var Promise = this;
+
+      if (!isArray(promises)) {
+        throw new TypeError('You must pass an array to race.');
+      }
+      return new Promise(function(resolve, reject) {
+        var results = [], promise;
+
+        for (var i = 0; i < promises.length; i++) {
+          promise = promises[i];
+
+          if (promise && typeof promise.then === 'function') {
+            promise.then(resolve, reject);
+          } else {
+            resolve(promise);
+          }
+        }
+      });
+    }
+
+    __exports__.race = race;
+  });
+define("promise/reject", 
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    /**
+      `RSVP.reject` returns a promise that will become rejected with the passed
+      `reason`. `RSVP.reject` is essentially shorthand for the following:
+
+      ```javascript
+      var promise = new RSVP.Promise(function(resolve, reject){
+        reject(new Error('WHOOPS'));
+      });
+
+      promise.then(function(value){
+        // Code here doesn't run because the promise is rejected!
+      }, function(reason){
+        // reason.message === 'WHOOPS'
+      });
+      ```
+
+      Instead of writing the above, your code now simply becomes the following:
+
+      ```javascript
+      var promise = RSVP.reject(new Error('WHOOPS'));
+
+      promise.then(function(value){
+        // Code here doesn't run because the promise is rejected!
+      }, function(reason){
+        // reason.message === 'WHOOPS'
+      });
+      ```
+
+      @method reject
+      @for RSVP
+      @param {Any} reason value that the returned promise will be rejected with.
+      @param {String} label optional string for identifying the returned promise.
+      Useful for tooling.
+      @return {Promise} a promise that will become rejected with the given
+      `reason`.
+    */
+    function reject(reason) {
+      /*jshint validthis:true */
+      var Promise = this;
+
+      return new Promise(function (resolve, reject) {
+        reject(reason);
+      });
+    }
+
+    __exports__.reject = reject;
+  });
+define("promise/resolve", 
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    function resolve(value) {
+      /*jshint validthis:true */
+      if (value && typeof value === 'object' && value.constructor === this) {
+        return value;
+      }
+
+      var Promise = this;
+
+      return new Promise(function(resolve) {
+        resolve(value);
+      });
+    }
+
+    __exports__.resolve = resolve;
+  });
+define("promise/utils", 
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    function objectOrFunction(x) {
+      return isFunction(x) || (typeof x === "object" && x !== null);
+    }
+
+    function isFunction(x) {
+      return typeof x === "function";
+    }
+
+    function isArray(x) {
+      return Object.prototype.toString.call(x) === "[object Array]";
+    }
+
+    // Date.now is not available in browsers < IE9
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now#Compatibility
+    var now = Date.now || function() { return new Date().getTime(); };
+
+
+    __exports__.objectOrFunction = objectOrFunction;
+    __exports__.isFunction = isFunction;
+    __exports__.isArray = isArray;
+    __exports__.now = now;
+  });
+requireModule('promise/polyfill').polyfill();
+}());(function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
 	else if(typeof define === 'function' && define.amd)
@@ -79992,327 +78132,1046 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ }
 /******/ ])
 });
-;
-},{}],84:[function(require,module,exports){
-/*(function(root, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define([], factory);
-  } else if (typeof exports === 'object') {
-    module.exports = factory();
-  } else {
-    root.mobileConsole = factory();
-  }*/
-//})(this, function() {
-  var containerHtml = '' + '<div id="jsmc-collapse"></div>' + '<div id="jsmc-clear">&#xd7</div>' + '<div id="jsmc-commands">&#x2261</div>' + '<div id="jsmc-commands-container"></div>' + '<div id="jsmc-content">' + '	<input id="jsmc-button" type="button" value="Run"/>' + '	<div id="jsmc-log">' + '	</div>' + '	<div id="jsmc-input-container">' + '	<input id="jsmc-input" type="text" placeholder="type your js here"/>' + '	</div>' + '</div>' + '';
-  var logElementHtml = '' + '	<div class="jsmc-log-text"></div>' + '	<div class="jsmc-log-target"></div>' + '';
-  var mobileConsole = {
-    props: {
-      showOnError: false,
-      proxyConsole: true,
-      isCollapsed: false,
-      catchErrors: true
-    },
-    init: function() {
-      this.commandsHash = [];
-      if (!this.initialized) {
-        if (this.props.catchErrors) {
-          this.bindErrorListener();
-        }
-        this.initializeContainers();
-        this.bindListeners();
-        this.initialized = true;
-        if (this.props.proxyConsole) {
-          this.decorateConsole();
-        } else {
-          this.undecorateConsole();
-        }
-      }
-    },
-    options: function(options) {
-      for (var i in options) {
-        if (typeof this.props[i] !== 'undefined') {
-          this.props[i] = options[i];
-        }
-      }
-      this.init();
-    },
-    show: function(options) {
-      var el = document.getElementById('js-mobile-console');
-      if (!el) {
-        this.init();
-      }
-      this.$el.container.style.display = 'block';
-      if (options && options.expand) {
-        this.toggleCollapsed(false);
-      }
-    },
-    hide: function() {
-      if (this.$el && this.$el.container) {
-        this.$el.container.style.display = 'none';
-      }
-    },
-    commands: function(commands) {
-      if (typeof commands !== 'object') {
-        throw new Error('mobileConsole: commands method accepts object, not ' + typeof commands);
-      }
-      this.commandsHash = commands;
-      this.commandsHashLength = 0;
-      for (var i in commands) {
-        if (commands.hasOwnProperty(i)) {
-          this.commandsHashLength++;
-        }
-      }
-      if (this.commandsHashLength) {
-        this.populateCommandsContainer_();
-      }
-    },
-    populateCommandsContainer_: function() {
-      var self = this;
-      for (var i in this.commandsHash) {
-        if (this.commandsHash.hasOwnProperty(i)) {
-          var commandEl = document.createElement('div');
-          commandEl.className = 'jsmc-command';
-          commandEl.innerHTML = i;
-          commandEl.command = this.commandsHash[i];
-          var commandElContainer = document.createElement('div');
-          commandElContainer.className = 'jsmc-command-wrapper';
-          commandElContainer.appendChild(commandEl);
-          this.$el.commandsContainer.appendChild(commandElContainer);
-        }
-      }
-      if (!this.commandsPopulated) {
-        this.$el.commandsContainer.addEventListener('click', function(event) {
-          if (event.target.className === 'jsmc-command') {
-            var command = event.target.command;
-            var res = self.eval(command);
-            self.logValue(command, false, true);
-            self.logValue(res.text, res.error);
-          }
-        });
-      }
-      this.commandsPopulated = true;
-    },
-    destroy: function() {
-      var el = document.getElementById('js-mobile-console');
-      el.parentNode.removeChild(el);
-    },
-    initializeContainers: function(options) {
-      this.$el = {};
-      el = this.$el.container = document.createElement('div');
-      el.id = 'js-mobile-console';
-      el.innerHTML = containerHtml;
-      el.style.display = 'none';
-      document.body.appendChild(el);
-      this.$el.input = document.getElementById('jsmc-input');
-      this.$el.button = document.getElementById('jsmc-button');
-      this.$el.log = document.getElementById('jsmc-log');
-      this.$el.content = document.getElementById('jsmc-content');
-      this.$el.collapseControl = document.getElementById('jsmc-collapse');
-      this.$el.clearControl = document.getElementById('jsmc-clear');
-      this.$el.commandsControl = document.getElementById('jsmc-commands');
-      this.$el.commandsContainer = document.getElementById('jsmc-commands-container');
-      if (this.props.isCollapsed) {
-        this.$el.content.style.display = 'none';
-        this.$el.clearControl.style.display = 'none';
-        this.$el.commandsControl.style.display = 'none';
-        this.isCollapsed = true;
-        this.$el.collapseControl.innerHTML = '&#9650;';
-      } else {
-        this.$el.collapseControl.innerHTML = '&#9660;';
-      }
-    },
-    toggleCollapsed: function(toBeCollapsed) {
-      this.isCollapsed = typeof toBeCollapsed === 'boolean' ? toBeCollapsed : !this.isCollapsed;
-      var display = this.isCollapsed ? 'none' : 'block';
-      this.$el.content.style.display = display;
-      this.$el.collapseControl.innerHTML = this.isCollapsed ? '&#9650;' : '&#9660;';
-      if (this.isCollapsed) {
-        this.$el.clearControl.style.display = 'none';
-        this.$el.commandsControl.style.display = 'none';
-      } else {
-        this.$el.clearControl.style.display = 'inline-block';
-        if (this.commandsHashLength) {
-          this.$el.commandsControl.style.display = 'inline-block';
-        }
-      }
-    },
-    bindListeners: function() {
-      var self = this;
-      this.$el.collapseControl.addEventListener('click', function() {
-        self.toggleCollapsed();
-      });
-      this.$el.clearControl.addEventListener('click', function() {
-        self.clearLogs();
-      });
-      this.$el.button.addEventListener('click', function() {
-        logValue();
-      });
-      this.$el.input.addEventListener('keyup', function(e) {
-        if (e.which === 13) {
-          logValue();
-        }
-      });
-      this.$el.commandsControl.addEventListener('click', function() {
-        self.toggleCommands();
-      });
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"_process":90}],82:[function(require,module,exports){
+/**
+ * @author qiao / https://github.com/qiao
+ * @author mrdoob / http://mrdoob.com
+ * @author alteredq / http://alteredqualia.com/
+ * @author WestLangley / http://github.com/WestLangley
+ * @author erich666 / http://erichaines.com
+ */
 
-      function logValue() {
-        var val = self.$el.input.value;
-        var res = self.eval(val);
-        self.logValue(res.text, res.error);
-      }
-    },
-    toggleCommands: function() {
-      this.commandsShown = !this.commandsShown;
-      this.$el.commandsContainer.style.display = this.commandsShown ? 'inline-block' : 'none';
-    },
-    eval: function(command) {
-      var text;
-      var error;
-      try {
-        text = window.eval(command);
-      } catch (e) {
-        text = e.message;
-        error = true;
-      }
-      if (JSON && JSON.stringify) {
-        try {
-          text = JSON.stringify(text);
-        } catch (e) {
-          text = e.message;
-          error = true;
-        }
-      }
-      return {
-        text: text,
-        error: error
-      };
-    },
-    clearLogs: function() {
-      this.$el.log.innerHTML = '';
-    },
-    bindErrorListener: function() {
-      var self = this;
-      window.onerror = function(errorMessage, file, lineNumber, columnNumber) {
-        if (self.props.showOnError) {
-          self.show({
-            expand: true
-          });
-        }
-        var error = file + ':' + lineNumber + (columnNumber ? (':' + columnNumber) : '');
-        self.logValue(errorMessage, error);
-      };
-    },
-    appendLogEl: function(el) {
-      this.$el.log.appendChild(el);
-      this.$el.log.scrollTop = this.$el.log.scrollHeight;
-    },
-    decorateConsole: function() {
-      var self = this;
-      if (this.consoleDecorated) {
-        return;
-      }
-      this.consoleDecorated = true;
-      if (window.console) {
-        if (window.console.log) {
-          this.oldLog = window.console.log;
-          window.console.log = function() {
-            var args = [].slice.call(arguments);
-            self.oldLog.apply(window.console, args);
-            var res = stringifyComponents(args);
-            self.logValue(res.text, res.error);
-          };
-        }
-        if (window.console.info) {
-          this.oldinfo = window.console.info;
-          window.console.info = function() {
-            var args = [].slice.call(arguments);
-            self.oldinfo.apply(window.console, args);
-            var res = stringifyComponents(args);
-            self.logValue(res.text, res.error);
-          };
-        }
-        if (window.console.warn) {
-          this.oldwarn = window.console.warn;
-          window.console.warn = function() {
-            var args = [].slice.call(arguments);
-            self.oldwarn.apply(window.console, args);
-            var res = stringifyComponents(args);
-            self.logValue(res.text, res.error);
-          };
-        }
-        if (window.console.error) {
-          this.olderror = window.console.error;
-          window.console.error = function() {
-            var args = [].slice.call(arguments);
-            self.olderror.apply(window.console, args);
-            var res = stringifyComponents(args);
-            self.logValue(res.text, res.error);
-          };
-        }
-      }
+// This set of controls performs orbiting, dollying (zooming), and panning.
+// Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).
+//
+//    Orbit - left mouse / touch: one finger move
+//    Zoom - middle mouse, or mousewheel / touch: two finger spread or squish
+//    Pan - right mouse, or arrow keys / touch: three finter swipe
 
-      function stringifyComponents(args) {
-        if (JSON && JSON.stringify) {
-          try {
-            for (var i = 0; i < args.length; i++) {
-              args[i] = JSON.stringify(args[i]);
-            }
-          } catch (e) {
-            args = [e.message];
-            var error = true;
-          }
-        }
-        return {
-          text: args.join(' '),
-          error: error
-        };
-      }
-    },
-    undecorateConsole: function() {
-      var self = this;
-      if (this.consoleDecorated) {
-        window.console.log = function() {
-          var args = [].slice.call(arguments);
-          self.oldLog.apply(window.console, args);
-        };
-        window.console.info = function() {
-          var args = [].slice.call(arguments);
-          self.oldinfo.apply(window.console, args);
-        };
-        window.console.warn = function() {
-          var args = [].slice.call(arguments);
-          self.oldwarn.apply(window.console, args);
-        };
-        window.console.error = function() {
-          var args = [].slice.call(arguments);
-          self.olderror.apply(window.console, args);
-        };
-      }
-    },
-    logValue: function(value, error, command) {
-      var logEl = document.createElement('div');
-      logEl.className = 'jsmc-log-el';
-      logEl.innerHTML = logElementHtml;
-      if (error) {
-        logEl.className += ' jsmc-log-error';
-      }
-      if (command) {
-        logEl.className += ' jsmc-log-command';
-      }
-      var logTextEl = logEl.getElementsByClassName('jsmc-log-text')[0];
-      logTextEl.innerHTML = value;
-      if (typeof error === 'string') {
-        var logTargetEl = logEl.getElementsByClassName('jsmc-log-target')[0];
-        logTargetEl.innerHTML = error;
-      }
-      this.appendLogEl(logEl);
-    }
-  };
-  //return mobileConsole;
-//});
-module.exports = mobileConsole;
-},{}],85:[function(require,module,exports){
+THREE.OrbitControls = function ( object, domElement ) {
+
+	this.object = object;
+
+	this.domElement = ( domElement !== undefined ) ? domElement : document;
+
+	// Set to false to disable this control
+	this.enabled = true;
+
+	// "target" sets the location of focus, where the object orbits around
+	this.target = new THREE.Vector3();
+
+	// How far you can dolly in and out ( PerspectiveCamera only )
+	this.minDistance = 0;
+	this.maxDistance = Infinity;
+
+	// How far you can zoom in and out ( OrthographicCamera only )
+	this.minZoom = 0;
+	this.maxZoom = Infinity;
+
+	// How far you can orbit vertically, upper and lower limits.
+	// Range is 0 to Math.PI radians.
+	this.minPolarAngle = 0; // radians
+	this.maxPolarAngle = Math.PI; // radians
+
+	// How far you can orbit horizontally, upper and lower limits.
+	// If set, must be a sub-interval of the interval [ - Math.PI, Math.PI ].
+	this.minAzimuthAngle = - Infinity; // radians
+	this.maxAzimuthAngle = Infinity; // radians
+
+	// Set to true to enable damping (inertia)
+	// If damping is enabled, you must call controls.update() in your animation loop
+	this.enableDamping = false;
+	this.dampingFactor = 0.25;
+
+	// This option actually enables dollying in and out; left as "zoom" for backwards compatibility.
+	// Set to false to disable zooming
+	this.enableZoom = true;
+	this.zoomSpeed = 1.0;
+
+	// Set to false to disable rotating
+	this.enableRotate = true;
+	this.rotateSpeed = 1.0;
+
+	// Set to false to disable panning
+	this.enablePan = true;
+	this.keyPanSpeed = 7.0;	// pixels moved per arrow key push
+
+	// Set to true to automatically rotate around the target
+	// If auto-rotate is enabled, you must call controls.update() in your animation loop
+	this.autoRotate = false;
+	this.autoRotateSpeed = 2.0; // 30 seconds per round when fps is 60
+
+	// Set to false to disable use of the keys
+	this.enableKeys = true;
+
+	// The four arrow keys
+	this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40 };
+
+	// Mouse buttons
+	this.mouseButtons = { ORBIT: THREE.MOUSE.LEFT, ZOOM: THREE.MOUSE.MIDDLE, PAN: THREE.MOUSE.RIGHT };
+
+	// for reset
+	this.target0 = this.target.clone();
+	this.position0 = this.object.position.clone();
+	this.zoom0 = this.object.zoom;
+
+	//
+	// public methods
+	//
+
+	this.getPolarAngle = function () {
+
+		return spherical.phi;
+
+	};
+
+	this.getAzimuthalAngle = function () {
+
+		return spherical.theta;
+
+	};
+
+	this.reset = function () {
+
+		scope.target.copy( scope.target0 );
+		scope.object.position.copy( scope.position0 );
+		scope.object.zoom = scope.zoom0;
+
+		scope.object.updateProjectionMatrix();
+		scope.dispatchEvent( changeEvent );
+
+		scope.update();
+
+		state = STATE.NONE;
+
+	};
+
+	// this method is exposed, but perhaps it would be better if we can make it private...
+	this.update = function() {
+
+		var offset = new THREE.Vector3();
+
+		// so camera.up is the orbit axis
+		var quat = new THREE.Quaternion().setFromUnitVectors( object.up, new THREE.Vector3( 0, 1, 0 ) );
+		var quatInverse = quat.clone().inverse();
+
+		var lastPosition = new THREE.Vector3();
+		var lastQuaternion = new THREE.Quaternion();
+
+		return function () {
+
+			var position = scope.object.position;
+
+			offset.copy( position ).sub( scope.target );
+
+			// rotate offset to "y-axis-is-up" space
+			offset.applyQuaternion( quat );
+
+			// angle from z-axis around y-axis
+			spherical.setFromVector3( offset );
+
+			if ( scope.autoRotate && state === STATE.NONE ) {
+
+				rotateLeft( getAutoRotationAngle() );
+
+			}
+
+			spherical.theta += sphericalDelta.theta;
+			spherical.phi += sphericalDelta.phi;
+
+			// restrict theta to be between desired limits
+			spherical.theta = Math.max( scope.minAzimuthAngle, Math.min( scope.maxAzimuthAngle, spherical.theta ) );
+
+			// restrict phi to be between desired limits
+			spherical.phi = Math.max( scope.minPolarAngle, Math.min( scope.maxPolarAngle, spherical.phi ) );
+
+			spherical.makeSafe();
+
+
+			spherical.radius *= scale;
+
+			// restrict radius to be between desired limits
+			spherical.radius = Math.max( scope.minDistance, Math.min( scope.maxDistance, spherical.radius ) );
+
+			// move target to panned location
+			scope.target.add( panOffset );
+
+			offset.setFromSpherical( spherical );
+
+			// rotate offset back to "camera-up-vector-is-up" space
+			offset.applyQuaternion( quatInverse );
+
+			position.copy( scope.target ).add( offset );
+
+			scope.object.lookAt( scope.target );
+
+			if ( scope.enableDamping === true ) {
+
+				sphericalDelta.theta *= ( 1 - scope.dampingFactor );
+				sphericalDelta.phi *= ( 1 - scope.dampingFactor );
+
+			} else {
+
+				sphericalDelta.set( 0, 0, 0 );
+
+			}
+
+			scale = 1;
+			panOffset.set( 0, 0, 0 );
+
+			// update condition is:
+			// min(camera displacement, camera rotation in radians)^2 > EPS
+			// using small-angle approximation cos(x/2) = 1 - x^2 / 8
+
+			if ( zoomChanged ||
+				lastPosition.distanceToSquared( scope.object.position ) > EPS ||
+				8 * ( 1 - lastQuaternion.dot( scope.object.quaternion ) ) > EPS ) {
+
+				scope.dispatchEvent( changeEvent );
+
+				lastPosition.copy( scope.object.position );
+				lastQuaternion.copy( scope.object.quaternion );
+				zoomChanged = false;
+
+				return true;
+
+			}
+
+			return false;
+
+		};
+
+	}();
+
+	this.dispose = function() {
+
+		scope.domElement.removeEventListener( 'contextmenu', onContextMenu, false );
+		scope.domElement.removeEventListener( 'mousedown', onMouseDown, false );
+		scope.domElement.removeEventListener( 'mousewheel', onMouseWheel, false );
+		scope.domElement.removeEventListener( 'MozMousePixelScroll', onMouseWheel, false ); // firefox
+
+		scope.domElement.removeEventListener( 'touchstart', onTouchStart, false );
+		scope.domElement.removeEventListener( 'touchend', onTouchEnd, false );
+		scope.domElement.removeEventListener( 'touchmove', onTouchMove, false );
+
+		document.removeEventListener( 'mousemove', onMouseMove, false );
+		document.removeEventListener( 'mouseup', onMouseUp, false );
+		document.removeEventListener( 'mouseout', onMouseUp, false );
+
+		window.removeEventListener( 'keydown', onKeyDown, false );
+
+		//scope.dispatchEvent( { type: 'dispose' } ); // should this be added here?
+
+	};
+
+	//
+	// internals
+	//
+
+	var scope = this;
+
+	var changeEvent = { type: 'change' };
+	var startEvent = { type: 'start' };
+	var endEvent = { type: 'end' };
+
+	var STATE = { NONE : - 1, ROTATE : 0, DOLLY : 1, PAN : 2, TOUCH_ROTATE : 3, TOUCH_DOLLY : 4, TOUCH_PAN : 5 };
+
+	var state = STATE.NONE;
+
+	var EPS = 0.000001;
+
+	// current position in spherical coordinates
+	var spherical = new THREE.Spherical();
+	var sphericalDelta = new THREE.Spherical();
+
+	var scale = 1;
+	var panOffset = new THREE.Vector3();
+	var zoomChanged = false;
+
+	var rotateStart = new THREE.Vector2();
+	var rotateEnd = new THREE.Vector2();
+	var rotateDelta = new THREE.Vector2();
+
+	var panStart = new THREE.Vector2();
+	var panEnd = new THREE.Vector2();
+	var panDelta = new THREE.Vector2();
+
+	var dollyStart = new THREE.Vector2();
+	var dollyEnd = new THREE.Vector2();
+	var dollyDelta = new THREE.Vector2();
+
+	function getAutoRotationAngle() {
+
+		return 2 * Math.PI / 60 / 60 * scope.autoRotateSpeed;
+
+	}
+
+	function getZoomScale() {
+
+		return Math.pow( 0.95, scope.zoomSpeed );
+
+	}
+
+	function rotateLeft( angle ) {
+
+		sphericalDelta.theta -= angle;
+
+	}
+
+	function rotateUp( angle ) {
+
+		sphericalDelta.phi -= angle;
+
+	}
+
+	var panLeft = function() {
+
+		var v = new THREE.Vector3();
+
+		return function panLeft( distance, objectMatrix ) {
+
+			v.setFromMatrixColumn( objectMatrix, 0 ); // get X column of objectMatrix
+			v.multiplyScalar( - distance );
+
+			panOffset.add( v );
+
+		};
+
+	}();
+
+	var panUp = function() {
+
+		var v = new THREE.Vector3();
+
+		return function panUp( distance, objectMatrix ) {
+
+			v.setFromMatrixColumn( objectMatrix, 1 ); // get Y column of objectMatrix
+			v.multiplyScalar( distance );
+
+			panOffset.add( v );
+
+		};
+
+	}();
+
+	// deltaX and deltaY are in pixels; right and down are positive
+	var pan = function() {
+
+		var offset = new THREE.Vector3();
+
+		return function( deltaX, deltaY ) {
+
+			var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+
+			if ( scope.object instanceof THREE.PerspectiveCamera ) {
+
+				// perspective
+				var position = scope.object.position;
+				offset.copy( position ).sub( scope.target );
+				var targetDistance = offset.length();
+
+				// half of the fov is center to top of screen
+				targetDistance *= Math.tan( ( scope.object.fov / 2 ) * Math.PI / 180.0 );
+
+				// we actually don't use screenWidth, since perspective camera is fixed to screen height
+				panLeft( 2 * deltaX * targetDistance / element.clientHeight, scope.object.matrix );
+				panUp( 2 * deltaY * targetDistance / element.clientHeight, scope.object.matrix );
+
+			} else if ( scope.object instanceof THREE.OrthographicCamera ) {
+
+				// orthographic
+				panLeft( deltaX * ( scope.object.right - scope.object.left ) / scope.object.zoom / element.clientWidth, scope.object.matrix );
+				panUp( deltaY * ( scope.object.top - scope.object.bottom ) / scope.object.zoom / element.clientHeight, scope.object.matrix );
+
+			} else {
+
+				// camera neither orthographic nor perspective
+				console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - pan disabled.' );
+				scope.enablePan = false;
+
+			}
+
+		};
+
+	}();
+
+	function dollyIn( dollyScale ) {
+
+		if ( scope.object instanceof THREE.PerspectiveCamera ) {
+
+			scale /= dollyScale;
+
+		} else if ( scope.object instanceof THREE.OrthographicCamera ) {
+
+			scope.object.zoom = Math.max( scope.minZoom, Math.min( scope.maxZoom, scope.object.zoom * dollyScale ) );
+			scope.object.updateProjectionMatrix();
+			zoomChanged = true;
+
+		} else {
+
+			console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
+			scope.enableZoom = false;
+
+		}
+
+	}
+
+	function dollyOut( dollyScale ) {
+
+		if ( scope.object instanceof THREE.PerspectiveCamera ) {
+
+			scale *= dollyScale;
+
+		} else if ( scope.object instanceof THREE.OrthographicCamera ) {
+
+			scope.object.zoom = Math.max( scope.minZoom, Math.min( scope.maxZoom, scope.object.zoom / dollyScale ) );
+			scope.object.updateProjectionMatrix();
+			zoomChanged = true;
+
+		} else {
+
+			console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
+			scope.enableZoom = false;
+
+		}
+
+	}
+
+	//
+	// event callbacks - update the object state
+	//
+
+	function handleMouseDownRotate( event ) {
+
+		//console.log( 'handleMouseDownRotate' );
+
+		rotateStart.set( event.clientX, event.clientY );
+
+	}
+
+	function handleMouseDownDolly( event ) {
+
+		//console.log( 'handleMouseDownDolly' );
+
+		dollyStart.set( event.clientX, event.clientY );
+
+	}
+
+	function handleMouseDownPan( event ) {
+
+		//console.log( 'handleMouseDownPan' );
+
+		panStart.set( event.clientX, event.clientY );
+
+	}
+
+	function handleMouseMoveRotate( event ) {
+
+		//console.log( 'handleMouseMoveRotate' );
+
+		rotateEnd.set( event.clientX, event.clientY );
+		rotateDelta.subVectors( rotateEnd, rotateStart );
+
+		var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+
+		// rotating across whole screen goes 360 degrees around
+		rotateLeft( 2 * Math.PI * rotateDelta.x / element.clientWidth * scope.rotateSpeed );
+
+		// rotating up and down along whole screen attempts to go 360, but limited to 180
+		rotateUp( 2 * Math.PI * rotateDelta.y / element.clientHeight * scope.rotateSpeed );
+
+		rotateStart.copy( rotateEnd );
+
+		scope.update();
+
+	}
+
+	function handleMouseMoveDolly( event ) {
+
+		//console.log( 'handleMouseMoveDolly' );
+
+		dollyEnd.set( event.clientX, event.clientY );
+
+		dollyDelta.subVectors( dollyEnd, dollyStart );
+
+		if ( dollyDelta.y > 0 ) {
+
+			dollyIn( getZoomScale() );
+
+		} else if ( dollyDelta.y < 0 ) {
+
+			dollyOut( getZoomScale() );
+
+		}
+
+		dollyStart.copy( dollyEnd );
+
+		scope.update();
+
+	}
+
+	function handleMouseMovePan( event ) {
+
+		//console.log( 'handleMouseMovePan' );
+
+		panEnd.set( event.clientX, event.clientY );
+
+		panDelta.subVectors( panEnd, panStart );
+
+		pan( panDelta.x, panDelta.y );
+
+		panStart.copy( panEnd );
+
+		scope.update();
+
+	}
+
+	function handleMouseUp( event ) {
+
+		//console.log( 'handleMouseUp' );
+
+	}
+
+	function handleMouseWheel( event ) {
+
+		//console.log( 'handleMouseWheel' );
+
+		var delta = 0;
+
+		if ( event.wheelDelta !== undefined ) {
+
+			// WebKit / Opera / Explorer 9
+
+			delta = event.wheelDelta;
+
+		} else if ( event.detail !== undefined ) {
+
+			// Firefox
+
+			delta = - event.detail;
+
+		}
+
+		if ( delta > 0 ) {
+
+			dollyOut( getZoomScale() );
+
+		} else if ( delta < 0 ) {
+
+			dollyIn( getZoomScale() );
+
+		}
+
+		scope.update();
+
+	}
+
+	function handleKeyDown( event ) {
+
+		//console.log( 'handleKeyDown' );
+
+		switch ( event.keyCode ) {
+
+			case scope.keys.UP:
+				pan( 0, scope.keyPanSpeed );
+				scope.update();
+				break;
+
+			case scope.keys.BOTTOM:
+				pan( 0, - scope.keyPanSpeed );
+				scope.update();
+				break;
+
+			case scope.keys.LEFT:
+				pan( scope.keyPanSpeed, 0 );
+				scope.update();
+				break;
+
+			case scope.keys.RIGHT:
+				pan( - scope.keyPanSpeed, 0 );
+				scope.update();
+				break;
+
+		}
+
+	}
+
+	function handleTouchStartRotate( event ) {
+
+		//console.log( 'handleTouchStartRotate' );
+
+		rotateStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
+
+	}
+
+	function handleTouchStartDolly( event ) {
+
+		//console.log( 'handleTouchStartDolly' );
+
+		var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+		var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+
+		var distance = Math.sqrt( dx * dx + dy * dy );
+
+		dollyStart.set( 0, distance );
+
+	}
+
+	function handleTouchStartPan( event ) {
+
+		//console.log( 'handleTouchStartPan' );
+
+		panStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
+
+	}
+
+	function handleTouchMoveRotate( event ) {
+
+		//console.log( 'handleTouchMoveRotate' );
+
+		rotateEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
+		rotateDelta.subVectors( rotateEnd, rotateStart );
+
+		var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+
+		// rotating across whole screen goes 360 degrees around
+		rotateLeft( 2 * Math.PI * rotateDelta.x / element.clientWidth * scope.rotateSpeed );
+
+		// rotating up and down along whole screen attempts to go 360, but limited to 180
+		rotateUp( 2 * Math.PI * rotateDelta.y / element.clientHeight * scope.rotateSpeed );
+
+		rotateStart.copy( rotateEnd );
+
+		scope.update();
+
+	}
+
+	function handleTouchMoveDolly( event ) {
+
+		//console.log( 'handleTouchMoveDolly' );
+
+		var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
+		var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+
+		var distance = Math.sqrt( dx * dx + dy * dy );
+
+		dollyEnd.set( 0, distance );
+
+		dollyDelta.subVectors( dollyEnd, dollyStart );
+
+		if ( dollyDelta.y > 0 ) {
+
+			dollyOut( getZoomScale() );
+
+		} else if ( dollyDelta.y < 0 ) {
+
+			dollyIn( getZoomScale() );
+
+		}
+
+		dollyStart.copy( dollyEnd );
+
+		scope.update();
+
+	}
+
+	function handleTouchMovePan( event ) {
+
+		//console.log( 'handleTouchMovePan' );
+
+		panEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
+
+		panDelta.subVectors( panEnd, panStart );
+
+		pan( panDelta.x, panDelta.y );
+
+		panStart.copy( panEnd );
+
+		scope.update();
+
+	}
+
+	function handleTouchEnd( event ) {
+
+		//console.log( 'handleTouchEnd' );
+
+	}
+
+	//
+	// event handlers - FSM: listen for events and reset state
+	//
+
+	function onMouseDown( event ) {
+
+		if ( scope.enabled === false ) return;
+
+		event.preventDefault();
+
+		if ( event.button === scope.mouseButtons.ORBIT ) {
+
+			if ( scope.enableRotate === false ) return;
+
+			handleMouseDownRotate( event );
+
+			state = STATE.ROTATE;
+
+		} else if ( event.button === scope.mouseButtons.ZOOM ) {
+
+			if ( scope.enableZoom === false ) return;
+
+			handleMouseDownDolly( event );
+
+			state = STATE.DOLLY;
+
+		} else if ( event.button === scope.mouseButtons.PAN ) {
+
+			if ( scope.enablePan === false ) return;
+
+			handleMouseDownPan( event );
+
+			state = STATE.PAN;
+
+		}
+
+		if ( state !== STATE.NONE ) {
+
+			document.addEventListener( 'mousemove', onMouseMove, false );
+			document.addEventListener( 'mouseup', onMouseUp, false );
+			document.addEventListener( 'mouseout', onMouseUp, false );
+
+			scope.dispatchEvent( startEvent );
+
+		}
+
+	}
+
+	function onMouseMove( event ) {
+
+		if ( scope.enabled === false ) return;
+
+		event.preventDefault();
+
+		if ( state === STATE.ROTATE ) {
+
+			if ( scope.enableRotate === false ) return;
+
+			handleMouseMoveRotate( event );
+
+		} else if ( state === STATE.DOLLY ) {
+
+			if ( scope.enableZoom === false ) return;
+
+			handleMouseMoveDolly( event );
+
+		} else if ( state === STATE.PAN ) {
+
+			if ( scope.enablePan === false ) return;
+
+			handleMouseMovePan( event );
+
+		}
+
+	}
+
+	function onMouseUp( event ) {
+
+		if ( scope.enabled === false ) return;
+
+		handleMouseUp( event );
+
+		document.removeEventListener( 'mousemove', onMouseMove, false );
+		document.removeEventListener( 'mouseup', onMouseUp, false );
+		document.removeEventListener( 'mouseout', onMouseUp, false );
+
+		scope.dispatchEvent( endEvent );
+
+		state = STATE.NONE;
+
+	}
+
+	function onMouseWheel( event ) {
+
+		if ( scope.enabled === false || scope.enableZoom === false || state !== STATE.NONE ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		handleMouseWheel( event );
+
+		scope.dispatchEvent( startEvent ); // not sure why these are here...
+		scope.dispatchEvent( endEvent );
+
+	}
+
+	function onKeyDown( event ) {
+
+		if ( scope.enabled === false || scope.enableKeys === false || scope.enablePan === false ) return;
+
+		handleKeyDown( event );
+
+	}
+
+	function onTouchStart( event ) {
+
+		if ( scope.enabled === false ) return;
+
+		switch ( event.touches.length ) {
+
+			case 1:	// one-fingered touch: rotate
+
+				if ( scope.enableRotate === false ) return;
+
+				handleTouchStartRotate( event );
+
+				state = STATE.TOUCH_ROTATE;
+
+				break;
+
+			case 2:	// two-fingered touch: dolly
+
+				if ( scope.enableZoom === false ) return;
+
+				handleTouchStartDolly( event );
+
+				state = STATE.TOUCH_DOLLY;
+
+				break;
+
+			case 3: // three-fingered touch: pan
+
+				if ( scope.enablePan === false ) return;
+
+				handleTouchStartPan( event );
+
+				state = STATE.TOUCH_PAN;
+
+				break;
+
+			default:
+
+				state = STATE.NONE;
+
+		}
+
+		if ( state !== STATE.NONE ) {
+
+			scope.dispatchEvent( startEvent );
+
+		}
+
+	}
+
+	function onTouchMove( event ) {
+
+		if ( scope.enabled === false ) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		switch ( event.touches.length ) {
+
+			case 1: // one-fingered touch: rotate
+
+				if ( scope.enableRotate === false ) return;
+				if ( state !== STATE.TOUCH_ROTATE ) return; // is this needed?...
+
+				handleTouchMoveRotate( event );
+
+				break;
+
+			case 2: // two-fingered touch: dolly
+
+				if ( scope.enableZoom === false ) return;
+				if ( state !== STATE.TOUCH_DOLLY ) return; // is this needed?...
+
+				handleTouchMoveDolly( event );
+
+				break;
+
+			case 3: // three-fingered touch: pan
+
+				if ( scope.enablePan === false ) return;
+				if ( state !== STATE.TOUCH_PAN ) return; // is this needed?...
+
+				handleTouchMovePan( event );
+
+				break;
+
+			default:
+
+				state = STATE.NONE;
+
+		}
+
+	}
+
+	function onTouchEnd( event ) {
+
+		if ( scope.enabled === false ) return;
+
+		handleTouchEnd( event );
+
+		scope.dispatchEvent( endEvent );
+
+		state = STATE.NONE;
+
+	}
+
+	function onContextMenu( event ) {
+
+		event.preventDefault();
+
+	}
+
+	//
+
+	scope.domElement.addEventListener( 'contextmenu', onContextMenu, false );
+
+	scope.domElement.addEventListener( 'mousedown', onMouseDown, false );
+	scope.domElement.addEventListener( 'mousewheel', onMouseWheel, false );
+	scope.domElement.addEventListener( 'MozMousePixelScroll', onMouseWheel, false ); // firefox
+
+	scope.domElement.addEventListener( 'touchstart', onTouchStart, false );
+	scope.domElement.addEventListener( 'touchend', onTouchEnd, false );
+	scope.domElement.addEventListener( 'touchmove', onTouchMove, false );
+
+	window.addEventListener( 'keydown', onKeyDown, false );
+
+	// force an update at start
+
+	this.update();
+
+};
+
+THREE.OrbitControls.prototype = Object.create( THREE.EventDispatcher.prototype );
+THREE.OrbitControls.prototype.constructor = THREE.OrbitControls;
+
+Object.defineProperties( THREE.OrbitControls.prototype, {
+
+	center: {
+
+		get: function () {
+
+			console.warn( 'THREE.OrbitControls: .center has been renamed to .target' );
+			return this.target;
+
+		}
+
+	},
+
+	// backward compatibility
+
+	noZoom: {
+
+		get: function () {
+
+			console.warn( 'THREE.OrbitControls: .noZoom has been deprecated. Use .enableZoom instead.' );
+			return ! this.enableZoom;
+
+		},
+
+		set: function ( value ) {
+
+			console.warn( 'THREE.OrbitControls: .noZoom has been deprecated. Use .enableZoom instead.' );
+			this.enableZoom = ! value;
+
+		}
+
+	},
+
+	noRotate: {
+
+		get: function () {
+
+			console.warn( 'THREE.OrbitControls: .noRotate has been deprecated. Use .enableRotate instead.' );
+			return ! this.enableRotate;
+
+		},
+
+		set: function ( value ) {
+
+			console.warn( 'THREE.OrbitControls: .noRotate has been deprecated. Use .enableRotate instead.' );
+			this.enableRotate = ! value;
+
+		}
+
+	},
+
+	noPan: {
+
+		get: function () {
+
+			console.warn( 'THREE.OrbitControls: .noPan has been deprecated. Use .enablePan instead.' );
+			return ! this.enablePan;
+
+		},
+
+		set: function ( value ) {
+
+			console.warn( 'THREE.OrbitControls: .noPan has been deprecated. Use .enablePan instead.' );
+			this.enablePan = ! value;
+
+		}
+
+	},
+
+	noKeys: {
+
+		get: function () {
+
+			console.warn( 'THREE.OrbitControls: .noKeys has been deprecated. Use .enableKeys instead.' );
+			return ! this.enableKeys;
+
+		},
+
+		set: function ( value ) {
+
+			console.warn( 'THREE.OrbitControls: .noKeys has been deprecated. Use .enableKeys instead.' );
+			this.enableKeys = ! value;
+
+		}
+
+	},
+
+	staticMoving : {
+
+		get: function () {
+
+			console.warn( 'THREE.OrbitControls: .staticMoving has been deprecated. Use .enableDamping instead.' );
+			return ! this.constraint.enableDamping;
+
+		},
+
+		set: function ( value ) {
+
+			console.warn( 'THREE.OrbitControls: .staticMoving has been deprecated. Use .enableDamping instead.' );
+			this.constraint.enableDamping = ! value;
+
+		}
+
+	},
+
+	dynamicDampingFactor : {
+
+		get: function () {
+
+			console.warn( 'THREE.OrbitControls: .dynamicDampingFactor has been renamed. Use .dampingFactor instead.' );
+			return this.constraint.dampingFactor;
+
+		},
+
+		set: function ( value ) {
+
+			console.warn( 'THREE.OrbitControls: .dynamicDampingFactor has been renamed. Use .dampingFactor instead.' );
+			this.constraint.dampingFactor = value;
+
+		}
+
+	}
+
+} );
+},{}],83:[function(require,module,exports){
 /**
  * @author mrdoob / http://mrdoob.com/
  * @author supereggbert / http://www.paulbrunt.co.uk/
@@ -81234,7 +80093,7 @@ THREE.Projector = function () {
 	}
 
 };
-},{}],86:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 ;(function(root, factory) {
 
   // Support AMD
@@ -81608,7 +80467,7 @@ THREE.Projector = function () {
 
   return randomColor;
 }));
-},{}],87:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 /**
  * @author zz85 / https://github.com/zz85
  *
@@ -81870,15 +80729,15 @@ THREE.Sky = function () {
 	this.uniforms = skyUniforms;
 
 };
-},{"three":75}],88:[function(require,module,exports){
+},{"three":73}],86:[function(require,module,exports){
 // stats.js - http://github.com/mrdoob/stats.js
 var Stats=function(){function f(a,e,b){a=document.createElement(a);a.id=e;a.style.cssText=b;return a}function l(a,e,b){var c=f("div",a,"padding:0 0 3px 3px;text-align:left;background:"+b),d=f("div",a+"Text","font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px;color:"+e);d.innerHTML=a.toUpperCase();c.appendChild(d);a=f("div",a+"Graph","width:74px;height:30px;background:"+e);c.appendChild(a);for(e=0;74>e;e++)a.appendChild(f("span","","width:1px;height:30px;float:left;opacity:0.9;background:"+
 b));return c}function m(a){for(var b=c.children,d=0;d<b.length;d++)b[d].style.display=d===a?"block":"none";n=a}function p(a,b){a.appendChild(a.firstChild).style.height=Math.min(30,30-30*b)+"px"}var q=self.performance&&self.performance.now?self.performance.now.bind(performance):Date.now,k=q(),r=k,t=0,n=0,c=f("div","stats","width:80px;opacity:0.9;cursor:pointer");c.addEventListener("mousedown",function(a){a.preventDefault();m(++n%c.children.length)},!1);var d=0,u=Infinity,v=0,b=l("fps","#0ff","#002"),
 A=b.children[0],B=b.children[1];c.appendChild(b);var g=0,w=Infinity,x=0,b=l("ms","#0f0","#020"),C=b.children[0],D=b.children[1];c.appendChild(b);if(self.performance&&self.performance.memory){var h=0,y=Infinity,z=0,b=l("mb","#f08","#201"),E=b.children[0],F=b.children[1];c.appendChild(b)}m(n);return{REVISION:14,domElement:c,setMode:m,begin:function(){k=q()},end:function(){var a=q();g=a-k;w=Math.min(w,g);x=Math.max(x,g);C.textContent=(g|0)+" MS ("+(w|0)+"-"+(x|0)+")";p(D,g/200);t++;if(a>r+1E3&&(d=Math.round(1E3*
 t/(a-r)),u=Math.min(u,d),v=Math.max(v,d),A.textContent=d+" FPS ("+u+"-"+v+")",p(B,d/100),r=a,t=0,void 0!==h)){var b=performance.memory.usedJSHeapSize,c=performance.memory.jsHeapSizeLimit;h=Math.round(9.54E-7*b);y=Math.min(y,h);z=Math.max(z,h);E.textContent=h+" MB ("+y+"-"+z+")";p(F,b/c)}return a},update:function(){k=this.end()}}};"object"===typeof module&&(module.exports=Stats);
-},{}],89:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 !function(e,t,n){"use strict";!function o(e,t,n){function a(s,l){if(!t[s]){if(!e[s]){var i="function"==typeof require&&require;if(!l&&i)return i(s,!0);if(r)return r(s,!0);var u=new Error("Cannot find module '"+s+"'");throw u.code="MODULE_NOT_FOUND",u}var c=t[s]={exports:{}};e[s][0].call(c.exports,function(t){var n=e[s][1][t];return a(n?n:t)},c,c.exports,o,e,t,n)}return t[s].exports}for(var r="function"==typeof require&&require,s=0;s<n.length;s++)a(n[s]);return a}({1:[function(o,a,r){var s=function(e){return e&&e.__esModule?e:{"default":e}};Object.defineProperty(r,"__esModule",{value:!0});var l,i,u,c,d=o("./modules/handle-dom"),f=o("./modules/utils"),p=o("./modules/handle-swal-dom"),m=o("./modules/handle-click"),v=o("./modules/handle-key"),y=s(v),h=o("./modules/default-params"),b=s(h),g=o("./modules/set-params"),w=s(g);r["default"]=u=c=function(){function o(e){var t=a;return t[e]===n?b["default"][e]:t[e]}var a=arguments[0];if(d.addClass(t.body,"stop-scrolling"),p.resetInput(),a===n)return f.logStr("SweetAlert expects at least 1 attribute!"),!1;var r=f.extend({},b["default"]);switch(typeof a){case"string":r.title=a,r.text=arguments[1]||"",r.type=arguments[2]||"";break;case"object":if(a.title===n)return f.logStr('Missing "title" argument!'),!1;r.title=a.title;for(var s in b["default"])r[s]=o(s);r.confirmButtonText=r.showCancelButton?"Confirm":b["default"].confirmButtonText,r.confirmButtonText=o("confirmButtonText"),r.doneFunction=arguments[1]||null;break;default:return f.logStr('Unexpected type of argument! Expected "string" or "object", got '+typeof a),!1}w["default"](r),p.fixVerticalPosition(),p.openModal(arguments[1]);for(var u=p.getModal(),v=u.querySelectorAll("button"),h=["onclick","onmouseover","onmouseout","onmousedown","onmouseup","onfocus"],g=function(e){return m.handleButton(e,r,u)},C=0;C<v.length;C++)for(var S=0;S<h.length;S++){var x=h[S];v[C][x]=g}p.getOverlay().onclick=g,l=e.onkeydown;var k=function(e){return y["default"](e,r,u)};e.onkeydown=k,e.onfocus=function(){setTimeout(function(){i!==n&&(i.focus(),i=n)},0)},c.enableButtons()},u.setDefaults=c.setDefaults=function(e){if(!e)throw new Error("userParams is required");if("object"!=typeof e)throw new Error("userParams has to be a object");f.extend(b["default"],e)},u.close=c.close=function(){var o=p.getModal();d.fadeOut(p.getOverlay(),5),d.fadeOut(o,5),d.removeClass(o,"showSweetAlert"),d.addClass(o,"hideSweetAlert"),d.removeClass(o,"visible");var a=o.querySelector(".sa-icon.sa-success");d.removeClass(a,"animate"),d.removeClass(a.querySelector(".sa-tip"),"animateSuccessTip"),d.removeClass(a.querySelector(".sa-long"),"animateSuccessLong");var r=o.querySelector(".sa-icon.sa-error");d.removeClass(r,"animateErrorIcon"),d.removeClass(r.querySelector(".sa-x-mark"),"animateXMark");var s=o.querySelector(".sa-icon.sa-warning");return d.removeClass(s,"pulseWarning"),d.removeClass(s.querySelector(".sa-body"),"pulseWarningIns"),d.removeClass(s.querySelector(".sa-dot"),"pulseWarningIns"),setTimeout(function(){var e=o.getAttribute("data-custom-class");d.removeClass(o,e)},300),d.removeClass(t.body,"stop-scrolling"),e.onkeydown=l,e.previousActiveElement&&e.previousActiveElement.focus(),i=n,clearTimeout(o.timeout),!0},u.showInputError=c.showInputError=function(e){var t=p.getModal(),n=t.querySelector(".sa-input-error");d.addClass(n,"show");var o=t.querySelector(".sa-error-container");d.addClass(o,"show"),o.querySelector("p").innerHTML=e,setTimeout(function(){u.enableButtons()},1),t.querySelector("input").focus()},u.resetInputError=c.resetInputError=function(e){if(e&&13===e.keyCode)return!1;var t=p.getModal(),n=t.querySelector(".sa-input-error");d.removeClass(n,"show");var o=t.querySelector(".sa-error-container");d.removeClass(o,"show")},u.disableButtons=c.disableButtons=function(){var e=p.getModal(),t=e.querySelector("button.confirm"),n=e.querySelector("button.cancel");t.disabled=!0,n.disabled=!0},u.enableButtons=c.enableButtons=function(){var e=p.getModal(),t=e.querySelector("button.confirm"),n=e.querySelector("button.cancel");t.disabled=!1,n.disabled=!1},"undefined"!=typeof e?e.sweetAlert=e.swal=u:f.logStr("SweetAlert is a frontend module!"),a.exports=r["default"]},{"./modules/default-params":2,"./modules/handle-click":3,"./modules/handle-dom":4,"./modules/handle-key":5,"./modules/handle-swal-dom":6,"./modules/set-params":8,"./modules/utils":9}],2:[function(e,t,n){Object.defineProperty(n,"__esModule",{value:!0});var o={title:"",text:"",type:null,allowOutsideClick:!1,showConfirmButton:!0,showCancelButton:!1,closeOnConfirm:!0,closeOnCancel:!0,confirmButtonText:"OK",confirmButtonColor:"#8CD4F5",cancelButtonText:"Cancel",imageUrl:null,imageSize:null,timer:null,customClass:"",html:!1,animation:!0,allowEscapeKey:!0,inputType:"text",inputPlaceholder:"",inputValue:"",showLoaderOnConfirm:!1};n["default"]=o,t.exports=n["default"]},{}],3:[function(t,n,o){Object.defineProperty(o,"__esModule",{value:!0});var a=t("./utils"),r=(t("./handle-swal-dom"),t("./handle-dom")),s=function(t,n,o){function s(e){m&&n.confirmButtonColor&&(p.style.backgroundColor=e)}var u,c,d,f=t||e.event,p=f.target||f.srcElement,m=-1!==p.className.indexOf("confirm"),v=-1!==p.className.indexOf("sweet-overlay"),y=r.hasClass(o,"visible"),h=n.doneFunction&&"true"===o.getAttribute("data-has-done-function");switch(m&&n.confirmButtonColor&&(u=n.confirmButtonColor,c=a.colorLuminance(u,-.04),d=a.colorLuminance(u,-.14)),f.type){case"mouseover":s(c);break;case"mouseout":s(u);break;case"mousedown":s(d);break;case"mouseup":s(c);break;case"focus":var b=o.querySelector("button.confirm"),g=o.querySelector("button.cancel");m?g.style.boxShadow="none":b.style.boxShadow="none";break;case"click":var w=o===p,C=r.isDescendant(o,p);if(!w&&!C&&y&&!n.allowOutsideClick)break;m&&h&&y?l(o,n):h&&y||v?i(o,n):r.isDescendant(o,p)&&"BUTTON"===p.tagName&&sweetAlert.close()}},l=function(e,t){var n=!0;r.hasClass(e,"show-input")&&(n=e.querySelector("input").value,n||(n="")),t.doneFunction(n),t.closeOnConfirm&&sweetAlert.close(),t.showLoaderOnConfirm&&sweetAlert.disableButtons()},i=function(e,t){var n=String(t.doneFunction).replace(/\s/g,""),o="function("===n.substring(0,9)&&")"!==n.substring(9,10);o&&t.doneFunction(!1),t.closeOnCancel&&sweetAlert.close()};o["default"]={handleButton:s,handleConfirm:l,handleCancel:i},n.exports=o["default"]},{"./handle-dom":4,"./handle-swal-dom":6,"./utils":9}],4:[function(n,o,a){Object.defineProperty(a,"__esModule",{value:!0});var r=function(e,t){return new RegExp(" "+t+" ").test(" "+e.className+" ")},s=function(e,t){r(e,t)||(e.className+=" "+t)},l=function(e,t){var n=" "+e.className.replace(/[\t\r\n]/g," ")+" ";if(r(e,t)){for(;n.indexOf(" "+t+" ")>=0;)n=n.replace(" "+t+" "," ");e.className=n.replace(/^\s+|\s+$/g,"")}},i=function(e){var n=t.createElement("div");return n.appendChild(t.createTextNode(e)),n.innerHTML},u=function(e){e.style.opacity="",e.style.display="block"},c=function(e){if(e&&!e.length)return u(e);for(var t=0;t<e.length;++t)u(e[t])},d=function(e){e.style.opacity="",e.style.display="none"},f=function(e){if(e&&!e.length)return d(e);for(var t=0;t<e.length;++t)d(e[t])},p=function(e,t){for(var n=t.parentNode;null!==n;){if(n===e)return!0;n=n.parentNode}return!1},m=function(e){e.style.left="-9999px",e.style.display="block";var t,n=e.clientHeight;return t="undefined"!=typeof getComputedStyle?parseInt(getComputedStyle(e).getPropertyValue("padding-top"),10):parseInt(e.currentStyle.padding),e.style.left="",e.style.display="none","-"+parseInt((n+t)/2)+"px"},v=function(e,t){if(+e.style.opacity<1){t=t||16,e.style.opacity=0,e.style.display="block";var n=+new Date,o=function(e){function t(){return e.apply(this,arguments)}return t.toString=function(){return e.toString()},t}(function(){e.style.opacity=+e.style.opacity+(new Date-n)/100,n=+new Date,+e.style.opacity<1&&setTimeout(o,t)});o()}e.style.display="block"},y=function(e,t){t=t||16,e.style.opacity=1;var n=+new Date,o=function(e){function t(){return e.apply(this,arguments)}return t.toString=function(){return e.toString()},t}(function(){e.style.opacity=+e.style.opacity-(new Date-n)/100,n=+new Date,+e.style.opacity>0?setTimeout(o,t):e.style.display="none"});o()},h=function(n){if("function"==typeof MouseEvent){var o=new MouseEvent("click",{view:e,bubbles:!1,cancelable:!0});n.dispatchEvent(o)}else if(t.createEvent){var a=t.createEvent("MouseEvents");a.initEvent("click",!1,!1),n.dispatchEvent(a)}else t.createEventObject?n.fireEvent("onclick"):"function"==typeof n.onclick&&n.onclick()},b=function(t){"function"==typeof t.stopPropagation?(t.stopPropagation(),t.preventDefault()):e.event&&e.event.hasOwnProperty("cancelBubble")&&(e.event.cancelBubble=!0)};a.hasClass=r,a.addClass=s,a.removeClass=l,a.escapeHtml=i,a._show=u,a.show=c,a._hide=d,a.hide=f,a.isDescendant=p,a.getTopMargin=m,a.fadeIn=v,a.fadeOut=y,a.fireClick=h,a.stopEventPropagation=b},{}],5:[function(t,o,a){Object.defineProperty(a,"__esModule",{value:!0});var r=t("./handle-dom"),s=t("./handle-swal-dom"),l=function(t,o,a){var l=t||e.event,i=l.keyCode||l.which,u=a.querySelector("button.confirm"),c=a.querySelector("button.cancel"),d=a.querySelectorAll("button[tabindex]");if(-1!==[9,13,32,27].indexOf(i)){for(var f=l.target||l.srcElement,p=-1,m=0;m<d.length;m++)if(f===d[m]){p=m;break}9===i?(f=-1===p?u:p===d.length-1?d[0]:d[p+1],r.stopEventPropagation(l),f.focus(),o.confirmButtonColor&&s.setFocusStyle(f,o.confirmButtonColor)):13===i?("INPUT"===f.tagName&&(f=u,u.focus()),f=-1===p?u:n):27===i&&o.allowEscapeKey===!0?(f=c,r.fireClick(f,l)):f=n}};a["default"]=l,o.exports=a["default"]},{"./handle-dom":4,"./handle-swal-dom":6}],6:[function(n,o,a){var r=function(e){return e&&e.__esModule?e:{"default":e}};Object.defineProperty(a,"__esModule",{value:!0});var s=n("./utils"),l=n("./handle-dom"),i=n("./default-params"),u=r(i),c=n("./injected-html"),d=r(c),f=".sweet-alert",p=".sweet-overlay",m=function(){var e=t.createElement("div");for(e.innerHTML=d["default"];e.firstChild;)t.body.appendChild(e.firstChild)},v=function(e){function t(){return e.apply(this,arguments)}return t.toString=function(){return e.toString()},t}(function(){var e=t.querySelector(f);return e||(m(),e=v()),e}),y=function(){var e=v();return e?e.querySelector("input"):void 0},h=function(){return t.querySelector(p)},b=function(e,t){var n=s.hexToRgb(t);e.style.boxShadow="0 0 2px rgba("+n+", 0.8), inset 0 0 0 1px rgba(0, 0, 0, 0.05)"},g=function(n){var o=v();l.fadeIn(h(),10),l.show(o),l.addClass(o,"showSweetAlert"),l.removeClass(o,"hideSweetAlert"),e.previousActiveElement=t.activeElement;var a=o.querySelector("button.confirm");a.focus(),setTimeout(function(){l.addClass(o,"visible")},500);var r=o.getAttribute("data-timer");if("null"!==r&&""!==r){var s=n;o.timeout=setTimeout(function(){var e=(s||null)&&"true"===o.getAttribute("data-has-done-function");e?s(null):sweetAlert.close()},r)}},w=function(){var e=v(),t=y();l.removeClass(e,"show-input"),t.value=u["default"].inputValue,t.setAttribute("type",u["default"].inputType),t.setAttribute("placeholder",u["default"].inputPlaceholder),C()},C=function(e){if(e&&13===e.keyCode)return!1;var t=v(),n=t.querySelector(".sa-input-error");l.removeClass(n,"show");var o=t.querySelector(".sa-error-container");l.removeClass(o,"show")},S=function(){var e=v();e.style.marginTop=l.getTopMargin(v())};a.sweetAlertInitialize=m,a.getModal=v,a.getOverlay=h,a.getInput=y,a.setFocusStyle=b,a.openModal=g,a.resetInput=w,a.resetInputError=C,a.fixVerticalPosition=S},{"./default-params":2,"./handle-dom":4,"./injected-html":7,"./utils":9}],7:[function(e,t,n){Object.defineProperty(n,"__esModule",{value:!0});var o='<div class="sweet-overlay" tabIndex="-1"></div><div class="sweet-alert"><div class="sa-icon sa-error">\n      <span class="sa-x-mark">\n        <span class="sa-line sa-left"></span>\n        <span class="sa-line sa-right"></span>\n      </span>\n    </div><div class="sa-icon sa-warning">\n      <span class="sa-body"></span>\n      <span class="sa-dot"></span>\n    </div><div class="sa-icon sa-info"></div><div class="sa-icon sa-success">\n      <span class="sa-line sa-tip"></span>\n      <span class="sa-line sa-long"></span>\n\n      <div class="sa-placeholder"></div>\n      <div class="sa-fix"></div>\n    </div><div class="sa-icon sa-custom"></div><h2>Title</h2>\n    <p>Text</p>\n    <fieldset>\n      <input type="text" tabIndex="3" />\n      <div class="sa-input-error"></div>\n    </fieldset><div class="sa-error-container">\n      <div class="icon">!</div>\n      <p>Not valid!</p>\n    </div><div class="sa-button-container">\n      <button class="cancel" tabIndex="2">Cancel</button>\n      <div class="sa-confirm-button-container">\n        <button class="confirm" tabIndex="1">OK</button><div class="la-ball-fall">\n          <div></div>\n          <div></div>\n          <div></div>\n        </div>\n      </div>\n    </div></div>';n["default"]=o,t.exports=n["default"]},{}],8:[function(e,t,o){Object.defineProperty(o,"__esModule",{value:!0});var a=e("./utils"),r=e("./handle-swal-dom"),s=e("./handle-dom"),l=["error","warning","info","success","input","prompt"],i=function(e){var t=r.getModal(),o=t.querySelector("h2"),i=t.querySelector("p"),u=t.querySelector("button.cancel"),c=t.querySelector("button.confirm");if(o.innerHTML=e.html?e.title:s.escapeHtml(e.title).split("\n").join("<br>"),i.innerHTML=e.html?e.text:s.escapeHtml(e.text||"").split("\n").join("<br>"),e.text&&s.show(i),e.customClass)s.addClass(t,e.customClass),t.setAttribute("data-custom-class",e.customClass);else{var d=t.getAttribute("data-custom-class");s.removeClass(t,d),t.setAttribute("data-custom-class","")}if(s.hide(t.querySelectorAll(".sa-icon")),e.type&&!a.isIE8()){var f=function(){for(var o=!1,a=0;a<l.length;a++)if(e.type===l[a]){o=!0;break}if(!o)return logStr("Unknown alert type: "+e.type),{v:!1};var i=["success","error","warning","info"],u=n;-1!==i.indexOf(e.type)&&(u=t.querySelector(".sa-icon.sa-"+e.type),s.show(u));var c=r.getInput();switch(e.type){case"success":s.addClass(u,"animate"),s.addClass(u.querySelector(".sa-tip"),"animateSuccessTip"),s.addClass(u.querySelector(".sa-long"),"animateSuccessLong");break;case"error":s.addClass(u,"animateErrorIcon"),s.addClass(u.querySelector(".sa-x-mark"),"animateXMark");break;case"warning":s.addClass(u,"pulseWarning"),s.addClass(u.querySelector(".sa-body"),"pulseWarningIns"),s.addClass(u.querySelector(".sa-dot"),"pulseWarningIns");break;case"input":case"prompt":c.setAttribute("type",e.inputType),c.value=e.inputValue,c.setAttribute("placeholder",e.inputPlaceholder),s.addClass(t,"show-input"),setTimeout(function(){c.focus(),c.addEventListener("keyup",swal.resetInputError)},400)}}();if("object"==typeof f)return f.v}if(e.imageUrl){var p=t.querySelector(".sa-icon.sa-custom");p.style.backgroundImage="url("+e.imageUrl+")",s.show(p);var m=80,v=80;if(e.imageSize){var y=e.imageSize.toString().split("x"),h=y[0],b=y[1];h&&b?(m=h,v=b):logStr("Parameter imageSize expects value with format WIDTHxHEIGHT, got "+e.imageSize)}p.setAttribute("style",p.getAttribute("style")+"width:"+m+"px; height:"+v+"px")}t.setAttribute("data-has-cancel-button",e.showCancelButton),e.showCancelButton?u.style.display="inline-block":s.hide(u),t.setAttribute("data-has-confirm-button",e.showConfirmButton),e.showConfirmButton?c.style.display="inline-block":s.hide(c),e.cancelButtonText&&(u.innerHTML=s.escapeHtml(e.cancelButtonText)),e.confirmButtonText&&(c.innerHTML=s.escapeHtml(e.confirmButtonText)),e.confirmButtonColor&&(c.style.backgroundColor=e.confirmButtonColor,c.style.borderLeftColor=e.confirmLoadingButtonColor,c.style.borderRightColor=e.confirmLoadingButtonColor,r.setFocusStyle(c,e.confirmButtonColor)),t.setAttribute("data-allow-outside-click",e.allowOutsideClick);var g=e.doneFunction?!0:!1;t.setAttribute("data-has-done-function",g),e.animation?"string"==typeof e.animation?t.setAttribute("data-animation",e.animation):t.setAttribute("data-animation","pop"):t.setAttribute("data-animation","none"),t.setAttribute("data-timer",e.timer)};o["default"]=i,t.exports=o["default"]},{"./handle-dom":4,"./handle-swal-dom":6,"./utils":9}],9:[function(t,n,o){Object.defineProperty(o,"__esModule",{value:!0});var a=function(e,t){for(var n in t)t.hasOwnProperty(n)&&(e[n]=t[n]);return e},r=function(e){var t=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(e);return t?parseInt(t[1],16)+", "+parseInt(t[2],16)+", "+parseInt(t[3],16):null},s=function(){return e.attachEvent&&!e.addEventListener},l=function(t){e.console&&e.console.log("SweetAlert: "+t)},i=function(e,t){e=String(e).replace(/[^0-9a-f]/gi,""),e.length<6&&(e=e[0]+e[0]+e[1]+e[1]+e[2]+e[2]),t=t||0;var n,o,a="#";for(o=0;3>o;o++)n=parseInt(e.substr(2*o,2),16),n=Math.round(Math.min(Math.max(0,n+n*t),255)).toString(16),a+=("00"+n).substr(n.length);return a};o.extend=a,o.hexToRgb=r,o.isIE8=s,o.logStr=l,o.colorLuminance=i},{}]},{},[1]),"function"==typeof define&&define.amd?define(function(){return sweetAlert}):"undefined"!=typeof module&&module.exports&&(module.exports=sweetAlert)}(window,document);
-},{}],90:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 var VirtualJoystick	= function(opts)
 {
 	opts			= opts			|| {};
@@ -82299,7 +81158,7 @@ VirtualJoystick.prototype._check3D = function()
 	return exports;
 }
 module.exports = VirtualJoystick;
-},{}],91:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 window.$ = window.jQuery = require('jquery');
 require('bootstrap');
 var fn = require('./functions');
@@ -82396,6 +81255,7 @@ $(document).ready(function() {
 
 	function checkifSignedIn() {
 		if (typeof getCookie('username') !== "undefined" && typeof getCookie('password') != "undefined") {
+			window.signedIn = true;
 			console.log("signed in as: " + getCookie('username'));
 			$("#ls").css('display', 'none');
 			$("#playGuest").css('display', 'none');
@@ -82405,7 +81265,7 @@ $(document).ready(function() {
 			//$("#playBtn")[0].disabled = false;
 
 
-			var signOut = $('<input id="signOut" type="button" style="float: right; margin-bottom: 4px;" value="signOut" class="btn btn-info"/>');
+			var signOut = $('<input id="signOut" type="button" style="float: right; margin-bottom: 4px;" value="sign out" class="btn btn-info"/>');
 			$("#guest-ls").append(signOut);
 			$("#signOut").on('click', function(event) {
 				$.ajax({
@@ -82509,6 +81369,7 @@ $(document).ready(function() {
 
 			// NOT Signed IN
 		} else {
+			window.signedIn = false;
 			console.log('not signed in');
 			$("#playBtn")[0].disabled = true;
 
@@ -82561,7 +81422,7 @@ $(document).ready(function() {
 		return false;
 	});
 });
-},{"./functions":77,"bootstrap":1,"jquery":71}],92:[function(require,module,exports){
+},{"./functions":75,"bootstrap":1,"jquery":71}],90:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -82654,4 +81515,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[76]);
+},{}]},{},[74]);

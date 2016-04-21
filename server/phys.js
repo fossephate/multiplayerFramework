@@ -1,3 +1,4 @@
+var CANNON = require('cannon');
 var fn = {};
 fn.createPhysBody = function createPhysBody(shape, mass) {
 	var createCollider;

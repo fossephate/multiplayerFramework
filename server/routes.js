@@ -4,31 +4,6 @@ var EM = require('./email-dispatcher');
 module.exports = function(app) {
 	// main signIn page //
 
-	/*app.get('/', function(req, res){
-		res.render('/index.html');
-	});*/
-
-// 	app.get('/', function(req, res) {
-// 		// check if the user's credentials are saved in a cookie //
-// 		if (req.cookies.user == undefined || req.cookies.pass == undefined) {
-// 			res.render('signIn', {
-// 				title: 'Hello - Please SignIn To Your Account'
-// 			});
-// 		} else {
-// 			// attempt automatic signIn //
-// 			AM.autoSignIn(req.cookies.user, req.cookies.pass, function(o) {
-// 				if (o != null) {
-// 					req.session.user = o;
-// 					res.redirect('/home');
-// 				} else {
-// 					res.render('signIn', {
-// 						title: 'Hello - Please SignIn To Your Account'
-// 					});
-// 				}
-// 			});
-// 		}
-// 	});
-
 	app.post('/autoSignIn', function(req, res) {
 		if (req.session.user != null) {
 			AM.getAccountByUser(req.session.user.username, function(tempAccount) {
@@ -39,91 +14,119 @@ module.exports = function(app) {
 			});
 		}
 	});
-
-	//LOGIN POST
-// 	app.post('/', function(req, res) {
-// 		var errors = [];
-// 		AM.validateSignInData(req.body, errors);
-// 		if (errors.length > 0) {
-// 			res.status(400).send(errors);
-// 		} else {
-// 			AM.manualSignIn(req.body.user, req.body.pass, function(e, o) {
-// 				if (!o) {
-// 					res.status(400).send(e);
-// 				} else {
-// 					req.session.user = o;
-// 					// FIX THIS
-// 					//if (req.body['rememberMe'] == 'true') {// FIX THIS
-// 					res.cookie('user', o.user, {
-// 						path: '/',
-// 						maxAge: 900000
-// 					});
-// 					res.cookie('pass', o.pass, {
-// 						path: '/',
-// 						maxAge: 900000
-// 					});
-// 					/*if(o.usernames) {
-// 						res.cookie('usernames', o.usernames, {
-// 							path: '/',
-// 							maxAge: 900000
-// 						});
-// 					}
-// 					if(o.nodes) {
-// 						res.cookie('nodes', o.nodes, {
-// 							path: '/',
-// 							maxAge: 900000
-// 						});
-// 					}*/
-// 					//}// FIX THIS
-// 					res.status(200).json('ok');
-// 				}
-// 			});
-// 		}
-// 	});
-
+	
 	// CREATE CHARACTER
+// 	app.post('/createCharacter', function(req, res) {
+// 		if (typeof req.session.user == "undefined") {
+// 			res.status(400).send('error');
+// 			return;
+// 		}
+
+// 		AM.getAccountByUser(req.session.user.user, function(o) {
+// 			if (o) {
+// 				var nodes = {};
+// 				var usernames = [];
+// 				if (typeof o.nodes != "undefined") {
+// 					for (var i in o.nodes) {
+// 						nodes[i] = o.nodes[i];
+// 					}
+// 				}
+// 				if (typeof o.usernames != "undefined") {
+// 					for (var i = 0; i < o.usernames.length; i++) {
+// 						usernames.push(o.usernames[i]);
+// 					}
+// 				}
+
+// 				var newNode = {
+// 					username: req.body.name,
+// 					class: req.body.class,
+// 					level: 0,
+// 					experience: 0,
+// 					health: 100,
+// 					score: 0,
+// 				};
+// 				//o.nodes[req.body.name] = newNode;
+// 				//var o2nodes = o.nodes;
+// 				//newNodes[newNode.username] = newNode;
+
+
+
+// 				nodes[req.body.name] = newNode;
+// 				usernames.push(req.body.name);
+// 				//console.log(nodes);
+
+// 				var data = {
+// 					user: o.user,
+// 					nodes: nodes,
+// 					usernames: usernames,
+// 				};
+
+// 				AM.addData(data, function(e, o) {
+// 					if (e) {
+// 						res.status(400).json('error');
+// 					} else if(o) {
+// 						//req.session.user = o;
+// 						// update the user's signIn cookies if they exists //
+// 						/*if (req.cookies.user != undefined && req.cookies.pass != undefined) {
+// 							res.cookie('user', o.user, {
+// 								maxAge: 900000
+// 							});
+// 							res.cookie('pass', o.pass, {
+// 								maxAge: 900000
+// 							});
+// 						}*/
+// 						//console.log(o);
+// 						res.status(200).json('ok');
+// 					}
+// 				});
+// 				//console.log(o);
+// 				//res.status(200).send(o);
+// 			} else {
+// 				res.status(400).json('error');
+// 			}
+// 		});
+// 	});
+	
+	
+	
 	app.post('/createCharacter', function(req, res) {
-		if (typeof req.session.user == "undefined") {
+		if (typeof req.session.username == "undefined") {
 			res.status(400).send('error');
 			return;
 		}
 
-		AM.getAccountByUser(req.session.user.user, function(o) {
-			if (o) {
-				var nodes = {};
+		AM.getAccountByUser(req.session.user.username, function(tempAccount) {
+			if (tempAccount) {
+				var characters = {};
 				var usernames = [];
-				if (typeof o.nodes != "undefined") {
-					for (var i in o.nodes) {
-						nodes[i] = o.nodes[i];
+				if (typeof tempAccount.characters != "undefined") {
+					for (var i in tempAccount.characters) {
+						characters[i] = tempAccount.nodes[i];
 					}
 				}
-				if (typeof o.usernames != "undefined") {
-					for (var i = 0; i < o.usernames.length; i++) {
-						usernames.push(o.usernames[i]);
+				if (typeof tempAccount.usernames != "undefined") {
+					for (var i = 0; i < tempAccount.usernames.length; i++) {
+						usernames.push(tempAccount.usernames[i]);
 					}
 				}
 
 				var newNode = {
-					username: req.body.name,
+					characterName: req.body.name,
 					class: req.body.class,
 					level: 0,
 					experience: 0,
 					health: 100,
-					score: 0,
 				};
-				//o.nodes[req.body.name] = newNode;
-				//var o2nodes = o.nodes;
-				//newNodes[newNode.username] = newNode;
 
 
 
-				nodes[req.body.name] = newNode;
+				characters[req.body.name] = newNode;
 				usernames.push(req.body.name);
 				//console.log(nodes);
 
 				var data = {
-					user: o.user,
-					nodes: nodes,
+					username: tempAccount.user,
+					characters: characters,
 					usernames: usernames,
 				};
 
@@ -160,21 +163,14 @@ module.exports = function(app) {
 	
 	
 	
-	
-	
-	
-	
-	
-	
 	app.post('/getCharacters', function(req, res) {
 		if (typeof req.session.user == "undefined") {
 			res.status(400).json('error');
 			return;
 		}
-		AM.getAccountByUser(req.session.user.user, function(o) {
-			if (o) {
-				//console.log(o);
-				res.status(200).json(o.nodes);
+		AM.getAccountByUser(req.session.user.user, function(tempAccount) {
+			if (tempAccount) {
+				res.status(200).json(tempAccount.nodes);
 			} else {
 				res.status(400).json('error');
 			}

@@ -1,6 +1,7 @@
 var login = require('./login');
 
 
+
 var fn = {};
 
 fn.getCookies = function getCookies() {
@@ -259,63 +260,6 @@ function roundRect(ctx, x, y, w, h, r) {
 
 
 
-function whenDo(variables, operator, istypeof, callback, frequency, params) {
-	var isDone = false;
-	if (istypeof) {
-
-		if (operator == "==") {
-			if (typeof variables.var1 == variables.var2) {
-				isDone = true;
-			}
-		} else if (operator == "!=") {
-			if (typeof variables.var1 != variables.var2) {
-				isDone = true;
-			}
-		}
-
-	} else if (!istypeof) {
-
-		if (operator == "==") {
-			if (variables.var1 == variables.var2) {
-				isDone = true;
-			}
-		} else if (operator == "!=") {
-			if (variables.var1 != variables.var2) {
-				isDone = true;
-			}
-		}
-
-	}
-
-	if (isDone === true) {
-		if (params.length === 0) {
-			callback();
-		} else if (params.length == 1) {
-			callback(params[0]);
-		} else if (params.length == 2) {
-			callback(params[0], params[1]);
-		} else if (params.length == 3) {
-			callback(params[0], params[1], params[2]);
-		}
-
-	} else if (isDone === false) {
-		/*setTimeout(function() {
-			whenDo(variable1, variable2, operator, istypeof, callback, frequency, params);
-			console.log("looped");
-		}, frequency);*/
-		//newer browsers
-		//console.log("looped");
-		//console.log(a);
-		console.log(variables.var1);
-		setTimeout(whenDo, frequency, variables, operator, istypeof, callback, frequency, params);
-	}
-
-
-}
-
-
-
-
 
 fn.limit = function limit(min, max, variable, teleport, teleportProp) {
 	if (!teleportProp) {
@@ -522,162 +466,6 @@ fn.createHealthBar = function createHealthBar() {
 
 
 
-fn.createXPBar = function createXPBar() {
-	var XPBOpts = {
-		radius: 8,
-		xPos: window.innerWidth / 4,
-		yPos: 10,
-		barLength: window.innerWidth / 2,
-		barLength2: 0,
-		xScale: 1,
-		yScale: 1,
-		calcPos: function() {
-			var pos = {};
-			pos.x = (-window.innerWidth / 2) + this.xPos;
-			pos.y = (-window.innerHeight / 2) + this.yPos;
-			return pos;
-		},
-		calcCylinderPos: function(barLength, isbg) {
-			var pos = {};
-			if (isbg) {
-				pos.x = (-window.innerWidth / 2) + this.xPos + this.barLength / 2 + this.radius;
-				pos.y = (-window.innerHeight / 2) + this.yPos;
-			} else if (!isbg) {
-				pos.x = (-window.innerWidth / 2) + this.xPos + barLength / 2 + this.radius;
-				pos.y = (-window.innerHeight / 2) + this.yPos;
-			}
-			return pos;
-		},
-		calcSpherePos: function(which, isbg) {
-			var pos = {};
-			pos.x = (-window.innerWidth / 2) + this.xPos + this.radius;
-			pos.y = (-window.innerHeight / 2) + this.yPos;
-			if (which == 2) {
-				if (isbg) {
-					//console.log(pos.y);
-					pos.x += this.barLength;
-				} else if (!isbg) {
-					pos.x += this.barLength2;
-				}
-			}
-			return pos;
-		}
-	};
-
-	var bgCylinderGeometry = new THREE.CylinderGeometry(XPBOpts.radius, XPBOpts.radius, XPBOpts.barLength, 32);
-	var bgSphereGeometry = new THREE.SphereGeometry(XPBOpts.radius, 32, 32);
-	var bgBarMaterial = new THREE.MeshBasicMaterial({
-		color: 0x333333,
-	});
-	var bgCylinderMesh = new THREE.Mesh(bgCylinderGeometry, bgBarMaterial);
-	bgCylinderMesh.rotation.z = Math.PI / 2;
-	var bgSphereMesh1 = new THREE.Mesh(bgSphereGeometry, bgBarMaterial);
-	var bgSphereMesh2 = new THREE.Mesh(bgSphereGeometry, bgBarMaterial);
-
-	var bgCylinderPos = XPBOpts.calcCylinderPos(XPBOpts.barLength, true);
-	bgCylinderMesh.position.set(bgCylinderPos.x, bgCylinderPos.y, -10);
-	var bgSpherePos1 = XPBOpts.calcSpherePos(1, true);
-	bgSphereMesh1.position.set(bgSpherePos1.x, bgSpherePos1.y, -10);
-	var bgSpherePos2 = XPBOpts.calcSpherePos(2, true);
-	bgSphereMesh2.position.set(bgSpherePos2.x, bgSpherePos2.y, -10);
-
-
-
-
-	var cylinderGeometry = new THREE.CylinderGeometry(XPBOpts.radius - 2, XPBOpts.radius - 2, XPBOpts.barLength2, 32);
-	var sphereGeometry = new THREE.SphereGeometry(XPBOpts.radius - 2, 32, 32);
-	var barMaterial = new THREE.MeshBasicMaterial({
-		//color: 0x8C8C8C,
-		color: 0x990099,
-		//side: THREE.DoubleSide
-	});
-	var cylinderMesh = new THREE.Mesh(cylinderGeometry, barMaterial);
-	cylinderMesh.rotation.z = Math.PI / 2;
-
-	var sphereMesh1 = new THREE.Mesh(sphereGeometry, barMaterial);
-	var sphereMesh2 = new THREE.Mesh(sphereGeometry, barMaterial);
-	var cylinderPos = XPBOpts.calcCylinderPos(XPBOpts.barLength2);
-	cylinderMesh.position.set(cylinderPos.x, cylinderPos.y, 0);
-	var spherePos1 = XPBOpts.calcSpherePos(1, false);
-	sphereMesh1.position.set(spherePos1.x, spherePos1.y, 0);
-	var spherePos2 = XPBOpts.calcSpherePos(2, false);
-	sphereMesh2.position.set(spherePos2.x, spherePos2.y, 0);
-
-	world1.t.HUD.scene.add(bgCylinderMesh);
-	world1.t.HUD.scene.add(bgSphereMesh1);
-	world1.t.HUD.scene.add(bgSphereMesh2);
-	world1.t.HUD.scene.add(cylinderMesh);
-	world1.t.HUD.scene.add(sphereMesh1);
-	world1.t.HUD.scene.add(sphereMesh2);
-
-
-
-	var XPB = {};
-	XPB.bg = {};
-	XPB.bg.cMesh = bgCylinderMesh;
-	XPB.bg.sMesh1 = bgSphereMesh1;
-	XPB.bg.sMesh2 = bgSphereMesh2;
-
-	XPB.cMesh = cylinderMesh;
-	XPB.sMesh1 = sphereMesh1;
-	XPB.sMesh2 = sphereMesh2;
-
-	XPB.options = XPBOpts;
-
-	XPB.recalc = function() {
-		this.options.barLength = window.innerWidth / 2;
-		this.options.xPos = window.innerWidth / 4;
-
-		var bgCylinderGeometry = new THREE.CylinderGeometry(this.options.radius, this.options.radius, this.options.barLength, 32);
-		this.bg.cMesh.geometry.dispose();
-		this.bg.cMesh.geometry = bgCylinderGeometry;
-		this.bg.cMesh.needsUpdate = true;
-
-		var cylinderGeometry = new THREE.CylinderGeometry(this.options.radius - 2, this.options.radius - 2, this.options.barLength2, 32);
-		this.cMesh.geometry.dispose();
-		this.cMesh.geometry = cylinderGeometry;
-		this.cMesh.needsUpdate = true;
-	};
-
-	XPB.update = function(currentXP, currentLevel) {
-		var levelMaxXP = 100 * currentLevel + 1;
-		this.options.barLength2 = (currentXP / levelMaxXP) * this.options.barLength;
-		//this.options.xPos = window.innerWidth/4;
-		var bgCylinderPos = XPBOpts.calcCylinderPos(this.options.barLength, true);
-		this.bg.cMesh.position.set(bgCylinderPos.x, bgCylinderPos.y, -10);
-		var bgSpherePos1 = XPBOpts.calcSpherePos(1, true);
-		this.bg.sMesh1.position.set(bgSpherePos1.x, bgSpherePos1.y, -10);
-		var bgSpherePos2 = XPBOpts.calcSpherePos(2, true);
-		this.bg.sMesh2.position.set(bgSpherePos2.x, bgSpherePos2.y, -10);
-
-		var spherePos1 = this.options.calcSpherePos(1, false);
-		this.sMesh1.position.set(spherePos1.x, spherePos1.y, 0);
-		var spherePos2 = this.options.calcSpherePos(2, false);
-		this.sMesh2.position.set(spherePos2.x, spherePos2.y, 0);
-
-		var cylinderGeometry = new THREE.CylinderGeometry(this.options.radius - 2, this.options.radius - 2, this.options.barLength2, 32);
-		this.cMesh.geometry.dispose();
-		this.cMesh.geometry = cylinderGeometry;
-		var cylinderPos = this.options.calcCylinderPos(this.options.barLength2, false);
-		this.cMesh.position.set(cylinderPos.x, cylinderPos.y, 0);
-	};
-	return XPB;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -711,7 +499,6 @@ fn.createXPBar2 = function createXPBar2(radius, xPos, yPos, barLength) {
 		pos.y = (-window.innerHeight / 2) + this.yPos;
 		if (which == 2) {
 			if (isbg) {
-				//console.log(pos.y);
 				pos.x += this.barLength;
 			} else if (!isbg) {
 				pos.x += this.barLength2;
@@ -724,8 +511,6 @@ fn.createXPBar2 = function createXPBar2(radius, xPos, yPos, barLength) {
 
 
 	var XPBOpts = XPB.options;
-
-
 
 	var bgCylinderGeometry = new THREE.CylinderGeometry(XPBOpts.radius, XPBOpts.radius, XPBOpts.barLength, 32);
 	var bgSphereGeometry = new THREE.SphereGeometry(XPBOpts.radius, 32, 32);
@@ -1047,6 +832,114 @@ function drawGrid(ctx, x, y, width, height, rows, columns, radius, BW, BH) {
 
 
 
+//var fn = {};
+
+function box(x, y, width, height) {
+	this.x = x;
+	this.y = y;
+	this.width = width;
+	this.height = height;
+}
+
+fn.test2 = function(ctx) {
+	var xNum = 5;
+	var yNum = 6;
+	
+	var boxWidth = 300;
+	var boxHeight = 300;
+	
+	var lineWidth = 15;
+	var xGridLines = xNum+1;
+	var yGridLines = yNum+1;
+	
+	var gridWidth = (boxWidth*xNum)+(lineWidth*xGridLines);
+	var gridHeight = (boxHeight*yNum)+(lineWidth*yGridLines);
+	
+	var boxes = [];
+	
+	for(var i = 0; i < yNum; i++) {
+		
+		for(var j = 0; j < xNum; j++) {
+		
+			//var lineWidthAdded = ((i+1)*lineWidth);
+			//         width of boxes   width of borders
+			var xPos = (boxWidth*j) + ((j+1)*lineWidth);
+			
+			var yPos = (boxHeight*i) + ((i+1)*lineWidth);
+			
+			var tempBox = new box(xPos, yPos, boxWidth, boxHeight);
+			boxes.push(tempBox);
+			
+			
+		}
+		
+	}
+	console.log(boxes);
+	
+	var targetx = ctx.width/2;
+	var targety = ctx.height/2;
+	
+	var gcx = gridWidth/2;
+	var gcy = gridHeight/2;
+	
+	var transx = targetx - gcx;
+	var transy = targety - gcy;
+	ctx.save();
+	ctx.translate(transx, transy);
+	
+	
+	ctx.moveTo(0, 0);
+	for(var i = 0; i < xNum+1; i++) {
+		
+		var xPos = (boxWidth*i) + ((i)*lineWidth) + lineWidth/2;
+		ctx.moveTo(xPos, 0);
+		ctx.lineTo(xPos, gridHeight);
+	}
+	for(var i = 0; i < yNum+1; i++) {
+		
+		var yPos = (boxHeight*i) + ((i)*lineWidth) + lineWidth/2;
+		ctx.moveTo(0, yPos);
+		ctx.lineTo(gridWidth, yPos);
+	}
+	ctx.stroke();
+	
+	ctx.restore();
+	
+	//x,y,width,height
+	//ctx.fillRect(0, 0, 2048, 2048);
+};
+
+
+
+var sprite;
+fn.test1 = function() {
+	var canvas = document.createElement('canvas');
+	var context = canvas.getContext('2d');
+	canvas.width = 2048;
+	canvas.height = 2048;
+	context.fillStyle = "#000000";
+	context.lineWidth = 15;
+	
+	fn.test2(context);
+	
+	var texture = new THREE.Texture(canvas);
+	texture.minFilter = THREE.LinearFilter;
+	texture.needsUpdate = true;
+	var spriteMaterial = new THREE.SpriteMaterial({
+		map: texture
+	});
+	sprite = new THREE.Sprite(spriteMaterial);
+	
+	//var scale = window.innerWidth/2;
+	var scale = 200;
+	
+	sprite.scale.set(scale, scale, 1);
+	
+	world1.t.HUD.scene.add(sprite);
+};
+
+
+
 
 
 
@@ -1192,7 +1085,7 @@ a.update(50);
 
 
 
-fn.createHUDInventory = function createHUDInventory() {
+/*fn.createHUDInventory = function createHUDInventory() {
 	var canvas = document.createElement('canvas');
 	var context = canvas.getContext('2d');
 	canvas.width = 2048;
@@ -1223,7 +1116,7 @@ fn.createHUDInventory = function createHUDInventory() {
 	};
 	world1.t.HUD.scene.add(obj.mesh);
 	return obj;
-}
+}*/
 
 
 
@@ -1519,62 +1412,6 @@ fn.physicsFromHeightmap = function physicsFromHeightmap(heightmapSrc, callback) 
 		hfBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI);
 		callback(planeMesh, hfBody);
 	});
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-	/*var heightmap = new Image();
-	heightmap.onload = function() {
-		options.heightmap = this;
-
-		var zValues = fromHeightmap2(heightmap, options);
-		var geometry1 = new THREE.PlaneGeometry(options.xSize, options.ySize, options.xSegments, options.ySegments);
-		for(var i = 0; i < geometry1.vertices.length; i++) {
-			geometry1.vertices[i].z = zValues[i];
-		}
-		
-
-		//var geometry2 = geometry1.clone();
-		var geometry2 = new THREE.PlaneGeometry(options.xSize, options.ySize, options.xSegments, options.ySegments);
-		//fromHeightmap(geometry2.vertices, options);
-		geometry2.vertices = geometry1.vertices;
-		var material = new THREE.MeshLambertMaterial({
-			color: 0xffff00,
-			side: THREE.DoubleSide
-		});
-		var planeMesh = new THREE.Mesh(geometry2, material);
-
-
-
-		var vertices = toArray2D(geometry1.vertices, options);
-		vertices.reverse();
-
-		//var wallGeometry = new THREE.PlaneBufferGeometry(1, 1);
-		//var wallMesh = new THREE.Mesh(wallGeometry);
-		var hfShape = new CANNON.Heightfield(vertices, {
-			elementSize: options.xSize / options.xSegments,
-		});
-		var hfBody = new CANNON.Body({
-			mass: 0,
-		});
-		hfBody.addShape(hfShape);
-		hfBody.shapeOffsets[0].x = -options.xSegments * hfShape.elementSize / 2;
-		hfBody.shapeOffsets[0].y = -options.xSegments * hfShape.elementSize / 2;
-		hfBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI);
-		//createPhysicsObject(wallMesh, hfBody, world1);
-
-
-
-
-		callback(planeMesh, hfBody);
-	};
-	heightmap.src = src;*/
 }
 
 
@@ -1586,14 +1423,14 @@ fn.physicsFromHeightmap = function physicsFromHeightmap(heightmapSrc, callback) 
 var lf = localforage;
 
 localforage.config({
-	driver: localforage.INDEXEDDB, // Force INDEXEDDB; same as using setDriver() // 3-9-16
+	//driver: localforage.INDEXEDDB, // Force INDEXEDDB; same as using setDriver() // 3-9-16
 	name: 'mmo',
 	version: 1.0,
 	//size: 4980736, // Size of database, in bytes. WebSQL-only for now.
 	storeName: 'keyvaluepairs', // Should be alphanumeric, with underscores.
 	description: 'some description'
 });
-localforage.setDriver(localforage.INDEXEDDB);
+//localforage.setDriver(localforage.INDEXEDDB);
 
 // with promises
 /*localforage.setItem('key', 'value').then(function(value) {
@@ -1643,26 +1480,6 @@ fn.assetHolder = function assetHolder() {
 	
 	this.loadedModels = [];
 	this.modelList = [];
-
-
-	/*localforage.setItem('key', 'value').then(function(value) {
-		console.log("value was set");
-	}, function(error) {
-		console.error(error);
-	});*/
-
-	/*localforage.getItem('assets').then(function(value) {
-		if(value !== null) {
-			console.log("loaded assets from storage");
-			scope.assets = value;
-		}
-		//console.log(value);
-	}, function(error) {
-		console.error(error);
-	});*/
-
-
-
 
 	this.manager = new THREE.LoadingManager();
 	this.manager.scope = this;
@@ -1753,13 +1570,15 @@ fn.assetHolder = function assetHolder() {
 					//scope.numberOfLoadedAssets += 1;
 					//scope.assetProgress();
 					//console.log("loaded: " + url + " manually.");
-					var storable = JSON.stringify(scope.assets.files[url].value);
-					
-					localforage.setItem('files.'+url, storable).then(function(value) {
-						//scope.numberOfLoadedAssets += 1;
-						//scope.assetProgress();
-						console.log("loaded and stored: " + url + " manually.");
-					});
+					if(!fn.isMobile()) {
+						var storable = JSON.stringify(scope.assets.files[url].value);
+
+						localforage.setItem('files.'+url, storable).then(function(value) {
+							//scope.numberOfLoadedAssets += 1;
+							//scope.assetProgress();
+							console.log("loaded and stored: " + url + " manually.");
+						});
+					}
 				});
 			}
 		});
@@ -1936,6 +1755,86 @@ a.onProgress = function ( item, loaded, total ) {
 };
 */
 
+
+
+function segment(parentGrid, column, row) {//fill in paramater for heightmap url or define url scheme, also paramater for position
+	this.terrainGrid = parentGrid;
+	
+	
+	this.heightmap = 0;//probably just store url
+	
+	this.width = 1024;//this.terrainGrid.segmentWidth
+	this.height = 1024;//this.terrainGrid.segmentHeight
+	// position from the bottom left? top left? bottom left for now
+	this.worldPosition = new THREE.Vector2(column*this.width, row*this.height);
+	this.coordPosition = new THREE.Vector2(column, row);
+	
+	this.calculateCoordPosition = function() {
+		
+	};
+}
+
+
+
+
+function terrainGrid() {
+	this.rows = 10;
+	this.columns = 10;
+	this.segmentWidth = 1024;
+	this.segmentHeight = 1024;
+	
+	this.segments = [];
+	for(var i = 0; i < this.columns; i++) {
+		this.segments[i] = [];
+	}
+	
+	for(i = 0; i < this.columns; i++) {
+		for(var j = 0; j < this.rows; j++) {
+			this.segments[i][j] = new segment(this, i, j);
+		}
+	}
+	
+	this.findZone = function(position) {
+		var column = Math.floor(position.x/this.segmentWidth);
+		var row = Math.floor(position.y/this.segmentHeight);
+		position.set(column, row);
+		
+		return position;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 THREE.Cache.enabled = true;
 
 
@@ -1973,6 +1872,8 @@ function character() {
 	this.mesh.warpTime = 0.2;
 	this.mesh.animTo = "none";
 	this.mesh.animPlaying = "none";
+	// add reference to this object
+	this.mesh.characterObject = this;
 
 	this.loadModel = function(name, scale) {
 		this.mesh.loadFast(name);
@@ -2036,7 +1937,12 @@ fn.playerConstructor = function playerConstructor(playerData) {
 	this.equipment = {};
 	this.level = 0;
 	this.health = 100;
-	//this.username = "john";
+	
+	this.autoAttacking = false;
+	this.targetId = null;
+	this.casting = false;
+	
+	this.spells = [];
 	
 	
 	this.setClass = function(playerClass) {
@@ -2045,9 +1951,18 @@ fn.playerConstructor = function playerConstructor(playerData) {
 	};
 
 	if (playerData) {
+		this.uniqueId = playerData.uniqueId;
 		if(playerData.class) {
 			this.setClass(playerData.class);
 		}
+		
+		/*if(playerData.spells) {
+			this.spells = playerData.spells;
+			for(var i = 0; i < playerData.spells.length; i++) {
+				
+				//this.learnSpell(playerData.spells[i]);
+			}
+		}*/
 		
 		/*this.items.userLabel = new makeTextSprite(playerData.username);
 		this.items.userLabel.scale.set(50, 50, 1);
@@ -2065,29 +1980,56 @@ fn.playerConstructor = function playerConstructor(playerData) {
 		this.mesh.add(this.items.healthLabel.mesh);*/
 	}
 	
+	this.cast = function() {
+		
+	};
+	
+	this.learnSpell = function() {
+		
+	};
 	
 	
 	
 	
 	
+	this.targetObject = function(objectToTarget) {
+		if(typeof objectToTarget.uniqueId !== "undefined") {
+			this.targetId = objectToTarget.uniqueId;
+		} else {
+			this.targetId = null;
+		}
+	};
 	
 	
 	
 	this.updateData = function(newData) {
-		//if(newData.position) {
-			this.phys.position.lerp(newData.position, 0.6, this.phys.position);
-
-			this.phys.quaternion.copy(newData.quaternion);
-
-			this.phys.velocity.copy(newData.velocity);
-
-			this.mesh.warpTime = newData.warpTime;
-			this.mesh.animTo = newData.animTo;
-		//}
+		this.phys.position.lerp(newData.position, 0.6, this.phys.position);
+		this.phys.quaternion.copy(newData.quaternion);
+		this.phys.velocity.copy(newData.velocity);
+		
+		if(world1.game.player.uniqueId !== this.uniqueId) {
+			var newRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), newData.rotation2.x - Math.PI/2);
+			newRotation = newRotation.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI/2));
+			this.mesh.quaternion.copy(newRotation);
+		} else {
+			
+			//if()
+			for(var i = 0; i < newData.learnedSpells.length; i++) {
+				world1.t.HUD.items.spellBar.spellSlots[i].spell.changeSpell(newData.learnedSpells[i]);
+			}
+			//world1.t.HUD.items.spellBar.spellSlots[0].spell.changeSpell("fireball");
+			
+			world1.t.HUD.items.healthBar.update(newData.health/100);
+			//var percent = newData.experience/(100*(newData.level+1));
+			//world1.t.HUD.items.XPBar.update(newData.experience, newData.level);
+			//world1.t.HUD.items.XPBar.update(percent);
+			world1.t.HUD.items.levelText.update(newData.level);
+			
+		}
+		
+		this.mesh.warpTime = newData.warpTime;
+		this.mesh.animTo = newData.animTo;
 	}
-	
-	
-	
 	
 	
 	return this;
@@ -2204,7 +2146,7 @@ fn.createPhysBody = function createPhysBody(shape, mass) {
 
 
 
-fn.createEnemy = function createEnemy(type) {
+/*fn.createEnemy = function createEnemy(type) {
 	var pObject;
 	switch (type) {
 		case "abababe":
@@ -2223,129 +2165,304 @@ fn.createEnemy = function createEnemy(type) {
 	}
 
 	return pObject;
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function hoverText(text) {
+	var scope = this;
+	
+	this.text = text;
+	
+	if(Array.isArray(text)) {
+		this.textParts = text;
+	} else {
+		this.textParts = [];
+		this.textParts.push(this.text);
+	}
+	
+	this.timer = 0;
+	
+	//this.text = text;
+	//this.textParts = [];
+	//this.textParts.push(this.text);
+	
+	//this.pos.x = 0;
+	//this.pos.y = 0;
+	
+	if (this.textParts.length > 0) {
+		var maxLength = 0;
+		this.textCanvas = document.createElement("canvas");
+		var ctx = this.textCanvas.getContext("2d");
+		ctx.font = "100px Arial";
+		for (var i = 0; i < this.textParts.length; i++) {
+			if (ctx.measureText(this.textParts[i]).width > maxLength) {
+				maxLength = ctx.measureText(this.textParts[i]).width;
+			}
+		}
+		this.textCanvas.height = this.textParts.length * 105;
+		this.textCanvas.width = maxLength;
+		ctx.fillStyle = "#fefefe";
+		ctx.fillRect(0, 0, maxLength, this.textParts.length * 105);
+		ctx.fillStyle = "black";
+
+		ctx.font = "100px Arial";
+		for (var i = 0; i < this.textParts.length; i++) {
+			ctx.fillText(this.textParts[i], 0, (i + 1) * 100);
+			ctx.stroke();
+		}
+		var texture = new THREE.Texture(this.textCanvas);
+		texture.minFilter = THREE.LinearFilter;
+		texture.needsUpdate = true;
+		var textPartsMaterial = new THREE.SpriteMaterial({
+			map: texture
+		});
+		this.sprite = new THREE.Sprite(textPartsMaterial);
+		this.sprite.scale.set(maxLength / 7, this.textParts.length * 15, 1);
+		
+		this.sprite.visible = false;
+		world1.t.HUD.scene.add(this.sprite);
+	}
+	
+	//world1.t.HUD.scene.add(this.sprite);
+	
+	this.update = function() {//function(x, y) {
+		var x = input.mouse.HUDRay.x;
+		var y = input.mouse.HUDRay.y;
+		if(x !== this.sprite.position.x || y !== this.sprite.position.y){
+			this.sprite.position.set(x*window.innerWidth/2, y*window.innerHeight/2, 2);
+		}
+	};
+	
+	this.toggleVisibility = function() {
+		this.sprite.visible = !this.sprite.visible;
+	};
+	
+	this.show = function() {
+		if(scope.sprite.visible === false) {
+			scope.sprite.visible = true;
+		}
+		clearTimeout(scope.timer);
+		scope.timer = setTimeout(scope.hide, 100);
+	};
+	
+	this.hide = function() {
+		if(scope.sprite.visible === true) {
+			scope.sprite.visible = false;
+		}
+	};
+	
 }
+//window.a = new hoverText(['this is some example', 'text for a hover over box']);
+//window.a = new hoverText('this is some example text for a hover over box');
 
 
-
-function creature() {
-
-}
-
-
-
-var noSpellTexture = new THREE.TextureLoader().load("img/spells/none/icon/greycross.svg");
+var noSpellTexture = new THREE.TextureLoader().load("assets/models/icons/spells/nospell/greycross.svg");
 
 function spell(spellSlot, spellName) {
-	var spell1 = {};
-
+	var scope = this;
+	
 	if (spellSlot) {
-		spell1.slot = spellSlot;
+		this.slot = spellSlot;
 	} else {
 		throw new Error("No spellSlot specified!");
 	}
+	
+	this.mouseOverText = "test";
+	
+	
 
-	if (spellName) {
-		spell1.name = spellName;
+	/*if (spellName) {
+		this.spellName = spellName;
 	} else {
-		spell1.name = "none";
-	}
+		this.spellName = "none";
+	}*/
+	spellName = spellName || "none";
 
-	var slot = spell1.slot;
-	var pos = spell1.slot.mesh.position;
-	var bW = slot.width - 10;
-	var bH = slot.height - 10;
+	var slot = this.slot;
+	var pos = this.slot.mesh.position;
+	var bW = slot.width*0.8;
+	var bH = slot.height*0.8;
+	this.originalWidth = slot.originalWidth-10;
+	this.originalHeight = slot.originalHeight-10;
 
-	var geometry = new THREE.BoxGeometry(bW, bH, 0.1);
-	var material = new THREE.MeshBasicMaterial({
-		color: 0x00ff00
-	});
-
-
-	if (spell1.name == "fireball") {
-		var texture = new THREE.TextureLoader().load("img/spells/fireball/icon/fireball.jpg");
-		// 		texture.wrapS = THREE.RepeatWrapping;
-		// 		texture.wrapT = THREE.RepeatWrapping;
-		// 		texture.repeat.set(4, 4);
-
-		material.map = texture;
-		material.map.needsUpdate = true;
-
-		//var pos = spell1.slot.mesh.position;
-		spell1.mesh = new THREE.Mesh(geometry, material);
-		spell1.mesh.position.set(pos.x, pos.y, 1);
-
-		spell1.timer = new createCooldownTimer(pos.x - (1 * spell1.slot.width), pos.y - (1 * spell1.slot.width));
-	}
-
-	if (spell1.name == "none") {
-		var texture = noSpellTexture;
-		//var texture = new THREE.TextureLoader().load("img/spells/none/icon/greycross.svg");
-		// 		texture.wrapS = THREE.RepeatWrapping;
-		// 		texture.wrapT = THREE.RepeatWrapping;
-		// 		texture.repeat.set(4, 4);
-		material.map = texture;
-		material.map.needsUpdate = true;
-		//var pos = spell1.slot.mesh.position;
-		spell1.mesh = new THREE.Mesh(geometry, material);
-		spell1.mesh.position.set(pos.x, pos.y, 1);
-		//spell1.timer = new createCooldownTimer(pos.x-(1*spell1.slot.width), pos.y-(1*spell1.slot.width));
-	}
-
-	spell1.update = function() {
-
+	this.update = function() {
+		
 	};
 
-	spell1.recalc = function() {
+	this.recalc = function() {
+		var slot = this.slot;
+		var pos = this.slot.mesh.position;
+		var bW = slot.width*0.8;
+		var bH = slot.height*0.8;
+		this.mesh.position.set(pos.x, pos.y, 1);
+		var xScale = bW / this.originalWidth;
+		var yScale = bH / this.originalHeight;
+		//console.log(xScale);
+		//console.log(yScale);
+		//console.log(this.originalWidth);
+		//console.log(this.mesh);
+		this.mesh.scale.set(xScale, yScale, 1);
+	};
+	
+	
+	
+	this.changeSpell = function(spellName) {
+		if(this.spellName == spellName) {
+			return;
+		}
+		
+		this.spellName = spellName;
+		
+		if(this.mesh) {
+			world1.t.HUD.scene.remove(this.mesh);
+		}
+		
+		var geometry = new THREE.BoxGeometry(bW, bH, 0.1);
+		var material = new THREE.MeshBasicMaterial({
+			color: 0xffffff
+		});
+		
+		if (this.spellName == "fireball") {
+			this.hoverText = new hoverText("Cast a powerful fireball");
+			
+			var texture = new THREE.TextureLoader().load("assets/models/icons/spells/painterly-spell-icons-1/fireball-red-1.png");
+			texture.minFilter = THREE.LinearFilter;
+			material.map = texture;
+			material.map.needsUpdate = true;
+			this.mesh = new THREE.Mesh(geometry, material);
+			this.mesh.position.set(pos.x, pos.y, 1);
+			this.timer = new cooldownTimer(this, pos.x - (1 * this.slot.width), pos.y - (1 * this.slot.width));
+		}
 
-	}
+		if (this.spellName == "none") {
+			this.hoverText = new hoverText("No spell");
+			var texture = noSpellTexture;
+			texture.minFilter = THREE.LinearFilter;
+			material.map = texture;
+			material.map.needsUpdate = true;
+			this.mesh = new THREE.Mesh(geometry, material);
+			this.mesh.position.set(pos.x, pos.y, 1);
+			//this.timer = new createCooldownTimer(pos.x-(1*spell1.slot.width), pos.y-(1*spell1.slot.width));
+		}
+		world1.t.HUD.scene.add(this.mesh);
+	};
+	
+	this.mouseOver = function() {
+		scope.hoverText.show();
+		scope.hoverText.update();
+		//console.log(scope.hoverText.text);
+	};
+	
+	this.use = function() {
+		this.timer.use();
+	};
+	
+	this.changeSpell(spellName);
 
-	world1.t.HUD.scene.add(spell1.mesh);
-
-	return spell1;
+	//world1.t.HUD.scene.add(this.mesh);
+	
+	return this;
 }
 
 
 
-function spellSlot(width, height, pos, spellName) {
-	var spellSlot1 = {};
-	//spellSlot.spellNumber = spellNum;
+function spellSlot(spellBar, width, height, pos, row, column) {
+	
+	this.row = row;
+	this.column = column;
+	
+	this.spellBar = spellBar;
+	
+	this.width = width;
+	this.height = height;
+	
+	this.originalWidth = width;
+	this.originalHeight = height;
+	
+	var geometry = new THREE.BoxGeometry(this.width, this.height, 0.1);
 
-	spellSlot1.width = width;
-	spellSlot1.height = height;
-	var geometry = new THREE.BoxGeometry(spellSlot1.width, spellSlot1.height, 0.1);
-
-	var texture = new THREE.TextureLoader().load("img/spellSlot/spellSlot.png");
+	var texture = new THREE.TextureLoader().load("assets/models/icons/spells/painterly-spell-icons-3/frame-1-grey.png");
+	texture.minFilter = THREE.LinearFilter;
+	texture.needsUpdate = true;
 	//texture.wrapS = THREE.RepeatWrapping;
 	//texture.wrapT = THREE.RepeatWrapping;
 	//texture.repeat.set(4, 4);
 
 	var material = new THREE.MeshBasicMaterial({
 		map: texture,
-		//color: 0x00ff00
 	});
+	
+	this.pos = {};
+	this.pos.x = pos.x;
+	this.pos.y = pos.y;
+	this.mesh = new THREE.Mesh(geometry, material);
+	this.mesh.position.set(this.pos.x, this.pos.y, 0);
 
-	spellSlot1.mesh = new THREE.Mesh(geometry, material);
-	spellSlot1.mesh.position.set(pos.x, pos.y, 0);
-
-	spellSlot1.spell = new spell(spellSlot1, spellName);
+	this.spell = new spell(this, "none");
 
 
-	spellSlot1.update = function() {
+	this.update = function() {
 
 	};
 
-	spellSlot1.recalc = function() {
-
+	this.recalc = function(bW, bH) {
+		//console.log("test");
+		
+		var xScale = bW / this.originalWidth;
+		var yScale = bH / this.originalHeight;
+		this.width = bW;
+		this.height = bH;
+		
+		this.mesh.scale.set(xScale, yScale, 1);
+		this.pos.x = this.column * bW * 1.2-(this.spellBar.width/2) + this.spellBar.pos.x;
+		this.pos.y = this.row * bH * 1.2-(this.spellBar.height/2) + this.spellBar.pos.y;
+		this.mesh.position.set(this.pos.x, this.pos.y, 0);
+		
+		this.spell.recalc();
 	};
+	
+	this.changeSpell = function(spellName) {
+		this.spell = new spell(this, spellName);
+	};
+	
+	var scope = this;
+	
+	this.mouseOver = function() {
+		this.spell.mouseOver();
+		//console.log(this.spell);
+	};
+	
+	this.mesh.mouseOver = function() {
+		scope.mouseOver();
+	};
+	
+	this.click = function() {
+		//this.spell.click();
+		//console.log(this.spell);
+	};
+	
+	this.mesh.click = function() {
+		scope.click();
+	};
+	
+	world1.t.HUD.scene.add(this.mesh);
 
-
-
-
-	world1.t.HUD.scene.add(spellSlot1.mesh);
-
-	return spellSlot1;
+	return this;
 }
-
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.changeSpell("fireball");
 
 
 
@@ -2359,90 +2476,85 @@ function spellSlot(width, height, pos, spellName) {
 
 
 fn.createSpellBar = function createSpellBar() {
-
-	//var bW = 50;
-	//var bH = 50;
-	var bW = window.innerWidth / 20;
-	var bH = window.innerWidth / 20;
+	
+	var bW = window.innerWidth/20;	
+	var bH = window.innerWidth/20;
 
 	var geometry = new THREE.BoxGeometry(bW, bH, 0.1);
 	var material = new THREE.MeshBasicMaterial({
 		color: 0x00ff00
 	});
-	/*var cube = new THREE.Mesh(geometry, material);
-	var pos = new THREE.Vector2();
-	pos.x = 0;
-	pos.y = ((-window.innerHeight/2)*(2/3));
-	cube.position.set(pos.x, pos.y, 0);*/
+	
+	
+	this.pos = new THREE.Vector2();
+	this.pos.x = 0;
+	this.pos.y = (-window.innerHeight / 2) * (2 / 3);
+	this.rows = 1;
+	this.columns = 5;
+	this.width = bW * this.columns; //500
+	this.height = bW * this.rows; //100
+	this.spellSlots = [];
 
+	for (var i = 0; i < this.rows; i++) {
+		for (var j = 0; j < this.columns; j++) {
 
-
-	var container = {};
-	container.pos = new THREE.Vector2();
-	container.pos.x = 0;
-	container.pos.y = (-window.innerHeight / 2) * (2 / 3);
-	container.rows = 1;
-	container.columns = 5;
-	container.width = bW * container.columns; //500
-	container.height = bW * container.rows; //100
-	container.spellSlots = {};
-
-	for (var i = 0; i < container.rows; i++) {
-		for (var j = 0; j < container.columns; j++) {
-
-			var k = (i * container.columns) + j;
-
-
-
-			//var cube = new THREE.Mesh(geometry, material);
+			var k = (i * this.columns) + j;
 
 			var pos = new THREE.Vector2();
-			pos.x = j * bW * 1.2 - (container.width / 2) + container.pos.x;
-			pos.y = i * bH * 1.2 - (container.height / 2) + container.pos.y;
-			//cube.position.set(pos.x, pos.y, 0);
-			//console.log(k);
-			//console.log(pos.x, pos.y);
-			//var spellSlot = new spellSlot(pos, k);
-			var spellSlot1;
-
-			if (k == 0) {
-				spellSlot1 = new spellSlot(bW, bH, pos, "fireball");
-			} else {
-				spellSlot1 = new spellSlot(bW, bH, pos);
-			}
+			pos.x = j * bW * 1.2 - (this.width / 2) + this.pos.x;
+			pos.y = i * bH * 1.2 - (this.height / 2) + this.pos.y;
+			
+			var spellSlot1 = new spellSlot(this, bW, bH, pos, i, j);
 
 			/*if(k < 3) {
 				var spellSlot = new spellSlot(pos, k);
 				//cube.timer = new createCooldownTimer(pos.x+(window.innerWidth/2)-(1*bW), pos.y+(window.innerHeight/2)-(1*bW));
 			}*/
-			container.spellSlots[k] = spellSlot1;
+			this.spellSlots[k] = spellSlot1;
 
 
 			//world1.t.HUD.scene.add(cube);
 		}
 	}
 
-	container.update = function() {
+	this.update = function() {
 
 	};
 
-	container.recalc = function() {
+	this.recalc = function() {
+		//console.log("test2");
+		//console.log(this.spellSlots);
+		var bW = window.innerWidth/20;
+		var bH = window.innerWidth/20;
+		
+		this.pos.x = 0;
+		this.pos.y = (-window.innerHeight / 2) * (2 / 3);
+		this.width = bW * this.columns;
+		this.height = bW * this.rows;
+		
 		for (var i = 0; i < this.spellSlots.length; i++) {
-			if (typeof this.spellSlots[i].update !== "undefined") {
-				//this.spellSlots[i].upda
+		//for(var i in this.spellSlots) {
+			//console.log(this.spellSlots[i]);
+			if (typeof this.spellSlots[i].recalc !== "undefined") {
+				this.spellSlots[i].recalc(bW, bH);
 			}
 		}
 	};
 
 
-	container.addSpell = function(slot, spell) {
+	/*this.addSpell = function(slot, spell) {
+		
+	};*/
 
-	};
+	return this;
+}
 
 
-	//world1.t.HUD.scene.add(cube);
 
-	return container;
+
+
+function coolDown() {
+	
 }
 
 
@@ -2450,16 +2562,9 @@ fn.createSpellBar = function createSpellBar() {
 
 
 
+//world1.t.HUD.items.spellBar.spellSlots[0].changeSpell("fireball");
 
-
-
-
-
-
-
-
-
-fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
+/*fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 	//console.log(Math.round(x), Math.round(y));
 
 	var bW = ((window.innerWidth / 20) / 2);
@@ -2472,7 +2577,7 @@ fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 		timeRemaining: timeRemaining,
 		totalTime: totalTime,
 		bW: ((window.innerWidth / 20) / 2),
-		radius: (bW) * 0.7 * xScale, //4
+		radius: (bW) * 0.8 * xScale, //4
 		radius2: (bW) * 0.9 * yScale, //5
 		xPos: x || 0,
 		yPos: y || 0,
@@ -2481,8 +2586,8 @@ fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 		calcPos: function() {
 			this.bW = ((window.innerWidth / 20) / 2);
 			var pos = {};
-			pos.x = (this.bW * 2) + this.xPos; //pos.x = (-window.innerWidth/2) + /*this.radius + */(this.radius2*2) + this.xPos;
-			pos.y = (this.bW * 2) + this.yPos; //pos.y = (-window.innerHeight/2) + /*this.radius + */(this.radius2*2) + this.yPos;
+			pos.x = (this.bW * 2) + this.xPos; //pos.x = (-window.innerWidth/2) + /*this.radius + *//*(this.radius2*2) + this.xPos;
+			/*pos.y = (this.bW * 2) + this.yPos; //pos.y = (-window.innerHeight/2) + /*this.radius + *//*(this.radius2*2) + this.yPos;
 			return pos;
 		}
 	};
@@ -2522,7 +2627,127 @@ fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 	world1.t.HUD.scene.add(HB.mesh);
 
 	return HB;
-}
+}*/
+
+
+fn.cooldownTimer = function createCooldownTimer(spell, x, y, width) {
+	var scope = this;
+	
+	this.spell = spell;
+	
+
+	this.options = {};
+	
+	this.timeRemaining = 0;
+	this.totalTime = 4000;
+	this.xScale = 0.85;
+	this.yScale = 0.85;
+	this.bW = ((window.innerWidth / 20) / 2);
+	this.radius1 = (this.bW) * 0.8 * this.xScale;
+	this.radius2 = (this.bW) * 0.9 * this.yScale;
+	this.xPosition = x;
+	this.yPosition = y;
+	
+	this.calculatePosition = function() {
+		this.bW = ((window.innerWidth / 20) / 2);
+		var pos = {};
+		pos.x = (this.bW * 2) + this.xPosition;
+		pos.y = (this.bW * 2) + this.yPosition;
+		return pos;
+	};
+	
+	
+
+	var healthBarGeometry = new THREE.RingGeometry(this.radius1, this.radius2, 10, 8, 0, Math.PI * 2);
+	var healthBarMaterial = new THREE.MeshBasicMaterial({
+		color: 0xffff00,
+		side: THREE.DoubleSide
+	});
+	
+	this.mesh = new THREE.Mesh(healthBarGeometry, healthBarMaterial);
+	this.mesh.scale.set(this.xScale, this.yScale, 1);
+	this.mesh.rotation.y = Math.PI;
+	
+
+	var pos = this.calculatePosition();
+	this.mesh.position.set(pos.x, pos.y, 2);
+
+	this.recalc = function() {
+		var pos = this.calculatePosition();
+		this.mesh.position.set(pos.x, pos.y, 2);
+	};
+
+	this.update = function(timeRemaining, totalTime) {
+		var ratio = timeRemaining / totalTime;
+		var ringGeometry = new THREE.RingGeometry(this.radius1, this.radius2, 10, 8, 0, Math.PI * 2 * ratio);
+		this.mesh.scale.set(this.xScale, this.yScale, 1);
+		this.mesh.geometry.dispose();
+		this.mesh.geometry = ringGeometry;
+		this.mesh.material.color.setRGB(1.6 - ratio, ratio);
+	};
+	
+	
+	
+	
+	this.count = function() {
+		
+		scope.timeRemaining -= 100;
+		scope.update(scope.timeRemaining, scope.totalTime);
+		//setTimeout(scope.count, 100);
+		
+		if(scope.timeRemaining > 0) {
+			setTimeout(scope.count, 100);
+			//scope.timeRemaining -= 100;
+		}
+		
+		
+	};
+	
+	this.use = function() {
+		this.show();
+		this.timeRemaining = 4000;
+		//setInterval(this.count, 100);
+		
+		this.count();
+		setTimeout(this.hide, 4000);
+	};
+	
+	//this.reset = function() {
+		//this.mesh.visible = false;
+	//};
+	
+	
+	
+	this.toggleVisibility = function() {
+		this.mesh.visible = !this.mesh.visible;
+	};
+	
+	this.show = function() {
+		if(scope.mesh.visible === false) {
+			scope.mesh.visible = true;
+		}
+		//clearTimeout(scope.timer);
+		//scope.timer = setTimeout(scope.hide, 100);
+	};
+	
+	this.hide = function() {
+		if(scope.mesh.visible === true) {
+			scope.mesh.visible = false;
+		}
+	};
+	
+	
+	this.mesh.visible = false;
+	world1.t.HUD.scene.add(this.mesh);
+	return this;
+};
+
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.changeSpell("fireball");
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.use();
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.timer.use();
+
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.timer.update(90, 100);
+//world1.t.HUD.items.spellBar.spellSlots[0].spell.timer.reset(0);
 
 
 
@@ -2532,67 +2757,5 @@ fn.createCooldownTimer = function createCooldownTimer(x, y, width) {
 
 
 
-
-
-
-
-
-
-
-
-/*
-
-var a;
-var loader = new THREE.JSONLoader();
-loader.load(
-	// resource URL
-	'models/wizard/wizard.json',
-	// Function when resource is loaded
-	function ( collada ) {
-		a = collada;
-		console.log(collada);
-	},
-	// Function called when download progresses
-	function ( xhr ) {
-		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-	}
-);
-
-
-
-var a;
-var loader = new THREE.ColladaLoader();
-loader.load(
-	// resource URL
-	'models/wizard/wizard.dae',
-	// Function when resource is loaded
-	function ( collada ) {
-		a = collada;
-		console.log(collada);
-	},
-	// Function called when download progresses
-	function ( xhr ) {
-		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-	}
-);
-
-
-var a;
-var loader = new THREE.AssimpJSONLoader();
-loader.load(
-	// resource URL
-	'models/wizard/wizard.json',
-	// Function when resource is loaded
-	function ( collada ) {
-		a = collada;
-		console.log(collada);
-	},
-	// Function called when download progresses
-	function ( xhr ) {
-		console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
-	}
-);
-
-*/
 
 module.exports = fn;

@@ -10,6 +10,7 @@ var account = new Schema({
 	characters: Array,
 	firstName: String,
 	lastName: String,
+	friends: Array,
 });
 
 module.exports = mongoose.model('account', account);
