@@ -13,7 +13,7 @@
     "bcrypt": "^0.8.5",
     "body-parser": "^1.15.0",
     "bootstrap": "^3.3.6",
-    "cannon": "github:schteppe/cannon.js",
+    "cannon": "^0.6.2",
     "canvas": "^1.3.12",
     "express": "^4.13.4",
     "express-session": "^1.13.0",
@@ -27,7 +27,7 @@
     "shader-particle-engine": "^1.0.5",
     "shortid": "^2.2.6",
     "socket.io": "^1.4.5",
-    "three": "^0.75.0",
+    "three": "^0.76.1",
     "webhamsters": "^3.7.0"
   },
   "engines": {
