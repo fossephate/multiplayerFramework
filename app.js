@@ -76,8 +76,9 @@ function gameServer() {
 	this.locations = {};
 	this.playersOnline = 0;
 	this.map = [];
-	this.lastId = 0;
-	this.config = {};
+	
+	this.zones = {};
+	
 	//this.t = {};
 	//this.t.scene = new THREE.Scene();
 	this.c = {};
@@ -177,7 +178,8 @@ function client(id) {
 		return null;
 	}
 
-	this.keys = [];
+	//this.keys = [];
+	this.actions = {};
 	this.data = {};
 
 	this.mouseX = 0;
@@ -342,7 +344,7 @@ function player(owner, characterName, classType) {
 	this.type = "player";
 	this.owner = owner;
 	this.socketId = this.owner.socketId;
-	this.keys = this.owner.keys;
+	//this.keys = this.owner.keys;
 	this.data = this.owner.data;
 	
 	this.characterName = characterName;
@@ -387,6 +389,7 @@ function player(owner, characterName, classType) {
 	//this.cooldowns.globalCooldown = 0;
 	
 	this.animTo = "idle";
+	this.animSpeed = 1;
 	this.warpTime = 0.2;
 
 	
@@ -434,6 +437,7 @@ player.prototype.viewObj = function() {
 		experience: this.experience,
 		cooldowns: this.cooldowns,
 		animTo: this.animTo,
+		animSpeed: this.animSpeed,
 		warpTime: this.warpTime,
 	};
 };
@@ -547,7 +551,8 @@ player.prototype.learnSpell = function(spellName) {
 
 player.prototype.move = function() {
 	var data = this.owner.data;
-	var keys = this.owner.keys;
+	//var keys = this.owner.keys;
+	var actions = this.owner.actions;
 	var rotation = this.owner.data.rotation || new THREE.Vector3();
 
 	//this.checkCooldowns();
@@ -555,7 +560,7 @@ player.prototype.move = function() {
 	this.temp.inputVelocity.set(0, 0, 0);
 	
 	
-	if (keys.indexOf("moveForward") > -1 && this.temp.isGrounded == true) {
+	if (actions.moveForward && this.temp.isGrounded == true) {
 		this.animTo = "walking_inPlace";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x);
 		if (rotatedV.x > 0) {
@@ -565,7 +570,7 @@ player.prototype.move = function() {
 		}
 	}
 	
-	if (keys.indexOf("moveBackward") > -1 && this.temp.isGrounded == true) {
+	if (actions.moveBackward && this.temp.isGrounded == true) {
 		this.animTo = "walking_inPlace";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x);
 		if (rotatedV.x < 0) {
@@ -574,7 +579,7 @@ player.prototype.move = function() {
 			this.temp.inputVelocity.x = 20;
 		}
 	}
-	if (keys.indexOf("moveLeft") > -1 && this.temp.isGrounded == true) {
+	if (actions.moveLeft && this.temp.isGrounded == true) {
 		this.animTo = "left_strafe_walking_inPlace";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x);
 		if (rotatedV.y > 0) {
@@ -583,7 +588,7 @@ player.prototype.move = function() {
 			this.temp.inputVelocity.y = -20;
 		}
 	}
-	if (keys.indexOf("moveRight") > -1 && this.temp.isGrounded == true) {
+	if (actions.moveRight && this.temp.isGrounded == true) {
 		this.animTo = "right_strafe_walking_inPlace";
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x);
 		if (rotatedV.y < 0) {
@@ -595,11 +600,11 @@ player.prototype.move = function() {
 	//this.temp.inputVelocity.normalize();
 	this.temp.inputVelocity.setLength(20);
 
-	if (keys.indexOf("moveForward") == -1 && keys.indexOf("moveBackward") == -1 && this.temp.isGrounded == true) {
+	if (!actions.moveForward && !actions.moveBackward && this.temp.isGrounded == true) {
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x).multiplyScalar(0.1);
 		this.temp.inputVelocity.x = -rotatedV.x;
 	}
-	if (keys.indexOf("moveLeft") == -1 && keys.indexOf("moveRight") == -1 && this.temp.isGrounded == true) {
+	if (!actions.moveLeft && !actions.moveRight && this.temp.isGrounded == true) {
 		var rotatedV = new THREE.Vector3().copy(this.phys.velocity).applyAxisAngle(new THREE.Vector3(0, 0, 1), -rotation.x).multiplyScalar(0.1);
 		this.temp.inputVelocity.y = -rotatedV.y;
 	}
@@ -648,7 +653,11 @@ player.prototype.move = function() {
 		if(result.distance < 1 && this.temp.isJumping === false) {
 			this.phys.position.z += 0.01 - result.distance;
 		}
-		if (result.distance < 0.1) {
+		if (result.distance < 0.05) {
+			if(this.animTo == "jump") {
+				this.animTo = "idle";
+				this.animSpeed = 0.02;
+			}
 			this.temp.isGrounded = true;
 		} else {
 			this.temp.isGrounded = false;
@@ -657,16 +666,20 @@ player.prototype.move = function() {
 		this.phys.position.z += 0.1;
 	}
 	
-	if (keys.indexOf("jump") > -1 && this.temp.isGrounded === true && this.temp.isJumping === false) {
+	if (actions.jump && this.temp.isGrounded === true && this.temp.isJumping === false) {
 		this.animTo = "jump";
+		this.animSpeed = 0.5;
+		//setTimeout(function() {
+			//scope.animTo = "idle";
+		//}, 500);
 		this.gainXP(10);
 		//this.score += 1;
 		this.temp.isJumping = true;
-		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 10), new CANNON.Vec3(0, 0, 0));
+		this.phys.applyLocalImpulse(new CANNON.Vec3(0, 0, 30), new CANNON.Vec3(0, 0, 0));
 		//this.phys.position.z += 0.5;
 	}
 	
-	if (keys.indexOf("jump") == -1 && this.temp.isGrounded === true) {
+	if (!actions.jump && this.temp.isGrounded === true) {
 		this.temp.isJumping = false;
 	}
 	
@@ -894,10 +907,11 @@ io.on('connection', function(socket) {
 
 
 	socket.on('input', function(data) {
-		var keys = data.keys;
-		var sentData = data.data;
-		gs.clients[socket.id].keys = keys;
-		gs.clients[socket.id].data = sentData;
+		//var keys = data.keys;
+		//var sentData = data.data;
+		gs.clients[socket.id].actions = data.actions || {};
+		gs.clients[socket.id].data = data.data || {};
+		//gs.clients[socket.id].keys = keys;// remove this
 	});
 
 	socket.on('getNumOfPlayersOnline', function(data) {

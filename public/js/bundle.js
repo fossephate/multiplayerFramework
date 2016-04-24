@@ -67516,13 +67516,13 @@ $(function() {
 	//(function(){var script=document.createElement('script');script.type='text/javascript';script.src='https://cdn.rawgit.com/zz85/zz85-bookmarklets/master/js/ThreeInspector.js';document.body.appendChild(script);})()
 	THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
 	//mobileConsole.show();
-
+	
 	preferences = {};
 	preferences.keyboard = {};
 	preferences.sound = {};
 	preferences.video = {};
-
-
+	
+	
 	input = {};
 	input.mouse = {};
 	input.mouse.x = 0;
@@ -67533,10 +67533,12 @@ $(function() {
 	input.mouse.lclickInitial = new THREE.Vector2();
 	input.mouse.lclickInitial.x = 9999;
 	input.mouse.lclickInitial.y = 9999;
+	input.mouse.lclicked = false;
 
 	input.mouse.rclickInitial = new THREE.Vector2();
 	input.mouse.rclickInitial.x = 9999;
 	input.mouse.rclickInitial.y = 9999;
+	input.mouse.rclicked = false;
 
 	input.mouse.chg = {};
 	input.mouse.chg.x = 0;
@@ -68883,19 +68885,20 @@ $(function() {
 
 	function gameLoop(world) {
 		if (world.game.connected) {
-			input.keys = [];
-			for (var i in input.action) {
+			//input.keys = [];
+			/*for (var i in input.action) {
 				if (input.action[i] === true) {
 					input.keys.push(i);
 				}
-			}
+			}*/
 
 			input.data.rotation = input.controls.rotation;
 			input.data.targetId = world1.game.player.targetId;
 			//input.data.casting = world1.
 
 			socket.emit('input', {
-				keys: input.keys,
+				//keys: [],// remove this
+				actions: input.action,
 				data: input.data,
 				//rotation: input.controls.rotation,
 				//rotation: new THREE.Vector3(0, 0, world1.t.controls.getAzimuthalAngle()),
@@ -69129,7 +69132,20 @@ $(function() {
 
 				}
 			}
-
+			
+			
+			
+			
+			if (!input.mouse.lclick && input.mouse.lclickInitial.x != 9999) {
+				var dx = Math.pow(input.mouse.x - input.mouse.rclickInitial.x, 2);
+				var dy = Math.pow(input.mouse.y - input.mouse.rclickInitial.y, 2);
+				var distance = Math.sqrt(dx + dy);
+				input.mouse.lclickInitial.x = 9999;
+				input.mouse.lclickInitial.y = 9999;
+				if (distance < 2) {
+					input.mouse.lclicked = true;
+				}
+			}
 
 
 			world1.t.HUD.raycaster.setFromCamera(input.mouse.HUDRay, world1.t.HUD.camera);
@@ -69139,11 +69155,19 @@ $(function() {
 				if (typeof obj.mouseOver != "undefined") {
 					obj.mouseOver();
 				}
+				if(input.mouse.lclicked && typeof obj.lclick != "undefined") {
+					obj.lclick();
+				}
+				
 				/*if(logReset == 0) {
 					console.log(obj);
 				}*/
 				//intersects[i].object.material.color.set(0xff0000);
 			}
+			input.mouse.lclicked = false;
+			
+			
+
 
 
 
@@ -69248,6 +69272,7 @@ $(function() {
 });
 },{"./functions":75,"./libs/blendCharacter":76,"./libs/cannonDebugRenderer":77,"./libs/canvasRenderer":78,"./libs/hamsters":79,"./libs/jquery.color":80,"./libs/localforage":81,"./libs/orbitControls":82,"./libs/projector":83,"./libs/randomColor":84,"./libs/skyShader":85,"./libs/stats.min":86,"./libs/sweetalert.min":87,"./libs/virtualjoystick":88,"cannon":15,"jquery":71,"shader-particle-engine":72,"three":73}],75:[function(require,module,exports){
 var login = require('./login');
+var spells = require('./spells');
 
 
 
@@ -71121,6 +71146,7 @@ function character() {
 	this.mesh.warpTime = 0.2;
 	this.mesh.animTo = "none";
 	this.mesh.animPlaying = "none";
+	this.mesh.animSpeed = 1;
 	// add reference to this object
 	this.mesh.characterObject = this;
 
@@ -71167,7 +71193,7 @@ function character() {
 			this.mesh.warp(this.mesh.animPlaying, this.mesh.animTo, this.mesh.warpTime);
 			this.mesh.animPlaying = this.mesh.animTo;
 		}
-		this.mesh.update(this.mesh.updateSpeed);
+		this.mesh.update(this.mesh.animSpeed);
 	};
 }
 
@@ -71278,6 +71304,7 @@ fn.playerConstructor = function playerConstructor(playerData) {
 		
 		this.mesh.warpTime = newData.warpTime;
 		this.mesh.animTo = newData.animTo;
+		this.mesh.animSpeed = newData.animSpeed;
 	}
 	
 	
@@ -71518,10 +71545,10 @@ function hoverText(text) {
 //window.a = new hoverText('this is some example text for a hover over box');
 
 
-var noSpellTexture = new THREE.TextureLoader().load("assets/models/icons/spells/nospell/greycross.svg");
-
 function spell(spellSlot, spellName) {
 	var scope = this;
+	
+	this.enabled = true;
 	
 	if (spellSlot) {
 		this.slot = spellSlot;
@@ -71531,13 +71558,6 @@ function spell(spellSlot, spellName) {
 	
 	this.mouseOverText = "test";
 	
-	
-
-	/*if (spellName) {
-		this.spellName = spellName;
-	} else {
-		this.spellName = "none";
-	}*/
 	spellName = spellName || "none";
 
 	var slot = this.slot;
@@ -71584,28 +71604,19 @@ function spell(spellSlot, spellName) {
 			color: 0xffffff
 		});
 		
-		if (this.spellName == "fireball") {
-			this.hoverText = new hoverText("Cast a powerful fireball");
+		var spellInfo = spells.getSpellInfo(this.spellName);
+		this.hoverText = new hoverText(spellInfo.hoverText);
 			
-			var texture = new THREE.TextureLoader().load("assets/models/icons/spells/painterly-spell-icons-1/fireball-red-1.png");
-			texture.minFilter = THREE.LinearFilter;
-			material.map = texture;
-			material.map.needsUpdate = true;
-			this.mesh = new THREE.Mesh(geometry, material);
-			this.mesh.position.set(pos.x, pos.y, 1);
-			this.timer = new cooldownTimer(this, pos.x - (1 * this.slot.width), pos.y - (1 * this.slot.width));
-		}
-
-		if (this.spellName == "none") {
-			this.hoverText = new hoverText("No spell");
-			var texture = noSpellTexture;
-			texture.minFilter = THREE.LinearFilter;
-			material.map = texture;
-			material.map.needsUpdate = true;
-			this.mesh = new THREE.Mesh(geometry, material);
-			this.mesh.position.set(pos.x, pos.y, 1);
-			//this.timer = new createCooldownTimer(pos.x-(1*spell1.slot.width), pos.y-(1*spell1.slot.width));
-		}
+		var texture = new THREE.TextureLoader().load(spellInfo.iconLocation);
+		texture.minFilter = THREE.LinearFilter;
+		material.map = texture;
+		material.map.needsUpdate = true;
+		this.mesh = new THREE.Mesh(geometry, material);
+		var pos = this.slot.mesh.position;
+		this.mesh.position.set(pos.x, pos.y, 1);
+		this.timer = new cooldownTimer(this, pos.x - (1 * this.slot.width), pos.y - (1 * this.slot.width));
+		
+		
 		world1.t.HUD.scene.add(this.mesh);
 	};
 	
@@ -71613,6 +71624,10 @@ function spell(spellSlot, spellName) {
 		scope.hoverText.show();
 		scope.hoverText.update();
 		//console.log(scope.hoverText.text);
+	};
+	
+	this.lclick = function() {
+		this.timer.use();
 	};
 	
 	this.use = function() {
@@ -71698,13 +71713,15 @@ function spellSlot(spellBar, width, height, pos, row, column) {
 		scope.mouseOver();
 	};
 	
-	this.click = function() {
-		//this.spell.click();
+	
+	
+	this.lclick = function() {
+		this.spell.lclick();
 		//console.log(this.spell);
 	};
 	
-	this.mesh.click = function() {
-		scope.click();
+	this.mesh.lclick = function() {
+		scope.lclick();
 	};
 	
 	world1.t.HUD.scene.add(this.mesh);
@@ -71796,14 +71813,6 @@ fn.createSpellBar = function createSpellBar() {
 	};*/
 
 	return this;
-}
-
-
-
-
-
-function coolDown() {
-	
 }
 
 
@@ -71947,6 +71956,8 @@ fn.cooldownTimer = function createCooldownTimer(spell, x, y, width) {
 		if(scope.timeRemaining > 0) {
 			setTimeout(scope.count, 100);
 			//scope.timeRemaining -= 100;
+		} else {
+			this.spell.enabled = true;
 		}
 		
 		
@@ -71954,11 +71965,11 @@ fn.cooldownTimer = function createCooldownTimer(spell, x, y, width) {
 	
 	this.use = function() {
 		this.show();
-		this.timeRemaining = 4000;
+		this.timeRemaining = this.spell.coolDownTime;
 		//setInterval(this.count, 100);
 		
 		this.count();
-		setTimeout(this.hide, 4000);
+		setTimeout(this.hide, this.spell.coolDownTime);
 	};
 	
 	//this.reset = function() {
@@ -72008,7 +72019,7 @@ fn.cooldownTimer = function createCooldownTimer(spell, x, y, width) {
 
 
 module.exports = fn;
-},{"./login":89}],76:[function(require,module,exports){
+},{"./login":89,"./spells":90}],76:[function(require,module,exports){
 THREE.BlendCharacter = function(assetHolder) {
 	
 	this.isLoading = false;
@@ -74586,7 +74597,7 @@ self.hamsters = {
   });
 })();
 }).call(this,require('_process'))
-},{"_process":90}],80:[function(require,module,exports){
+},{"_process":91}],80:[function(require,module,exports){
 /*!
  * jQuery Color Animations v@VERSION
  * https://github.com/jquery/jquery-color
@@ -78133,7 +78144,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":90}],82:[function(require,module,exports){
+},{"_process":91}],82:[function(require,module,exports){
 /**
  * @author qiao / https://github.com/qiao
  * @author mrdoob / http://mrdoob.com
@@ -81423,6 +81434,57 @@ $(document).ready(function() {
 	});
 });
 },{"./functions":75,"bootstrap":1,"jquery":71}],90:[function(require,module,exports){
+function spellInfo(info) {
+  this.name = info.name;
+  this.hoverText = info.hoverText;
+  this.coolDownTime = info.coolDownTime;
+  this.castTime = info.castTime;
+  this.effect = info.effect;
+  return this;
+}
+
+module.exports.getSpellInfo = function(spellName) {
+  
+  var returnedInfo;
+
+  switch (spellName) {
+    case "fireball":
+      returnedInfo = new spellInfo({
+        name: "fireball",
+        iconLocation: "assets/models/icons/spells/painterly-spell-icons-1/fireball-red-1.png",
+        hoverText: "Cast a powerfull fireball.",
+        coolDownTime: 1000,
+        castTime: 0,
+        effect: false,
+      });
+      break;
+      
+    case "melee":
+      returnedInfo = new spellInfo({
+        name: "melee",
+        iconLocation: "assets/models/icons/spells/painterly-spell-icons-1/fireball-red-1.png",
+        hoverText: "Hit your target.",
+        coolDownTime: 1000,
+        castTime: 0,
+        effect: false,
+      });
+      break;
+      
+      
+    default:
+      returnedInfo = new spellInfo({
+        name: "none",
+        iconLocation: "assets/models/icons/spells/nospell/greycross.svg",
+        hoverText: "There is no spell in this slot.",
+        coolDownTime: 0,
+        castTime: 0,
+        effect: false,
+      });
+      break;
+  }
+  return returnedInfo;
+};
+},{}],91:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};

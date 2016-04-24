@@ -53,13 +53,13 @@ $(function() {
 	//(function(){var script=document.createElement('script');script.type='text/javascript';script.src='https://cdn.rawgit.com/zz85/zz85-bookmarklets/master/js/ThreeInspector.js';document.body.appendChild(script);})()
 	THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
 	//mobileConsole.show();
-
+	
 	preferences = {};
 	preferences.keyboard = {};
 	preferences.sound = {};
 	preferences.video = {};
-
-
+	
+	
 	input = {};
 	input.mouse = {};
 	input.mouse.x = 0;
@@ -70,10 +70,12 @@ $(function() {
 	input.mouse.lclickInitial = new THREE.Vector2();
 	input.mouse.lclickInitial.x = 9999;
 	input.mouse.lclickInitial.y = 9999;
+	input.mouse.lclicked = false;
 
 	input.mouse.rclickInitial = new THREE.Vector2();
 	input.mouse.rclickInitial.x = 9999;
 	input.mouse.rclickInitial.y = 9999;
+	input.mouse.rclicked = false;
 
 	input.mouse.chg = {};
 	input.mouse.chg.x = 0;
@@ -1420,19 +1422,20 @@ $(function() {
 
 	function gameLoop(world) {
 		if (world.game.connected) {
-			input.keys = [];
-			for (var i in input.action) {
+			//input.keys = [];
+			/*for (var i in input.action) {
 				if (input.action[i] === true) {
 					input.keys.push(i);
 				}
-			}
+			}*/
 
 			input.data.rotation = input.controls.rotation;
 			input.data.targetId = world1.game.player.targetId;
 			//input.data.casting = world1.
 
 			socket.emit('input', {
-				keys: input.keys,
+				//keys: [],// remove this
+				actions: input.action,
 				data: input.data,
 				//rotation: input.controls.rotation,
 				//rotation: new THREE.Vector3(0, 0, world1.t.controls.getAzimuthalAngle()),
@@ -1666,7 +1669,20 @@ $(function() {
 
 				}
 			}
-
+			
+			
+			
+			
+			if (!input.mouse.lclick && input.mouse.lclickInitial.x != 9999) {
+				var dx = Math.pow(input.mouse.x - input.mouse.rclickInitial.x, 2);
+				var dy = Math.pow(input.mouse.y - input.mouse.rclickInitial.y, 2);
+				var distance = Math.sqrt(dx + dy);
+				input.mouse.lclickInitial.x = 9999;
+				input.mouse.lclickInitial.y = 9999;
+				if (distance < 2) {
+					input.mouse.lclicked = true;
+				}
+			}
 
 
 			world1.t.HUD.raycaster.setFromCamera(input.mouse.HUDRay, world1.t.HUD.camera);
@@ -1676,11 +1692,19 @@ $(function() {
 				if (typeof obj.mouseOver != "undefined") {
 					obj.mouseOver();
 				}
+				if(input.mouse.lclicked && typeof obj.lclick != "undefined") {
+					obj.lclick();
+				}
+				
 				/*if(logReset == 0) {
 					console.log(obj);
 				}*/
 				//intersects[i].object.material.color.set(0xff0000);
 			}
+			input.mouse.lclicked = false;
+			
+			
+
 
 
 

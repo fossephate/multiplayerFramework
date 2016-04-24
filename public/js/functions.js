@@ -1,4 +1,5 @@
 var login = require('./login');
+var spells = require('./spells');
 
 
 
@@ -1872,6 +1873,7 @@ function character() {
 	this.mesh.warpTime = 0.2;
 	this.mesh.animTo = "none";
 	this.mesh.animPlaying = "none";
+	this.mesh.animSpeed = 1;
 	// add reference to this object
 	this.mesh.characterObject = this;
 
@@ -1918,7 +1920,7 @@ function character() {
 			this.mesh.warp(this.mesh.animPlaying, this.mesh.animTo, this.mesh.warpTime);
 			this.mesh.animPlaying = this.mesh.animTo;
 		}
-		this.mesh.update(this.mesh.updateSpeed);
+		this.mesh.update(this.mesh.animSpeed);
 	};
 }
 
@@ -2029,6 +2031,7 @@ fn.playerConstructor = function playerConstructor(playerData) {
 		
 		this.mesh.warpTime = newData.warpTime;
 		this.mesh.animTo = newData.animTo;
+		this.mesh.animSpeed = newData.animSpeed;
 	}
 	
 	
@@ -2269,10 +2272,10 @@ function hoverText(text) {
 //window.a = new hoverText('this is some example text for a hover over box');
 
 
-var noSpellTexture = new THREE.TextureLoader().load("assets/models/icons/spells/nospell/greycross.svg");
-
 function spell(spellSlot, spellName) {
 	var scope = this;
+	
+	this.enabled = true;
 	
 	if (spellSlot) {
 		this.slot = spellSlot;
@@ -2282,13 +2285,6 @@ function spell(spellSlot, spellName) {
 	
 	this.mouseOverText = "test";
 	
-	
-
-	/*if (spellName) {
-		this.spellName = spellName;
-	} else {
-		this.spellName = "none";
-	}*/
 	spellName = spellName || "none";
 
 	var slot = this.slot;
@@ -2335,28 +2331,19 @@ function spell(spellSlot, spellName) {
 			color: 0xffffff
 		});
 		
-		if (this.spellName == "fireball") {
-			this.hoverText = new hoverText("Cast a powerful fireball");
+		var spellInfo = spells.getSpellInfo(this.spellName);
+		this.hoverText = new hoverText(spellInfo.hoverText);
 			
-			var texture = new THREE.TextureLoader().load("assets/models/icons/spells/painterly-spell-icons-1/fireball-red-1.png");
-			texture.minFilter = THREE.LinearFilter;
-			material.map = texture;
-			material.map.needsUpdate = true;
-			this.mesh = new THREE.Mesh(geometry, material);
-			this.mesh.position.set(pos.x, pos.y, 1);
-			this.timer = new cooldownTimer(this, pos.x - (1 * this.slot.width), pos.y - (1 * this.slot.width));
-		}
-
-		if (this.spellName == "none") {
-			this.hoverText = new hoverText("No spell");
-			var texture = noSpellTexture;
-			texture.minFilter = THREE.LinearFilter;
-			material.map = texture;
-			material.map.needsUpdate = true;
-			this.mesh = new THREE.Mesh(geometry, material);
-			this.mesh.position.set(pos.x, pos.y, 1);
-			//this.timer = new createCooldownTimer(pos.x-(1*spell1.slot.width), pos.y-(1*spell1.slot.width));
-		}
+		var texture = new THREE.TextureLoader().load(spellInfo.iconLocation);
+		texture.minFilter = THREE.LinearFilter;
+		material.map = texture;
+		material.map.needsUpdate = true;
+		this.mesh = new THREE.Mesh(geometry, material);
+		var pos = this.slot.mesh.position;
+		this.mesh.position.set(pos.x, pos.y, 1);
+		this.timer = new cooldownTimer(this, pos.x - (1 * this.slot.width), pos.y - (1 * this.slot.width));
+		
+		
 		world1.t.HUD.scene.add(this.mesh);
 	};
 	
@@ -2364,6 +2351,10 @@ function spell(spellSlot, spellName) {
 		scope.hoverText.show();
 		scope.hoverText.update();
 		//console.log(scope.hoverText.text);
+	};
+	
+	this.lclick = function() {
+		this.timer.use();
 	};
 	
 	this.use = function() {
@@ -2449,13 +2440,15 @@ function spellSlot(spellBar, width, height, pos, row, column) {
 		scope.mouseOver();
 	};
 	
-	this.click = function() {
-		//this.spell.click();
+	
+	
+	this.lclick = function() {
+		this.spell.lclick();
 		//console.log(this.spell);
 	};
 	
-	this.mesh.click = function() {
-		scope.click();
+	this.mesh.lclick = function() {
+		scope.lclick();
 	};
 	
 	world1.t.HUD.scene.add(this.mesh);
@@ -2547,14 +2540,6 @@ fn.createSpellBar = function createSpellBar() {
 	};*/
 
 	return this;
-}
-
-
-
-
-
-function coolDown() {
-	
 }
 
 
@@ -2698,6 +2683,8 @@ fn.cooldownTimer = function createCooldownTimer(spell, x, y, width) {
 		if(scope.timeRemaining > 0) {
 			setTimeout(scope.count, 100);
 			//scope.timeRemaining -= 100;
+		} else {
+			this.spell.enabled = true;
 		}
 		
 		
@@ -2705,11 +2692,11 @@ fn.cooldownTimer = function createCooldownTimer(spell, x, y, width) {
 	
 	this.use = function() {
 		this.show();
-		this.timeRemaining = 4000;
+		this.timeRemaining = this.spell.coolDownTime;
 		//setInterval(this.count, 100);
 		
 		this.count();
-		setTimeout(this.hide, 4000);
+		setTimeout(this.hide, this.spell.coolDownTime);
 	};
 	
 	//this.reset = function() {
