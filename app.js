@@ -1,6 +1,6 @@
 var util = require('util');
-var filter = require('bad-words');
-var list = require('badwords-list');
+//var filter = require('bad-words');
+//var list = require('badwords-list');
 var THREE = require('three');
 var CANNON = require('cannon');
 //var goblin = require('goblinphysics');
@@ -69,7 +69,7 @@ function gameServer() {
 	//      |______    inside of corner of cube
 	//     /      X
 	//    / Y
-	this.filter = new filter();
+	//this.filter = new filter();
 	this.clients = [];
 	//this.characters = [];
 	this.nodes = [];
